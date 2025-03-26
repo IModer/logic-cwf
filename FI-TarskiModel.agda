@@ -1,4 +1,4 @@
-{-# OPTIONS --prop --allow-unsolved-metas #-}
+{-# OPTIONS --prop #-}
 
 open import lib
 open import FirstOrderIntuinistic
@@ -98,33 +98,3 @@ module FI-TarskiModel
     ; Eqrefl = λ γ → refl
     ; subst' = λ K eq K' γ → substp (λ z → K (γ ,Σ z)) (eq γ) (K' γ)
     }
-    where
-{-
--}
-      funHelp' : 
-        {Γ : Set} →
-        {n : ℕ}  →
-        {a : funar n}  →
-        {ts : (Γ → D) ^ n}  →
-        {Δ : Set}  →
-        {γ : Δ → Γ}  →
-        (x : Δ) →  
-        ind^' {lzero} {n} {Γ → D} {λ n → D ^ n} * (λ d ds → d (γ x) ,Σ ds) ts ≡
-        ind^' {lzero} {n} {Δ → D} {λ n → D ^ n} * (λ d ds → d x ,Σ ds) 
-          (ind^ {lzero} {n} {Γ → D} {λ n → (Δ → D) ^ n} (λ _ → *) (λ _ t ts₁ → (λ δ → t (γ δ)) ,Σ ts₁) ts)
-      funHelp' {Γ} {zero} {a} {ts} {Δ} {γ} x = refl
-      funHelp' {Γ} {suc n} {a} {ts} {Δ} {γ} x = mk,= refl {!   !}
-
-      funHelp : 
-        {Γ : Set} →
-        {n : ℕ}  →
-        {a : funar n}  →
-        {ts : (Γ → D) ^ n}  →
-        {Δ : Set}  →
-        {γ : Δ → Γ}  →
-        (x : Δ) → 
-        (fun n a (ind^' {lzero} {n} {Γ → D} {λ n → D ^ n} * (λ d ds → d (γ x) ,Σ ds) ts)) 
-        ≡ 
-        (fun n a (ind^' {lzero} {n} {Δ → D} {λ n → D ^ n} * (λ d ds → d x ,Σ ds) 
-        (ind^ {lzero} {n} {Γ → D} {λ n → (Δ → D) ^ n} (λ _ → *) (λ _ t ts₁ → (λ δ → t (γ δ)) ,Σ ts₁) ts)))
-      funHelp {Γ} {n} {a} {ts} {Δ} {γ} x = cong (fun n a) {!   !}

@@ -84,11 +84,11 @@ DNT = record
   ; ▸tβ₂  = refl
   ; ▸tη   = mk,sp= ▸tη
   -- We also negate fun and rel
-  ; fun   = fun
-  ; fun[] = λ {Γ} {_} {_} {_} {Δ} {γ} → funLemma {Γ} {Δ = Δ} {γ = γ}
-  ; rel   = λ n x tms → (¬ ¬ rel n x tms) ,Σ 
-    join¬¬ db0
-  ; rel[] = λ {Γ} {_} {_} {_} {Δ} {γ} → mk,sp= (cong (λ x → ¬ (¬ x)) (relLemma {Γ} {Δ = Δ} {γ = γ}))
+  ; fun   = {!   !} -- fun
+  ; fun[] = {!   !} -- λ {Γ} {_} {_} {_} {Δ} {γ} → funLemma {Γ} {Δ = Δ} {γ = γ}
+  ; rel   = {!   !} -- λ n x tms → (¬ ¬ rel n x tms) ,Σ 
+    -- join¬¬ db0
+  ; rel[] = {!   !} -- λ {Γ} {_} {_} {_} {Δ} {γ} → mk,sp= (cong (λ x → ¬ (¬ x)) (relLemma {Γ} {Δ = Δ} {γ = γ}))
   -- 
   ; ∀' = λ {(Γt ,Σ Γp)} (K ,Σ Pk) → ∀' K ,Σ 
     -- there is a bug here where i cannot Cc-Cr db1

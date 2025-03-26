@@ -119,7 +119,7 @@ module IS = I funar relar
 ⟦_⟧T = {!   !}
 ⟦_⟧Ts = {!   !}
 
-⟦ Γ , I.⊥ ⟧F = M.⊥ {⟦ Γ ⟧C} -- Ha ezt a sort megadom, vagy bármelyik sorát ⟦_⟧F-nek akkor nem terminator check-el
+⟦ Γ , I.⊥ ⟧F = {!   !} -- Ha ezt a sort megadom, vagy bármelyik sorát ⟦_⟧F-nek akkor nem terminator check-el
 ⟦ Γ , I.⊤ ⟧F = {!   !}
 ⟦ Γ , x I.⊃ x₁ ⟧F = {!   !}
 ⟦ Γ , x I.∧ x₁ ⟧F = {!   !}

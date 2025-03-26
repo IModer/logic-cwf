@@ -30,7 +30,7 @@ Iterator:
 Kripke semantics:
 
 - Formalise notions of Preord, Presheaf, DepPresheaf, NatTransform
-- Use Ambrus's notations for it
+- Instead of whats in lib.Extra use Ambrus's notations for stuff
 
 Beth semantics:
 
@@ -39,7 +39,7 @@ Beth semantics:
 
 Completeness and Soundness
 
-## Extra :
+## Extra
 
 Give Terms with Tms (Term telescopes) so we dont need to assume funext, otherwise we need funext to say that ℕ "commutes" with "->" on the meta level - DONE
 
@@ -58,6 +58,8 @@ Prove associativity of \_+\_ in Peano
 DROPPED: Ask Amrbus more about the Dialectica translation
 
 ## TODO
+
+- Switch Classical to Tms also, redefine double negation in line with this
 
 - DROPPED: Formalise system T, it will be Ambrus's System T with formulas
 - Use better names/notation everywhere, this is like a last step refactor
