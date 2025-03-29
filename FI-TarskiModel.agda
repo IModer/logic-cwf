@@ -7,7 +7,7 @@ open import FirstOrderIntuinistic
 -- Whatever that means, thats why its also called StandardModel
 module FI-TarskiModel
   (funar : ℕ → Set)
-  (relar : ℕ → Set)  
+  (relar : ℕ → Set)
   (D : Set)
   (rel : (n : ℕ) → relar n → D ^ n → Prop)
   (fun : (n : ℕ) → funar n → D ^ n → D) where
