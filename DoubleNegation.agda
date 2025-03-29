@@ -15,7 +15,7 @@ module DoubleNegation
 -- Open the syntax of intuinistic logic
 
 
-DNT : FirstOrderClassical.Model funar relar lzero lzero lzero lzero
+DNT : FirstOrderClassical.Model funar relar lzero lzero lzero lzero lzero
 DNT = record
   { Con = Con
   ; Sub = Sub
@@ -83,15 +83,25 @@ DNT = record
   ; ▸tβ₁  = mk,sp= ▸tβ₁
   ; ▸tβ₂  = refl
   ; ▸tη   = mk,sp= ▸tη
-  -- We also negate fun and rel
-  ; fun   = {!   !} -- fun
-  ; fun[] = {!   !} -- λ {Γ} {_} {_} {_} {Δ} {γ} → funLemma {Γ} {Δ = Δ} {γ = γ}
-  ; rel   = {!   !} -- λ n x tms → (¬ ¬ rel n x tms) ,Σ 
-    -- join¬¬ db0
-  ; rel[] = {!   !} -- λ {Γ} {_} {_} {_} {Δ} {γ} → mk,sp= (cong (λ x → ¬ (¬ x)) (relLemma {Γ} {Δ = Δ} {γ = γ}))
-  -- 
+  ; Tms = λ (Γt ,Σ Γp) → Tms Γt -- Tms
+  ; _[_]ts = λ ts (γt ,Σ γp) → ts [ γt ]ts
+  ; [∘]ts = [∘]ts
+  ; [id]ts = [id]ts
+  ; εs = *
+  ; ◆sη = λ _ → refl
+  ; _,s_ = _,Σ_
+  ; π₁ = proj₁
+  ; π₂ = proj₂
+  ; ▸sβ₁ = refl
+  ; ▸sβ₂ = refl
+  ; ▸sη = refl
+  ; ,[] = refl
+  -- We also negate rel
+  ; fun   = fun
+  ; fun[] = refl
+  ; rel   = λ n x tms → (¬ ¬ rel n x tms) ,Σ join¬¬ db0
+  ; rel[] = mk,sp= (cong (λ z → ¬ (¬ z)) refl)
   ; ∀' = λ {(Γt ,Σ Γp)} (K ,Σ Pk) → ∀' K ,Σ 
-    -- there is a bug here where i cannot Cc-Cr db1
     ∀intro (((⊃intro Pk) [ pp ]p) $ ⊃intro ( (db1) $ ⊃intro (db1 $ ((∀elim db0) [ proj₂ ε ,p qp ]p))))
   ; ∀[] = refl
   ; ∀intro = ∀intro
@@ -106,11 +116,8 @@ DNT = record
   ; Eq[] = mk,sp= refl
   ; Eqrefl = ⊃intro (db0 $ ref)
   ; subst' = λ {Γ} (K ,Σ Pfk) {t}{t'} ¬¬Eq K[x:=t] → (⊃intro (Pfk [ idt ,t t' ]P) [ proj₂ ε ]p) $ ⊃intro ((¬¬Eq [ pp ]p) $ (⊃intro (db1 $ (subst' K db0 (K[x:=t] [ pp ∘p pp ]p))))) 
-    -- un∀ (∀intro (((⊃intro Pfk) [ proj₂ ε ]p) $ ⊃intro (db0 $ {!   !}))) t' -- exfalso (¬¬Eq $ ⊃intro {! subst' K db0 (K[x:=t] [ pp ]p)  !} )
-    --exfalso (¬¬Eq $ ⊃intro (((subst' (¬ (¬ K)) db0 (⊃intro (db0 $ (K[x:=t] [ pp ∘p pp ]p))))) $ ⊃intro ({!   !})))
-    -- un∀ (∀intro ((⊃intro Pfk [ proj₂ ε ]p) $ ⊃intro (?))) t'
   -- Finally we prove lem
-  ; dni = λ {(Γt ,Σ Γp)} {(X ,Σ Px)} → (⊃intro Px) [ proj₂ ε ]p
+  ; dne = λ {(Γt ,Σ Γp)} {(X ,Σ Px)} → (⊃intro Px) [ εp ]p
   }
   where
     module Syntax = FirstOrderIntuinistic.I funar relar

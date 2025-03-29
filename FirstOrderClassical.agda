@@ -1,4 +1,4 @@
-{-# OPTIONS --prop #-}
+{-# OPTIONS --prop --allow-unsolved-metas #-}
 
 open import lib
 
@@ -7,11 +7,11 @@ module FirstOrderClassical
   (relar : ℕ → Set) 
   where
 
-record Model (i j k l : Level) : Set (lsuc (i ⊔ j ⊔ k ⊔ l)) where
+record Model (i j k l m : Level) : Set (lsuc (i ⊔ j ⊔ k ⊔ l ⊔ m)) where
   infixl 5 _▸t _▸p_
   infixl 5 _,t_ _,p_
   infixr 7 _∘_
-  infixl 8 _[_]t _[_]F _[_]p
+  infixl 8 _[_]t _[_]ts _[_]F _[_]p
   infixr 6 _⊃_
   field
     -- We translate the Second order example into a first order GAT
@@ -109,12 +109,32 @@ record Model (i j k l : Level) : Set (lsuc (i ⊔ j ⊔ k ⊔ l)) where
     ▸tβ₂  : ∀{Γ Δ}{γ : Sub Δ Γ}{t : Tm Δ} → (qt [ γ ,t t ]t) ≡ t
     ▸tη   : ∀{Γ Δ}{γt : Sub Δ (Γ ▸t)} → ((pt ∘ γt) ,t (qt [ γt ]t)) ≡ γt
     
-    -- function and relation symbols (fun : (n : ℕ) → funar n → Tms n → Tm, rel : (n : ℕ) → relar n → Tms n → For)
-    -- kell helyettesítési szabály
-    fun  : ∀{Γ}(n : ℕ) → funar n → (Tm Γ) ^ n → Tm Γ
-    fun[] : ∀{Γ n a ts Δ}{γ : Sub Δ Γ} → fun n a ts [ γ ]t ≡ fun n a (ind^ {C = ((Tm Δ) ^_)} (λ _ → *) (λ _ t ts → t [ γ ]t ,Σ ts) ts)
-    rel  : ∀{Γ}(n : ℕ) → relar n → (Tm Γ) ^ n → For Γ
-    rel[] : ∀{Γ n a ts Δ}{γ : Sub Δ Γ} → (rel n a ts) [ γ ]F ≡ rel n a (ind^ {C = ((Tm Δ) ^_)} (λ _ → *) (λ _ t ts → t [ γ ]t ,Σ ts) ts)
+    -- Telescopes of terms
+    -- They are basically isomorphic to Vectors of Tm-s
+    -- Why do we nned them? Its more principled to build these into the theory rather then relaying on out metatheorys Vectors
+    -- We only rely on natural numbers from our metatheory
+    -- It is also a contravariant functor from Con
+    Tms : Con → ℕ → Set m
+    -- Action on morphisms
+    _[_]ts : ∀{Γ n} → Tms Γ n → ∀{Δ} → Sub Δ Γ → Tms Δ n
+    -- Functor laws
+    [∘]ts  : ∀{Γ n}{ts : Tms Γ n}{Δ}{γ : Sub Δ Γ}{Θ}{δ : Sub Θ Δ} → ts [ γ ∘ δ ]ts ≡ ts [ γ ]ts [ δ ]ts
+    [id]ts : ∀{Γ n}{ts : Tms Γ n} → ts [ id ]ts ≡ ts
+    εs     : ∀{Γ} → Tms Γ zero
+    ◆sη    : ∀{Γ}(ts : Tms Γ zero) → ts ≡ εs
+    _,s_   : ∀{Γ n} → Tms Γ n → Tm Γ → Tms Γ (suc n)
+    π₁     : ∀{Γ n} → Tms Γ (suc n) → Tms Γ n
+    π₂     : ∀{Γ n} → Tms Γ (suc n) → Tm Γ
+    ▸sβ₁   : ∀{Γ n}{ts : Tms Γ n}{t : Tm Γ} → π₁ (ts ,s t) ≡ ts
+    ▸sβ₂   : ∀{Γ n}{ts : Tms Γ n}{t : Tm Γ} → π₂ (ts ,s t) ≡ t
+    ▸sη    : ∀{Γ n}{ts : Tms Γ (suc n)} → π₁ ts ,s π₂ ts ≡ ts
+    ,[]    : ∀{Γ n}{ts : Tms Γ n}{t : Tm Γ}{Δ}{γ : Sub Δ Γ} → (ts ,s t) [ γ ]ts ≡ (ts [ γ ]ts) ,s (t [ γ ]t)
+
+    fun  : ∀{Γ}(n : ℕ) → funar n → Tms Γ n → Tm Γ
+    fun[] : ∀{Γ n a ts Δ}{γ : Sub Δ Γ} → (fun n a ts [ γ ]t) ≡ fun n a (ts [ γ ]ts)
+    rel  : ∀{Γ}(n : ℕ) → relar n → Tms Γ n → For Γ
+    rel[] : ∀{Γ n a ts Δ}{γ : Sub Δ Γ} → ((rel n a ts) [ γ ]F) ≡ rel n a (ts [ γ ]ts)
+
 
     -- first order connectives
 
@@ -137,7 +157,7 @@ record Model (i j k l : Level) : Set (lsuc (i ⊔ j ⊔ k ⊔ l)) where
     Eqrefl   : ∀{Γ}{t : Tm Γ} → Pf Γ (Eq t t)
     subst' : ∀{Γ}(K : For (Γ ▸t)){t t' : Tm Γ} → Pf Γ (Eq t t') → Pf Γ (K [ id ,t t ]F) → Pf Γ (K [ id ,t t' ]F)
 
-    dni : (∀{Γ}{X : For Γ} → Pf Γ (((X ⊃ ⊥) ⊃ ⊥) ⊃ X)) -- ite𝟚 (Pf  ⊤) (∀{Γ}{X : For Γ} → Pf Γ (((X ⊃ ⊥) ⊃ ⊥) ⊃ X)) b
+    dne : ∀{Γ A} → Pf Γ (((A ⊃ ⊥) ⊃ ⊥) ⊃ A)
 
   ,∘ : ∀{Γ Δ}{γ : Sub Δ Γ}{t : Tm Δ}{Θ}{δ : Sub Θ Δ} → (γ ,t t) ∘ δ ≡ γ ∘ δ ,t t [ δ ]t
   ,∘ {Γ}{Δ}{γ}{t}{Θ}{δ} = trans (sym ▸tη) (cong (λ z → proj₁ z ,t proj₂ z) (mk,= (trans (sym ass) (cong (_∘ δ) ▸tβ₁)) (trans [∘]t (cong (_[ δ ]t) ▸tβ₂))))
@@ -151,6 +171,11 @@ record Model (i j k l : Level) : Set (lsuc (i ⊔ j ⊔ k ⊔ l)) where
   un∀' : ∀{Γ K} → Pf Γ (∀' K) → (t : Tm Γ) → Pf Γ (K [ id ,t t ]F)
   un∀' {Γ}{K} k t = (∀elim k) [ id ,t t ]p
 
+  pp⁺ : ∀{Γ Δ}{K} → (γ : Sub Γ Δ) → Sub (Γ ▸p K [ γ ]F) (Δ ▸p K)
+  pp⁺ {Γ}{Δ}{K} γ = (γ ∘ pp) ,p substp (Pf (Γ ▸p K [ γ ]F)) (sym [∘]F) qp
+
+  pt⁺ : ∀{Γ Δ} → (γ : Sub Γ Δ) → Sub (Γ ▸t) (Δ ▸t)
+  pt⁺ γ = (γ ∘ pt) ,t qt
 
 -- We give the initial model of FOLClassicMinimal
 -- We give it as a normal form, meaning its a inductive
@@ -239,9 +264,20 @@ module I where
 
   open V using (vz; vs)
 
-  data Tm (Γt : ConTm) : Set where
+  -- Because we use Tms in our notion of model we have to define Tms and Tm mutually inductively
+  -- This is one of the "negatives" of using Tms but this is also the case for substitutions in Tm and Tm ^ n
+  data Tm (Γt : ConTm) : Set
+  Tms : ConTm → ℕ → Set
+
+  data Tm Γt where
     var  : V.Tm Γt → Tm Γt
-    fun  : (n : ℕ) → funar n → Tm Γt ^ n → Tm Γt
+    fun  : (n : ℕ) → funar n → Tms Γt n → Tm Γt
+  Tms Γt zero = 𝟙
+  Tms Γt (suc n) = Tms Γt n × Tm Γt
+
+  --data Tm (Γt : ConTm) : Set where
+  --  var  : V.Tm Γt → Tm Γt
+  --  fun  : (n : ℕ) → funar n → Tm Γt ^ n → Tm Γt
 
   data Subt : ConTm → ConTm → Set where
     εt : ∀{Δt} → Subt Δt ◆t
@@ -255,18 +291,21 @@ module I where
   vz [ γ ,t t ]v = t
   vs x [ γ ,t t ]v = x [ γ ]v
 
-  _[_]ts : ∀{Γt n} → Tm Γt ^ n → ∀{Δt} → Subt Δt Γt → Tm Δt ^ n
-  _[_]t  : ∀{Γt} → Tm Γt → ∀{Δt} → Subt Δt Γt → Tm Δt
-
-  _[_]ts {n = zero} _ _ = *
-  _[_]ts {n = suc n} (t ,Σ ts) γ = (t [ γ ]t) ,Σ (ts [ γ ]ts)
+  -- Substitution on terms and Tm ^ n
+  --_[_]ts : ∀{Γt n} → Tm Γt ^ n → ∀{Δt} → Subt Δt Γt → Tm Δt ^ n
+  --_[_]t  : ∀{Γt} → Tm Γt → ∀{Δt} → Subt Δt Γt → Tm Δt
+  --_[_]ts {n = zero} _ _ = *
+  --_[_]ts {n = suc n} (t ,Σ ts) γ = (t [ γ ]t) ,Σ (ts [ γ ]ts)
+  --var x [ γ ]t = x [ γ ]v
+  --(fun n a ts) [ γ ]t  = fun n a (ts [ γ ]ts)
 
   -- Substitution on terms
+  _[_]t  : ∀{Γt} → Tm Γt → ∀{Δt} → Subt Δt Γt → Tm Δt
+  _[_]ts : ∀{Γt n} → Tms Γt n → ∀{Δt} → Subt Δt Γt → Tms Δt n
   var x [ γ ]t = x [ γ ]v
-  (fun n a ts) [ γ ]t  = fun n a (ts [ γ ]ts)
-
-  --εt : ∀{Γt} → Subt Γt ◆t
-  --εt = εt
+  fun n a ts [ γ ]t = fun n a (ts [ γ ]ts)
+  _[_]ts {n = zero}  _         _ = *
+  _[_]ts {n = suc n} (ts ,Σ t) γ = ts [ γ ]ts ,Σ t [ γ ]t
 
   _∘t_ : ∀{Γt Δt} → Subt Δt Γt → ∀{Θt} → Subt Θt Δt → Subt Θt Γt
   εt ∘t _ = εt
@@ -277,12 +316,12 @@ module I where
   [∘]v {x = vs x} {γ = γ ,t t} = [∘]v {x = x}
 
   [∘]t : ∀{Γt}{t : Tm Γt}{Δt}{γ : Subt Δt Γt}{Θt}{δ : Subt Θt Δt} → t [ γ ∘t δ ]t ≡ t [ γ ]t [ δ ]t
-  [∘]ts : ∀{Γt n}{ts : Tm Γt ^ n}{Δt}{γ : Subt Δt Γt}{Θt}{δ : Subt Θt Δt} → ts [ γ ∘t δ ]ts ≡ ts [ γ ]ts [ δ ]ts
+  [∘]ts : ∀{Γt n}{ts : Tms Γt n}{Δt}{γ : Subt Δt Γt}{Θt}{δ : Subt Θt Δt} → ts [ γ ∘t δ ]ts ≡ ts [ γ ]ts [ δ ]ts
 
   [∘]t {Γt} {var x} {Δt} {γ} {Θt} {δ} = [∘]v {x = x}
   [∘]t {Γt} {fun n a ts} {Δt} {γ} {Θt} {δ} = cong (fun n a) [∘]ts
   [∘]ts {Γt} {zero} {ts} {Δt} {γ} {Θt} {δ} = refl
-  [∘]ts {Γt} {suc n} {ts = t ,Σ ts} {Δt} {γ} {Θt} {δ} = mk,= ([∘]t {t = t}) [∘]ts
+  [∘]ts {Γt} {suc n} {ts = t ,Σ ts} {Δt} {γ} {Θt} {δ} = mk,= ([∘]ts {ts = t}) ([∘]t {t = ts})
 
   ass : ∀{Γt Δt}{γ : Subt Δt Γt}{Θt}{δ : Subt Θt Δt}{Ξt}{θ : Subt Ξt Θt} → (γ ∘t δ) ∘t θ ≡ γ ∘t (δ ∘t θ)
   ass {γ = εt} = refl
@@ -312,12 +351,12 @@ module I where
   [id]v {x = vs x} = trans ((trans ([⌜⌝] {x = x}) (cong var (V.vs[] {t = x}{γ = V.id})))) (cong (λ z → var (vs z)) V.[id])
 
   [id]t  : ∀{Γt}{t : Tm Γt} → t [ idt ]t ≡ t
-  [id]ts : ∀{Γt n}{ts : Tm Γt ^ n} → ts [ idt ]ts ≡ ts
+  [id]ts : ∀{Γt n}{ts : Tms Γt n} → (ts [ idt ]ts) ≡ ts
 
   [id]t {t = var x} = [id]v
   [id]t {t = fun n a ts} = cong (fun n a) ([id]ts {ts = ts})
   [id]ts {n = zero}                = refl
-  [id]ts {n = suc n}{ts = t ,Σ ts} = mk,= [id]t [id]ts
+  [id]ts {n = suc n}{ts = t ,Σ ts} = mk,= [id]ts [id]t
 
   idr : ∀{Γt Δt}{γ : Subt Δt Γt} → γ ∘t idt ≡ γ
   idr {γ = εt} = refl
@@ -349,7 +388,7 @@ module I where
     ∀'   : For (Γt ▸t) → For Γt
     ∃'   : For (Γt ▸t) → For Γt
     Eq   : Tm Γt → Tm Γt → For Γt
-    rel  : (n : ℕ) → relar n → Tm Γt ^ n → For Γt
+    rel  : (n : ℕ) → relar n → Tms Γt n → For Γt
 
   ¬_ : ∀{Γt} → For Γt → For Γt
   ¬ A = A ⊃ ⊥
@@ -427,26 +466,26 @@ module I where
     ∨intro₂ : ∀{Γt}{K L}{Γp : ConPf Γt} → Pf Γp L → Pf Γp (K ∨ L)
 
     ∀intro  : ∀{Γt}{K Γp} → Pf {Γt ▸t} (Γp [ pt ]C) K → Pf {Γt} Γp (∀' K)
-    ∀elim : ∀{Γt}{K Γp} → Pf Γp (∀' K) → (t : Tm Γt) → Pf Γp (K [ idt ,t t ]F)
+    un∀ : ∀{Γt}{K Γp} → Pf Γp (∀' K) → (t : Tm Γt) → Pf Γp (K [ idt ,t t ]F)
 
     ∃intro : ∀{Γt K}{Γp : ConPf Γt} → (t : Tm Γt) → Pf Γp (K [ idt ,t t ]F) → Pf Γp (∃' K)
-    --∃intro : ∀{Γt K}{Γp : ConPf Γt} → (∃ (Tm Γt) (λ t → Pf Γp (K [ idt ,t t ]F))) → Pf Γp (∃' K)
     ∃elim  : ∀{Γt K L}{Γp : ConPf Γt}{Γp' : ConPf (Γt ▸t)} → Pf Γp (∃' K) → Pf (Γp' ▸p K) (L [ pt ]F) → Pf Γp L
 
     ref  : ∀{Γt}{a}{Γp : ConPf Γt} → Pf Γp (Eq a a)
     subst' : ∀{Γt}(K : For (Γt ▸t)){t t' : Tm Γt}{Γp} → Pf Γp (Eq t t') → Pf Γp (K [ idt ,t t ]F) → Pf Γp (K [ idt ,t t' ]F)
     _[_]P : ∀{Γt}{K}{Γp : ConPf Γt} → Pf Γp K → ∀{Δt : ConTm} → (γ : Subt Δt Γt) → Pf (Γp [ γ ]C) (K [ γ ]F)
     _[_]p : ∀{Γt}{Γp : ConPf Γt}{K : For Γt} → Pf Γp K → ∀{Γp'} → Subp Γp' Γp → Pf Γp' K
-    dni : ∀{Γt}{Γp : ConPf Γt}{X : For Γt} → Pf Γp (((X ⊃ ⊥) ⊃ ⊥) ⊃ X)
     qp : ∀{Γt}{Γp : ConPf Γt}{K : For Γt} → Pf (Γp ▸p K) K
 
-  app : ∀{Γ K L}{Γp : ConPf Γ} → Pf Γp (K ⊃ L) → Pf (Γp ▸p K) L
-  app m = (m [ pp ]p) $ qp
+    dne : ∀{Γt}{Γp : ConPf Γt}{K : For Γt} → Pf Γp (((K ⊃ ⊥) ⊃ ⊥) ⊃ K) 
 
-  un∀ : ∀{Γ K Γp} → Pf {Γ} Γp (∀' K) → Pf {Γ ▸t} (Γp [ pt ]C) K
-  un∀ {K = K}{Γp} k = substp (Pf (Γp [ pt ]C))
+  ⊃elim : ∀{Γ K L}{Γp : ConPf Γ} → Pf Γp (K ⊃ L) → Pf (Γp ▸p K) L
+  ⊃elim m = (m [ pp ]p) $ qp
+
+  ∀elim : ∀{Γ K Γp} → Pf {Γ} Γp (∀' K) → Pf {Γ ▸t} (Γp [ pt ]C) K
+  ∀elim {K = K}{Γp} k = substp (Pf (Γp [ pt ]C))
     (trans (trans (sym [∘]F) (cong (λ z → K [ z ,t var vz ]F) (trans ass (trans (cong (pt ∘t_) ▸tβ₁) idr)))) [id]F)
-    (∀elim (k [ pt ]P) (var vz))
+    (un∀ (k [ pt ]P) (var vz))
 
   Con : Set
   Con = Σ ConTm ConPf
@@ -469,27 +508,28 @@ module I where
   ◆η : {Γ : Con} (σ : Sub Γ ◆) → σ ≡ ε {Γ}
   ◆η {Γt ,Σ Γp} (εt ,Σ _) = refl
 
-  ts[] : ∀{Γ}{Δ}{n : ℕ}{γ : Sub Δ Γ}{ts : Tm (proj₁ Γ) ^ n} → ts [ proj₁ γ ]ts ≡ ind^ {T = Tm (proj₁ Γ)}{C = Tm (proj₁ Δ) ^_} (λ _ → *) (λ _ t ts' → t [ proj₁ γ ]t ,Σ ts') ts
-  ts[] {Γ} {Δ} {zero} {γ} {ts} = refl
-  ts[] {Γ} {Δ} {suc n} {γ} {t ,Σ ts} = cong (t [ proj₁ γ ]t ,Σ_) (ts[] {Γ} {Δ} {n} {γ} {ts})
+  -- We give db indexes in the syntax
 
-  funLemma : ∀{Γ}{n : ℕ}{a : funar n}{ts : Tm (proj₁ Γ) ^ n}{Δ}{γ : Sub Δ Γ} →
-    fun n a (ts [ proj₁ γ ]ts)
-    ≡
-    fun n a (ind^ {T = Tm (proj₁ Γ)}{C = Tm (proj₁ Δ) ^_} (λ _ → *) (λ _ t ts' → t [ proj₁ γ ]t ,Σ ts') ts)
-  funLemma {Γ} {zero} {a} {ts} {Δ} {γt ,Σ γp} = refl
-  funLemma {Γ} {suc n} {a} {t ,Σ ts} {Δ} {γt ,Σ γp} = cong (λ x → fun (suc n) a x) (mk,= refl (ts[] {Γ} {Δ} {n} {γt ,Σ γp} {ts}))
+  db0 : ∀{Γt Γp K} → Pf {Γt} (Γp ▸p K) K
+  db0 = qp
 
-  relLemma : ∀{Γ}{n : ℕ}{a : relar n}{ts : Tm (proj₁ Γ) ^ n}{Δ}{γ : Sub Δ Γ} →
-    rel n a (ts [ proj₁ γ ]ts)
-    ≡
-    rel n a (ind^ {T = Tm (proj₁ Γ)} {C = Tm (proj₁ Δ) ^_} (λ _ → *) (λ _ t ts₁ → t [ proj₁ γ ]t ,Σ ts₁) ts)
-  relLemma {Γ} {zero} {a} {ts} {Δ} {γt ,Σ γp} = refl
-  relLemma {Γ} {suc n} {a} {t ,Σ ts} {Δ} {γt ,Σ γp} = cong (λ x → rel (suc n) a x) (mk,= refl (ts[] {Γ} {Δ} {n} {γt ,Σ γp} {ts}))
+  db1 : ∀{Γt Γp K L} → Pf {Γt} (Γp ▸p K ▸p L) K
+  db1 = qp [ pp ]p
 
--- Only do enought so that I can be given
--- give I
-IM : Model lzero lzero lzero lzero
+  db2 : ∀{Γt Γp K L M} → Pf {Γt} (Γp ▸p K ▸p L ▸p M) K
+  db2 = (qp [ pp ]p) [ pp ]p
+
+  -- We prove that ¬¬_ is a monad
+  join¬¬ : ∀{Γt Γp}{K} → Pf {Γt} Γp (¬ ¬ (¬ ¬ K)) → Pf {Γt} Γp (¬ ¬ K)
+  join¬¬ x = ⊃intro ((x [ pp ]p) $ (⊃intro (db0 $ db1)))
+
+  pp⁺ : ∀{Γt}{Γp Δp}{K} → (γ : Subp {Γt} Γp Δp) → Subp {Γt} (Γp ▸p K) (Δp ▸p K)
+  pp⁺ γ = (γ ∘p pp) ,p qp
+
+  pt⁺ : ∀{Γt Δt} → (γ : Subt Γt Δt) → Subt (Γt ▸t) (Δt ▸t)
+  pt⁺ γ = (γ ∘t pt) ,t qt
+
+IM : Model _ _ _ _ _
 IM = record
   { Con = Con
   ; Sub = Sub
@@ -522,7 +562,7 @@ IM = record
   ; _⊃_ = _⊃_
   ; ⊃[] = refl
   ; ⊃intro = λ {Γ}{K} x → substp (Pf (proj₂ Γ)) (cong (K ⊃_) [id]F) (⊃intro x)
-  ; ⊃elim = λ {Γ}{K}{L} pf → substp (Pf (proj₂ Γ ▸p K)) (sym [id]F) (app {proj₁ Γ} {K}{L} {proj₂ Γ} pf)
+  ; ⊃elim = λ {Γ}{K}{L} pf → substp (Pf (proj₂ Γ ▸p K)) (sym [id]F) (⊃elim {proj₁ Γ} {K}{L} {proj₂ Γ} pf)
   ; _∧_    = _∧_
   ; ∧[]    = refl
   ; ∧intro = ∧intro
@@ -533,25 +573,38 @@ IM = record
   ; ∨elim = λ {Γ}{K}{L}{C} PfK PfL PfKL → substp (Pf (proj₂ Γ)) [id]F (∨elim PfK PfL PfKL)
   ; ∨intro₁ = ∨intro₁
   ; ∨intro₂ = ∨intro₂
-  ; Tm = λ (Γt ,Σ Γp) → Tm Γt
-  ; _[_]t = λ t (γt ,Σ γp) → t [ γt ]t
-  ; [∘]t = λ {(Γt ,Σ Γp)} {t} → [∘]t {Γt} {t}
-  ; [id]t = [id]t
-  ; _▸t = λ (Γt ,Σ Γp) → (Γt ▸t) ,Σ Γp [ pt ]C
-  ; _,t_ = λ {Γ} {Δ} (γt ,Σ γp) t → (γt ,t t) ,Σ substp (λ x → Subp (proj₂ Δ) x) (sym (trans (sym [∘]C) (cong (λ x → (proj₂ Γ) [ x ]C) ▸tβ₁))) γp
-  ; pt = λ {(Γt ,Σ Γp)} → pt {Γt} ,Σ (idp {Γt ▸t} {Γp [ pt ]C })
-  ; qt = λ {(Γt ,Σ Γp)} → qt {Γt}
-  ; ▸tβ₁ = mk,sp= ▸tβ₁
-  ; ▸tβ₂ = refl
-  ; ▸tη = mk,sp= ▸tη
+  ; Tm      = λ (Γt ,Σ Γp) → Tm Γt
+  ; _[_]t   = λ t (γt ,Σ γp) → t [ γt ]t
+  ; [∘]t    = λ {(Γt ,Σ Γp)} {t} → [∘]t {Γt} {t}
+  ; [id]t   = [id]t
+  ; _▸t     = λ (Γt ,Σ Γp) → (Γt ▸t) ,Σ Γp [ pt ]C
+  ; _,t_    = λ {Γ} {Δ} (γt ,Σ γp) t → (γt ,t t) ,Σ substp (λ x → Subp (proj₂ Δ) x) (sym (trans (sym [∘]C) (cong (λ x → (proj₂ Γ) [ x ]C) ▸tβ₁))) γp
+  ; pt      = λ {(Γt ,Σ Γp)} → pt {Γt} ,Σ (idp {Γt ▸t} {Γp [ pt ]C })
+  ; qt      = λ {(Γt ,Σ Γp)} → qt {Γt}
+  ; ▸tβ₁    = mk,sp= ▸tβ₁
+  ; ▸tβ₂    = refl
+  ; ▸tη     = mk,sp= ▸tη
+  ; Tms = λ (Γt ,Σ Γp) → Tms Γt -- Tms
+  ; _[_]ts = λ ts (γt ,Σ γp) → ts [ γt ]ts
+  ; [∘]ts = [∘]ts
+  ; [id]ts = [id]ts
+  ; εs = *
+  ; ◆sη = λ _ → refl
+  ; _,s_ = _,Σ_
+  ; π₁ = proj₁
+  ; π₂ = proj₂
+  ; ▸sβ₁ = refl
+  ; ▸sβ₂ = refl
+  ; ▸sη = refl
+  ; ,[] = refl
   ; fun = fun
-  ; fun[] = λ {Γ} {_} {_} {_} {Δ} {γ} → funLemma {Γ} {Δ = Δ} {γ = γ}
+  ; fun[] = refl
   ; rel = rel
-  ; rel[] = λ {Γ} {_} {_} {_} {Δ} {γ} → relLemma {Γ} {Δ = Δ} {γ = γ}
+  ; rel[] = refl
   ; ∀' = ∀'
   ; ∀[] = refl
   ; ∀intro = ∀intro
-  ; ∀elim = un∀
+  ; ∀elim = ∀elim
   ; ∃' = ∃'
   ; ∃[] = refl
   ; ∃intro = ∃intro
@@ -559,8 +612,8 @@ IM = record
   ; Eq = Eq
   ; Eq[] = refl
   ; Eqrefl = ref
-  ; subst' = λ K Pfeq Pft → subst' K Pfeq Pft
-  ; dni = dni
+  ; subst' = λ K → subst' K
+  ; dne = dne
   }
   where
-    open I  
+    open I
