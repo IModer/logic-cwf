@@ -48,10 +48,15 @@ module I where
     ∨ₑ : ∀ {Γ A B C} → Γ ▹ A ⊢ C → Γ ▹ B ⊢ C → Γ ⊢ A ∨ B → Γ ⊢ C
 
 module M where
+  infixr 0 caseₚ_of_
+  caseₚ_of_ : {A B : Prop} → A → (A → B) → B
+  caseₚ a of f = f a
+
   record ⊤ : Prop where
     constructor tt
 
   infixr 2 _∧_
+  infixr 4 _,,_
   record _∧_ (A B : Prop) : Prop where
     constructor _,,_
     field
@@ -70,11 +75,20 @@ module M where
   data ∥_∥ (A : Set) : Prop where
     inc : A → ∥ A ∥
 
-  infixr 0 _>>=_
-  _>>=_ : ∀ {A} {B : Prop} → ∥ A ∥ → (A → B) → B
-  inc a >>= f = f a
+  infix 4 _≡_
+  data _≡_ {A : Set} (a : A) : A → Prop where
+    refl : a ≡ a
 
-  infixr 4 _,,_
+  sym : ∀ {A} {x y : A} → x ≡ y → y ≡ x
+  sym refl = refl
+
+  infixl 9 _∙_
+  _∙_ : ∀ {A} {x y z : A} → x ≡ y → y ≡ z → x ≡ z
+  x≡y ∙ refl = x≡y
+
+  cong : ∀ {A B} (f : A → B) {x y} → x ≡ y → f x ≡ f y
+  cong f refl = refl
+
   record Σₛₚ (A : Set) (B : A → Prop) : Set where
     constructor _,,_
     field
@@ -92,7 +106,26 @@ module M where
   n + zero = n
   n + suc m = suc (n + m)
 
-open M public hiding (⊤; _∧_; ⊥; _∨_)
+  +-idl : ∀ n → zero + n ≡ n
+  +-idl zero = refl
+  +-idl (suc n) = cong suc (+-idl n)
+
+  +-suc : ∀ n m → suc n + m ≡ suc (n + m)
+  +-suc n zero = refl
+  +-suc n (suc m) = cong suc (+-suc n m)
+
+  data _≥_ (n m : ℕ) : Prop where
+    prove : ∀ l → n ≡ m + l → n ≥ m
+
+  ≥-cmp : ∀ n m → n ≥ m ∨ m ≥ n
+  ≥-cmp zero zero = inl (prove zero refl)
+  ≥-cmp zero (suc m) = inr (prove (suc m) (cong suc (sym (+-idl m))))
+  ≥-cmp (suc n) zero = inl (prove (suc n) (cong suc (sym (+-idl n))))
+  ≥-cmp (suc n) (suc m) with ≥-cmp n m
+  ... | inl (prove l n≡m+l) = inl (prove l (cong suc n≡m+l ∙ sym (+-suc m l)))
+  ... | inr (prove l m≡n+l) = inr (prove l (cong suc m≡n+l ∙ sym (+-suc n l)))
+
+open M public hiding (⊤; _∧_; ⊥; _∨_; refl; _∙_; _≥_)
 
 -- Prop-valued category
 record Preorder : Set₁ where
@@ -111,7 +144,7 @@ module Sh (P : Preorder) where
 
   record Sieve (i : W) : Set₁ where
     field
-      R : (j : W) → j ≥ i → Prop
+      R : ∀ j → j ≥ i → Prop
       restr : ∀ {j j≥i k} → R j j≥i → (k≥j : k ≥ j) → R k (j≥i ∙ k≥j)
 
   open Sieve public renaming (R to ∣_∣)
@@ -132,7 +165,7 @@ module Sh (P : Preorder) where
     infix 4 _◁_
     infixl 9 _[_]ᶜ
     field
-      _◁_ : (i : W) → Sieve i → Prop
+      _◁_ : ∀ i → Sieve i → Prop
       _[_]ᶜ : ∀ {i R j} → i ◁ R → (j≥i : j ≥ i) → j ◁ R [ j≥i ]ˢ
       maximal : ∀ {i R} → ⟨ i , refl ⟩⊩ R → i ◁ R
       local :
@@ -324,27 +357,35 @@ module Compl where
 
   infix 4 _≥⟨_⟩_
   data _≥⟨_⟩_ : World → ℕ → World → Prop where
-    refl⟨⟩ : ∀ {i} → i ≥⟨ zero ⟩ i
-    ∷≥⟨⟩ : ∀ {j n i d} → j ≥⟨ n ⟩ i → j ∷ d ≥⟨ suc n ⟩ i
+    refl′ : ∀ {i} → i ≥⟨ zero ⟩ i
+    ∷≥′ : ∀ {j n i d} → j ≥⟨ n ⟩ i → j ∷ d ≥⟨ suc n ⟩ i
 
-  infixl 9 _∙⟨⟩_
-  _∙⟨⟩_ : ∀ {j n i k m} → j ≥⟨ n ⟩ i → k ≥⟨ m ⟩ j → k ≥⟨ n + m ⟩ i
-  j≥i ∙⟨⟩ refl⟨⟩ = j≥i
-  j≥i ∙⟨⟩ ∷≥⟨⟩ k≥j = ∷≥⟨⟩ (j≥i ∙⟨⟩ k≥j)
+  subst-≥⟨⟩ : ∀ {n m j i} → n ≡ m → j ≥⟨ n ⟩ i → j ≥⟨ m ⟩ i
+  subst-≥⟨⟩ M.refl j≥′i = j≥′i
+
+  infixl 9 _∙′_
+  _∙′_ : ∀ {j n i k m} → j ≥⟨ n ⟩ i → k ≥⟨ m ⟩ j → k ≥⟨ n + m ⟩ i
+  j≥′i ∙′ refl′ = j≥′i
+  j≥′i ∙′ ∷≥′ k≥′j = ∷≥′ (j≥′i ∙′ k≥′j)
+
+  cut :
+    ∀ {j i} n m →
+    j ≥⟨ n + m ⟩ i → ∥ Σₛₚ World (λ k → k ≥⟨ n ⟩ i M.∧ j ≥⟨ m ⟩ k) ∥
+  cut {j} n zero j≥′i = inc (j ,, j≥′i ,, refl′)
+  cut n (suc m) (∷≥′ j≥′i) with inc (k ,, k≥′i ,, j≥′k) ← cut n m j≥′i =
+    inc (k ,, k≥′i ,, ∷≥′ j≥′k)
 
   infix 4 _≥_
-  _≥_ : World → World → Prop
-  j ≥ i = ∥ Σₛₚ ℕ (λ n → j ≥⟨ n ⟩ i) ∥
+  data _≥_ (i j : World) : Prop where
+    prove : ∀ n → i ≥⟨ n ⟩ j → i ≥ j
 
   refl : ∀ {i} → i ≥ i
-  refl = inc (zero ,, refl⟨⟩)
+  refl = prove zero refl′
 
   infixr 9 _∙_
   _∙_ : ∀ {j i k} → j ≥ i → k ≥ j → k ≥ i
-  j≥i ∙ k≥j = do
-    n ,, j≥i ← j≥i
-    m ,, k≥j ← k≥j
-    inc (n + m ,, j≥i ∙⟨⟩ k≥j)
+  j≥i ∙ k≥j with prove n j≥′i ← j≥i | prove m k≥′j ← k≥j =
+    prove (n + m) (j≥′i ∙′ k≥′j)
 
   P : Preorder
   P .Preorder.W = World
@@ -355,12 +396,24 @@ module Compl where
   open Sh P
 
   infix 4 _◁_
-  _◁_ : (i : World) → Sieve i → Prop
-  i ◁ R = ∥ Σₛₚ ℕ (λ n → ∀ {j} (j≥i : j ≥⟨ n ⟩ i) → ⟨ j , inc (n ,, j≥i) ⟩⊩ R) ∥
+  data _◁_ i (R : Sieve i) : Prop where
+    prove : ∀ n → (∀ {j} (j≥′i : j ≥⟨ n ⟩ i) → ⟨ j , prove n j≥′i ⟩⊩ R) → i ◁ R
 
   infixl 9 _[_]ᶜ
   _[_]ᶜ : ∀ {i R j} → i ◁ R → (j≥i : j ≥ i) → j ◁ R [ j≥i ]ˢ
-  _[_]ᶜ {R} i◁R j≥i = do
-    n ,, f ← i◁R
-    m ,, j≥i ← j≥i
-    inc ({!!} ,, λ k≥j → R .restr (f {!!}) {!!})
+  _[_]ᶜ {R} i◁R j≥i with prove n f ← i◁R | prove m j≥′i ← j≥i with M.≥-cmp n m
+  ... | inl (prove l n≡m+l) = prove l λ k≥′j →
+    f (subst-≥⟨⟩ (sym n≡m+l) (j≥′i ∙′ k≥′j))
+  ... | inr (prove l m≡n+l) = prove zero λ where
+    refl′ → caseₚ cut n l (subst-≥⟨⟩ m≡n+l j≥′i) of λ where
+      (inc (k ,, k≥′i ,, j≥′k)) → R .restr (f k≥′i) (prove l j≥′k)
+
+  maximal : ∀ {i R} → ⟨ i , refl ⟩⊩ R → i ◁ R
+  maximal i⊩R = prove zero λ where refl′ → i⊩R
+
+  local :
+    ∀ {i R S} →
+    i ◁ R → (∀ {j} (j≥i : j ≥ i) → ⟨ j , j≥i ⟩⊩ R → j ◁ S [ j≥i ]ˢ) → i ◁ S
+  local (prove n f) g = ?
+
+-- -} -- -} -- -} -- -} -- -} -- -} -- -} -- -} -- -} -- -} -- -} -- -}
