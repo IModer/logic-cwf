@@ -267,7 +267,7 @@ module Compl where
   reflect (A ∧ B) r = reflect A (∧ₑ₁ r) ,, reflect B (∧ₑ₂ r)
   reflect (A ⇒ B) r γ Δ⊩A = reflect B (⇒ₑ (r [ γ ]) (reify A Δ⊩A))
   reflect ⊥ a = {!!}
-  reflect (A ∨ B) r = {!∨ₑ ? ? r!}
+  reflect (A ∨ B) r = {!!}
 
   reflectꟲ : ∀ {Δ} Γ → Δ ⊢ˢ Γ → Δ ⊩ ⟦ Γ ⟧ꟲ
   reflectꟲ ◇ σ = tt
