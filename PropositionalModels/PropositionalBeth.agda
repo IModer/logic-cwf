@@ -125,6 +125,14 @@ module M where
   ... | inl (prove l n≡m+l) = inl (prove l (cong suc n≡m+l ∙ sym (+-suc m l)))
   ... | inr (prove l m≡n+l) = inr (prove l (cong suc m≡n+l ∙ sym (+-suc n l)))
 
+  data List (A : Set) : Set where
+    [] : List A
+    _∷_ : A → List A → List A
+
+  iteList : {A C : Set} → C → (A → C → C) → List A → C
+  iteList n c [] = n
+  iteList n c (x ∷ xs) = c x (iteList n c xs)
+
 open M public hiding (⊤; _∧_; ⊥; _∨_; refl; _∙_; _≥_)
 
 -- Prop-valued category
@@ -379,6 +387,14 @@ module Compl where
   data _≥_ (i j : World) : Prop where
     prove : ∀ n → i ≥⟨ n ⟩ j → i ≥ j
 
+  iteWorld : 
+    {C : Prop}{i j : World}{n : ℕ} → 
+    (World → World → ℕ → C) → 
+    (World → World → ℕ → C → C) → 
+    (j ≥⟨ n ⟩ i) → C
+  iteWorld {C}{i}{j}{.zero} f g refl′ = f i i zero
+  iteWorld {n = suc n} f g (∷≥′ {j = j}{i = i} x) = g j i n (iteWorld {n = n} f g x) 
+
   refl : ∀ {i} → i ≥ i
   refl = prove zero refl′
 
@@ -414,6 +430,7 @@ module Compl where
   local :
     ∀ {i R S} →
     i ◁ R → (∀ {j} (j≥i : j ≥ i) → ⟨ j , j≥i ⟩⊩ R → j ◁ S [ j≥i ]ˢ) → i ◁ S
-  local (prove n f) g = ?
+  local (prove n f) g = {!   !}
 
 -- -} -- -} -- -} -- -} -- -} -- -} -- -} -- -} -- -} -- -} -- -} -- -}
+   

@@ -9,13 +9,16 @@ We present FOL as a algebraic theory (first and second order). We prove formulas
 - lib : common datatypes (plus, times, eq, ...) used in all files
 - old - old files
 - FirstOrderClassical/FirstOrderIntuinistic - notion of model and syntax
-- FI- (first-order-intuinistic)
+- PropositionalIntuinistic - notion of model and syntax
+- FirstOderModels
   - FamModel - Families/Classical model
-  - KripkeModel
-  - Tarski - Presheaf model
+  - Tarski - Standard model
+  - KripkeModel - First order kripke model, we use (Tm : Set)
   - Beth - Sheaf model
   - Iterator - Non dependant iterator (eleminator)
 - Doublenegation
+- PropositionalKripke/PropositionalKripkePositive - Kripke semantics for propositional logic, self contained, with iterator and completeness ofr the negative fragment (might want to refactor)
+- PropositionalBeth - Beth semantics and completeness for full prop logic
 
 ## Double negation and (dialectica translation [dropped]) for FOL
 
