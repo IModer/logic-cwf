@@ -2,20 +2,23 @@
 
 This repo is *WIP*.
 
-We present FOL as a algebraic theory (first and second order). We prove formulas in the second order version where its convenient to work with variables. We realize this notion of varibales by translating [1] the second order presentation into a first order on. We also give double negation translation [2] [3] [4] in the first order presentation and show some common models of our theory.
+We present FOL as an algebraic theory (first and second order). We prove formulas in the second order version where its convenient to work with variables. We realize this notion of varibales by translating [1] the second order presentation into a first order on. We also give double negation translation [2] [3] [4] in the first order presentation and show some common models of our theory.
 
 ## Repo outline
 
 - lib : common datatypes (plus, times, eq, ...) used in all files
 - old - old files
 - FirstOrderClassical/FirstOrderIntuinistic - notion of model and syntax
-- FI- (first-order-intuinistic)
+- PropositionalIntuinistic - notion of model and syntax
+- FirstOderModels
   - FamModel - Families/Classical model
-  - KripkeModel
-  - Tarski - Presheaf model
+  - Tarski - Standard model
+  - KripkeModel - First order kripke model, we use (Tm : Set)
   - Beth - Sheaf model
   - Iterator - Non dependant iterator (eleminator)
 - Doublenegation
+- PropositionalKripke/PropositionalKripkePositive - Kripke semantics for propositional logic, self contained, with iterator and completeness ofr the negative fragment (might want to refactor)
+- PropositionalBeth - Beth semantics and completeness for full prop logic
 
 ## Double negation and (dialectica translation [dropped]) for FOL
 
@@ -29,12 +32,11 @@ Iterator:
 
 Kripke semantics:
 
-- Formalise notions of Preord, Presheaf, DepPresheaf, NatTransform
-- Instead of whats in lib.Extra use Ambrus's notations for stuff
-
+- Prove completeness for first order negative fragment
+ 
 Beth semantics:
 
-- Same as for Kripke
+- Prove comleteness for propositional case : PropositionalModels/PropositionalBeth
 - understand sheafs [5]
 
 Completeness and Soundness
@@ -57,10 +59,9 @@ Prove associativity of \_+\_ in Peano
 
 DROPPED: Ask Amrbus more about the Dialectica translation
 
-## TODO
+## Cleanup
 
-- Switch Classical to Tms also, redefine double negation in line with this
-
+- Reuse model in more places, make things more modular
 - DROPPED: Formalise system T, it will be Ambrus's System T with formulas
 - Use better names/notation everywhere, this is like a last step refactor
   - mostly in old, there is still a lot of stuff that can be refactored from there
