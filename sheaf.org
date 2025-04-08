@@ -1,0 +1,90 @@
+Some parts of the presheaf model:
+
+-- Some category
+module (C : Set)
+
+-- Con is a presheaf over some C category
+Con     = 
+  (Γ : C → Set) ×                              -- action on objects
+  (_[_]{Γ} : Γ I → C(J,I) → Γ J) ×             -- action on morphisms
+  ([∘]{Γ} : γ*[i∘j]{Γ} = γ*[i]{Γ}[j]{Γ}) ×      -- functor laws (substitutionm laws)
+  ([id]{Γ} : γ*[id]{Γ} = γ*)
+
+Sub Δ Γ = 
+  (γ : {I:C}→ Δ I → Γ I) ×                    -- natural transformations 
+  ([γ] : (γ δ*)[i]{Γ} = γ (δ*[id]{Δ}))        -- law (subst)
+
+Ty Γ    = 
+  (A : (I:C) → Γ I → Set) × -- dep presheaf over Con
+  (_[_]{A} : A I γ* → (i:C(J,I)) → A J (γ*[i]{Γ})) × 
+  ([∘]{A}: a*[i∘j]{A} = a*[i]{A}[j]{A}) × 
+  ([id]{A} : a*[id]{A} = a*)
+
+Tm Γ A  = 
+  (a : {I:C} → (γ*:Γ I) → A I γ*) × 
+  ([a] : (a {I} γ*)[i]{A} = a {J} (γ*[i]{Γ}))
+
+-- Normal presheaf model stuff until here
+
+-- Prop valued types (Prop valued dep presheafs over Con)
+Typ Γ   = 
+  (X : (I:C) → Γ I → Prop) × 
+  (_[_]{X} : X I γ* → (i:C(J,I)) → X J (γ*[i]{Γ}))
+
+X[γ]{Typ} I δ* = X I (γ δ*)
+x*[i]{X[γ]{Typ}} = x*[i]{X}
+Tmp Γ X = ({I:C}(γ*:Γ I) → X I γ*) × _ -- ?
+y : C → Con
+yI J := C(J,I)
+U : Con
+U I := Ty yI
+P : Con
+P I = Typ yI
+X[i]{P} = X[yi]{Typ}
+ElP : Typ P
+ElP I X := X I id_I
+x*[i]{ElP} := x*[i]{X}
+
+K : Con → Ty Γ
+K Δ I γ* := Δ I
+Sub Δ Γ = Tm Δ (K Γ)
+Πp A B I γ* = Tmp (yI▹A[yl γ*]) (B[yl γ*∘p,q])
+            = {J:C}(i:C(J,I))(a* : A J (γ*[i])) → B J (γ*[i],a*)
+
+
+A Prop-valued monad (Grothendieck topology):
+
+-- is 𝒥  : Typ P == Typ (Typ y_) ???
+
+| internally to a presheaf model  | externally                                               |      |
+|---------------------------------+----------------------------------------------------------+------|
+| 𝒥  : Prop → Prop                | 𝒥  : Typ P                                               | \McJ |
+| η  : ∀X.X → 𝒥 X                 | η  : Tmp (P ▹ ElP) (𝒥[p])                                |      | -- why isnt this (𝒥[q])
+| ≫= : ∀X Y → 𝒥 X → (X → 𝒥 Y) → 𝒥 Y | ≫= : Tmp (P ▹ K P ▹ 𝒥[p] ▹ Elp[p²] ⇒ 𝒥[q[p]]) (𝒥[q[p²]]) | \gg  |
+
+externally, unfolded:
+-- C → (C → Prop) → Prop
+-- (I:C) → Typ yI → Prop
+| 𝒥       : (I:C) → Typ yI → Prop                                                                          |
+| 𝒥       : (I:C) → (X:(J:C)→C(J,I)→Prop)×(X J i→(j:C(K,J))→X K (i∘j)) → Prop                              |
+| _[_]{𝒥} : 𝒥 I X → (i:C(J,I)) → 𝒥 J (X[yi]{Typ})                                                          |
+| η       : {I:C} → (X:Typ yI) × X I id_I → 𝒥 I X                                                          |
+| ≫=      : {I:C} → (X:Typ yI) × (Y:Typ yI) × 𝒥 I X × ({J:C}(i:C(J,I)) → X J i → 𝒥 J (Y[yi]{Typ})) → 𝒥 I Y |
+
+A is a 𝒥-sheaf:
+
+| internally to a presheaf model            | externally                            |
+|-------------------------------------------+---------------------------------------|
+| A   : Set                                 | A   : Con                             |
+| ask : ∀X.𝒥 X → (X → A) → A                | ask : Tm (P ▹ 𝒥 ▹ ElP[p] ⇒ K A) (K A) |
+| σ   : ∀X.(x#:𝒥 X)(a*:A)→ask x# (λ_.a) = a | TODO                                  |
+
+For any C, we define the following 𝒥:
+
+𝒥 I X := ∀J.(i:C(J,I)) → ∥(K:C)×(j:C(K,J))×X K (i∘j)∥   <- ez internalizalhato?
+x#[i]{𝒥} := λK j.x# K (i∘j)
+η {I} (X,x*) := λJ i.mk(J,i,x*[i]{X})
+≫= {I} (X,Y,x#,f) := TODO
+  X,Y : Typ yI
+  x#  : 𝒥 I X
+  f   : ...
