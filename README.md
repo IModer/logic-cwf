@@ -1,55 +1,81 @@
-# First order logic formalization in agda in the CwF style
+# First order logic formalization in Agda in the CwF style
 
 This repo is *WIP*.
 
-We present FOL as an algebraic theory (first and second order). We prove formulas in the second order version where its convenient to work with variables. We realize this notion of varibales by translating [1] the second order presentation into a first order on. We also give double negation translation [2] [3] [4] in the first order presentation and show some common models of our theory.
+We present FOL as an algebraic theory (first and second-order). We prove formulas in the second-order version where its convenient to work with variables. We realize this notion of varibales by translating [1] the second order presentation into a first-order on. We also give double negation translation [2] [3] [4] in the first-order presentation and show some common models of FOL.
 
 ## Repo outline
 
+```txt
+lib.agda
+Everything.adga
+- PropositionalLogic
+  - IntFull
+    - Notion of Model
+    - Syntax
+    - Interator
+    - Models (Tarski, Kripke, Beth)
+    - Completeness for Beth
+  - IntNegative
+    - Notion of Model
+    - Syntax
+    - Interator
+    - Models (Tarski, Kripke)
+    - Completeness for Kripke
+  - Classical
+    - Notion of Model
+    - Syntax
+    - Interator
+    - Completeness for Bool
+  - Double Negation translation (Between Full and classical)
+- FirstOrderLogic
+  - Intuitionistic (IntFull)
+    - Notion of Model
+    - Syntax
+    - Iterator
+    - Models (Beth)
+    - Completeness for Beth
+  - Classical
+    - Notion of Model
+    - Syntax
+    - Iterator
+    - Models (Tarski)
+  - DoubleNegation
+```
+
 - lib : common datatypes (plus, times, eq, ...) used in all files
 - old - old files
-- FirstOrderClassical/FirstOrderIntuinistic - notion of model and syntax
-- PropositionalIntuinistic - notion of model and syntax
-- FirstOderModels
-  - FamModel - Families/Classical model
-  - Tarski - Standard model
-  - KripkeModel - First order kripke model, we use (Tm : Set)
-  - Beth - Sheaf model
-  - Iterator - Non dependant iterator (eleminator)
-- Doublenegation
-- PropositionalKripke/PropositionalKripkePositive - Kripke semantics for propositional logic, self contained, with iterator and completeness ofr the negative fragment (might want to refactor)
-- PropositionalBeth - Beth semantics and completeness for full prop logic
 
-## Double negation and (dialectica translation [dropped]) for FOL
+## TODO
 
-Next step:
+Finish Propositional logic:
 
-Iterator:
+Whats left:
 
-- FI-Iterator.agda
-- Understand better Fors/Pfs, derive equalites for them
-- try to use as little transpost as possible
+- Prop:
+  - Iterator and completeness for Classical
+  - Syntax, Iterator, KripkeModel, Completeness for IntNeg
+  - Double Negation
+- FOL:
+  - Iterator, Model, Syntax for Classical
+  - Iterator, Model, Syntax for IntFull
+  - Double Negation
+- Dialectica
 
-Kripke semantics:
+## Working notes
 
-- Prove completeness for first order negative fragment
- 
 Beth semantics:
 
 - Prove comleteness for propositional case : PropositionalModels/PropositionalBeth
 - understand sheafs [5]
 
-Completeness and Soundness
-
-## Extra
-
 Give Terms with Tms (Term telescopes) so we dont need to assume funext, otherwise we need funext to say that ℕ "commutes" with "->" on the meta level - DONE
 
-The result of this is that all rel/fun eqs become refl, so its "better"
+The result of this is that all rel/fun eqs become refl
 
 Give different double negations for propositional logic : this can be done a lot of ways (considering direction and diff translations) [3/4/5]
 
-Prove associativity of \_+\_ in Peano
+Prove associativity of \_+\_ in Peano (Prop/IntFull/Examples)
 
 - Test is it easier/harder to prove equations in Syntax/Standard Model
 - So basically in peano :
@@ -57,12 +83,9 @@ Prove associativity of \_+\_ in Peano
   - In the syntax
   - In the standard mode with real natural numbers
 
-DROPPED: Ask Amrbus more about the Dialectica translation
-
 ## Cleanup
 
 - Reuse model in more places, make things more modular
-- DROPPED: Formalise system T, it will be Ambrus's System T with formulas
 - Use better names/notation everywhere, this is like a last step refactor
   - mostly in old, there is still a lot of stuff that can be refactored from there
   - no ModelClass

@@ -1,9 +1,9 @@
 {-# OPTIONS --prop #-}
 
 open import lib
-open import PropositionalIntuinistic
+open import PropositionalLogic.IntFull.Model
 
-module PI-KripkeModel
+module PropositionalLogic.IntFull.KripkeModel
   (Atom : Set)
   -- W is a preorder, the interpretation of Contexts/Formulas will be a Presheaf over W
   (W    : Set)
@@ -22,6 +22,8 @@ module PI-KripkeModel
         _∶_⟨_⟩ : ∀{w w'} → ∣_∣ w → w' ≥ w → ∣_∣ w'
   open PSh public
 
+  -- We can define the presheaf in advance because Con and For are both Psh
+  
   𝟙PSh : PSh
   ∣ 𝟙PSh ∣ = λ _ → 𝟙p
   _∶_⟨_⟩ 𝟙PSh = λ * _ → *
@@ -42,8 +44,8 @@ module PI-KripkeModel
   ∣ Γ ⇒PSh K ∣ = λ w → {w' : W} → w' ≥ w → ∣ Γ ∣ w' → ∣ K ∣ w'
   _∶_⟨_⟩ (Γ ⇒PSh K) = λ A γ δ Γw' → A (γ ∘≥ δ) Γw'
 
-  StandardModel : Model Atom _ _ _ _
-  StandardModel = record
+  Kripke : Model Atom _ _ _ _
+  Kripke = record
     { Con = PSh
     ; Sub = λ Γ Δ → {w : W} → ∣ Γ ∣ w → ∣ Δ ∣ w
     ; _∘_ = λ δ θ θw → δ (θ θw)

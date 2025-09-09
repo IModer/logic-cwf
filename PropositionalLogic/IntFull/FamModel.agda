@@ -1,16 +1,16 @@
 {-# OPTIONS --prop #-}
 
 open import lib
-open import PropositionalIntuinistic
+open import PropositionalLogic.IntFull.Model
 
-module PI-FamModel
+module PropositionalLogic.IntFull.FamModel
   (C : Set)
   (Atom : Set)
   (atom : Atom → Prop)
   where
 
-  StandardModel : Model Atom _ _ _ _
-  StandardModel = record
+  Fam : Model Atom _ _ _ _
+  Fam = record
     { Con = C → Prop
     ; Sub = λ Γ Δ → (c : C) → Γ c → Δ c
     ; _∘_ = λ γ δ c θc → γ c (δ c θc)

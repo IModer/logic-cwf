@@ -1,17 +1,16 @@
 {-# OPTIONS --prop #-}
 
 open import lib
-open import PropositionalIntuinistic
+open import PropositionalLogic.IntFull.Model
 
 -- Tarski Model or Tarski semantics, everything is interpreted via the "standard" interpretation
--- Whatever that means, thats why its also called StandardModel
-module PI-TarskiModel
+module PropositionalLogic.IntFull.TarskiModel
   (Atom : Set)
   (atom : Atom → Prop)
   where
 
-  StandardModel : Model Atom _ _ _ _
-  StandardModel = record
+  Tarski : Model Atom _ _ _ _
+  Tarski = record
     { Con = Prop
     ; Sub = λ Γ Δ → Γ → Δ -- λ Γ Δ → Γ → Δ
     ; _∘_ = λ γ δ θ → γ (δ θ)

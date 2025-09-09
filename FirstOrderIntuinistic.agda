@@ -470,13 +470,28 @@ module I where
     ∨intro₁ : ∀{Γt}{K L}{Γp : ConPf Γt} → Pf Γp K → Pf Γp (K ∨ L)
     ∨intro₂ : ∀{Γt}{K L}{Γp : ConPf Γt} → Pf Γp L → Pf Γp (K ∨ L)
 
-    ∀intro  : ∀{Γt}{K Γp} → Pf {Γt ▸t} (Γp [ pt ]C) K → Pf {Γt} Γp (∀' K)
-    un∀ : ∀{Γt}{K Γp} → Pf Γp (∀' K) → (t : Tm Γt) → Pf Γp (K [ idt ,t t ]F)
+    ∀intro  : ∀{Γt}{K Γp} → 
+      Pf {Γt ▸t} (Γp [ pt ]C) K → 
+    -----------------------------
+      Pf {Γt} Γp (∀' K)
+    
+    un∀ : ∀{Γt}{K Γp} → 
+      Pf Γp (∀' K) → (t : Tm Γt) → 
+     -----------------------------
+        Pf Γp (K [ idt ,t t ]F)
 
-    ∃intro : ∀{Γt K}{Γp : ConPf Γt} → (t : Tm Γt) → Pf Γp (K [ idt ,t t ]F) → Pf Γp (∃' K)
-    --∃intro : ∀{Γt K}{Γp : ConPf Γt} → (∃ (Tm Γt) (λ t → Pf Γp (K [ idt ,t t ]F))) → Pf Γp (∃' K)
-    ∃elim  : ∀{Γt K L}{Γp : ConPf Γt}{Γp' : ConPf (Γt ▸t)} → Pf Γp (∃' K) → Pf (Γp' ▸p K) (L [ pt ]F) → Pf Γp L
+    ∃intro : ∀{Γt K}{Γp : ConPf Γt} → (t : Tm Γt) → 
+      Pf Γp (K [ idt ,t t ]F) → 
+    -----------------------------
+      Pf Γp (∃' K)
+    
+    ∃elim  : ∀{Γt K L}{Γp : ConPf Γt}{Γp' : ConPf (Γt ▸t)} → 
+      Pf Γp (∃' K) → Pf (Γp' ▸p K) (L [ pt ]F) → 
+      ----------------------------------------------
+                  Pf Γp L
 
+    -- ∃intro : ∀{Γt K}{Γp : ConPf Γt} → (∃ (Tm Γt) (λ t → Pf Γp (K [ idt ,t t ]F))) → Pf Γp (∃' K)
+    
     ref  : ∀{Γt}{a}{Γp : ConPf Γt} → Pf Γp (Eq a a)
     subst' : ∀{Γt}(K : For (Γt ▸t)){t t' : Tm Γt}{Γp} → Pf Γp (Eq t t') → Pf Γp (K [ idt ,t t ]F) → Pf Γp (K [ idt ,t t' ]F)
     _[_]P : ∀{Γt}{K}{Γp : ConPf Γt} → Pf Γp K → ∀{Δt : ConTm} → (γ : Subt Δt Γt) → Pf (Γp [ γ ]C) (K [ γ ]F)
