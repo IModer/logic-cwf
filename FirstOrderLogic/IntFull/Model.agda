@@ -213,4 +213,35 @@ record DepModel (i j k l m : Level)(M : Model i j k l m) : Set (lsuc (i ⊔ j �
 
         For   : {Γm : M.Con} -> Con Γm -> M.For Γm -> Set k
         _[_]F : ∀{Γm Δm : M.Con}{Γ : Con Γm}{Δ : Con Δm}{Am : M.For Γm}{γm : M.Sub Δm Γm} → For Γ Am → Sub Δ Γ γm → For Δ (Am M.[ γm ]F)
+        [id]F  : {Γm : M.Con}{Γ : Con Γm}{Am : M.For Γm}{A : For Γ Am} -> A [ id ]F ≡ transport (For Γ) (sym M.[id]F) A
+        [∘]F  : {Γm Δm Θm Ξm : M.Con}{Γ : Con Γm}{Δ : Con Δm}{Θ : Con Θm}{Ξ : Con Ξm} ->
+                {γm : M.Sub Δm Γm}{γ : Sub Δ Γ γm} ->
+                {δm : M.Sub Θm Δm}{δ : Sub Θ Δ δm} ->
+                {Am : M.For Γm}{A : For Γ Am} -> 
+                A [ γ ∘ δ ]F ≡ transport (For Θ) (sym M.[∘]F) (A [ γ ]F [ δ ]F)
         
+        Pf : {Γm : M.Con} -> (Γ : Con Γm) -> ∀{Am} -> (A : For Γ Am) -> M.Pf Γm Am -> Prop l
+        _[_]p : {Γm Δm : M.Con}{Γ : Con Γm}{Δ : Con Δm}{Am : M.For Γm}{A : For Γ Am}{PfAm : M.Pf Γm Am} -> 
+                Pf Γ A PfAm -> 
+                {γm : M.Sub Δm Γm}(γ : Sub Δ Γ γm) -> 
+                Pf Δ (A [ γ ]F) (PfAm M.[ γm ]p)
+        
+        _▸p_  : {Γm : M.Con}(Γ : Con Γm) -> ∀{Am} -> For Γ Am -> Con (Γm M.▸p Am)
+        _,p_  : {Γm Δm : M.Con}{Γ : Con Γm}{Δ : Con Δm}{Am : M.For Γm}{γm : M.Sub Δm Γm}{A : For Γ Am}{PfAm : M.Pf Δm (Am M.[ γm ]F)} -> (γ : Sub Δ Γ γm) → Pf Δ (A [ γ ]F) PfAm → Sub Δ (Γ ▸p A) (γm M.,p PfAm)
+        pp    : {Γm : M.Con}{Γ : Con Γm}{Am : M.For Γm}{A : For Γ Am} -> 
+                Sub {Γm} {Γm M.▸p Am} (Γ ▸p A) Γ M.pp 
+        qp    : {Γm : M.Con}{Γ : Con Γm}{Am : M.For Γm}{A : For Γ Am} -> 
+                Pf (Γ ▸p A) (A [ pp ]F) M.qp
+        ▸pβ₁  : {Γm Δm : M.Con}{Γ : Con Γm}{Δ : Con Δm} ->
+                {γm : M.Sub Δm Γm}{γ : Sub Δ Γ γm} ->
+                {Am : M.For Γm}{A : For Γ Am} -> 
+                {PfAm : M.Pf Δm (Am M.[ γm ]F)}{PfA : Pf Δ (A [ γ ]F) PfAm} -> 
+                pp ∘ (γ ,p PfA) ≡ transport (Sub Δ Γ) (sym M.▸pβ₁) γ
+        ▸pη   : {Γm Δm : M.Con}{Γ : Con Γm}{Δ : Con Δm} ->
+                {Am : M.For Γm}{A : For Γ Am} -> 
+                {γpm : M.Sub Δm (Γm M.▸p Am)}{γp : Sub Δ (Γ ▸p A) γpm} ->
+                {γm : M.Sub Δm Γm}{γ : Sub Δ Γ γm} ->
+                {PfAm : M.Pf (Γm M.▸p Am) (Am M.[ M.pp ]F)} ->
+                (pp ∘ γp) ,p {! substp (λ z -> Pf Δ z _) ? (qp [ γp ]p) !}  ≡ transport (Sub Δ (Γ ▸p A)) (sym M.▸pη) γp
+                --                         _ = (substp (M.Pf Δm) (sym M.[∘]F) (M.qp M.[ γpm ]p)
+                --                         ? = (sym [∘]F)
