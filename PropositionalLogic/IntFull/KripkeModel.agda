@@ -17,9 +17,10 @@ module PropositionalLogic.IntFull.KripkeModel
   where
   -- PSh is a presheaf over W
   record PSh : Set₁ where
-      field
-        ∣_∣    : W → Prop
-        _∶_⟨_⟩ : ∀{w w'} → ∣_∣ w → w' ≥ w → ∣_∣ w'
+    constructor Psh
+    field
+      ∣_∣    : W → Prop
+      _∶_⟨_⟩ : ∀{w w'} → ∣_∣ w → w' ≥ w → ∣_∣ w'
   open PSh public
 
   -- We can define the presheaf in advance because Con and For are both Psh
@@ -74,5 +75,5 @@ module PropositionalLogic.IntFull.KripkeModel
     ; ∨intro₁ = λ u Γw → inj₁ (u Γw)
     ; ∨intro₂ = λ u Γw → inj₂ (u Γw)
     ; ∨elim = λ PfKC PfLC PfKL Γw → ind+p _ (λ Kw → PfKC (Γw ,Σ Kw)) (λ Lw → PfLC (Γw ,Σ Lw)) (PfKL Γw)
-    ; atom = λ x → record { ∣_∣ = ∣ x ∣pv ; _∶_⟨_⟩ = _pv:_⟨_⟩ x }
+    ; atom = λ x → Psh (∣ x ∣pv) (_pv:_⟨_⟩ x)
     }

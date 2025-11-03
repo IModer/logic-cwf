@@ -66,7 +66,7 @@ IM = record
     ; ε = ε
     ; For = For
     ; Pf = Pf
-    ; _[_] = λ x γ → x [ γ ]
+    ; _[_] = _[_]
     ; _▸_ = _▸_
     ; _,_ = λ γ x → (γ , x)
     ; p = p
@@ -88,3 +88,4 @@ IM = record
     ; ∨elim = ∨elim
     ; atom = atom
     }
+ 
