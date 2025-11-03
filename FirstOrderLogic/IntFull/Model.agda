@@ -60,7 +60,8 @@ record Model (i j k l m : Level) : Set (lsuc (i ⊔ j ⊔ k ⊔ l ⊔ m)) where
     ▸pβ₁  : ∀{Γ Δ}{γ : Sub Δ Γ}{K}{k : Pf Δ (K [ γ ]F)} → pp ∘ (γ ,p k) ≡ γ
     -- β₂ nem kell mert Pf propba van
     -- kell η
-    ▸pη   : ∀{Γ Δ K}{γp : Sub Δ (Γ ▸p K)}  → (pp ∘ γp) ,p substp (λ K → Pf Δ K) (sym [∘]F) (qp [ γp ]p) ≡ γp
+    ▸pη   : ∀{Γ K} -> id ≡ (pp ,p qp) ∈ Sub (Γ ▸p K) (Γ ▸p K)
+    -- ∀{Γ Δ K}{γp : Sub Δ (Γ ▸p K)}  → (pp ∘ γp) ,p substp (λ K → Pf Δ K) (sym [∘]F) (qp [ γp ]p) ≡ γp
     -- The second half has to be transported because
     -- qp [ γp ]p : Pf Δ (K [ pp ]F [ γp ]F)
     -- but we need ? : Pf Δ (K [ pp ∘ γp ]F)
@@ -237,11 +238,139 @@ record DepModel (i j k l m : Level)(M : Model i j k l m) : Set (lsuc (i ⊔ j �
                 {Am : M.For Γm}{A : For Γ Am} -> 
                 {PfAm : M.Pf Δm (Am M.[ γm ]F)}{PfA : Pf Δ (A [ γ ]F) PfAm} -> 
                 pp ∘ (γ ,p PfA) ≡ transport (Sub Δ Γ) (sym M.▸pβ₁) γ
-        ▸pη   : {Γm Δm : M.Con}{Γ : Con Γm}{Δ : Con Δm} ->
+        ▸pη   : {Γm : M.Con}{Γ : Con Γm} ->
+                {Am : M.For Γm}{A : For Γ Am} ->
+                {γm : M.Sub (Γm M.▸p Am) (Γm M.▸p Am)}{γ : Sub (Γ ▸p A) (Γ ▸p A) γm} ->
+                id ≡ transport (Sub (Γ ▸p A) (Γ ▸p A)) (sym M.▸pη) (pp ,p qp)
+                {-
+                {Γm Δm : M.Con}{Γ : Con Γm}{Δ : Con Δm} ->
                 {Am : M.For Γm}{A : For Γ Am} -> 
                 {γpm : M.Sub Δm (Γm M.▸p Am)}{γp : Sub Δ (Γ ▸p A) γpm} ->
                 {γm : M.Sub Δm Γm}{γ : Sub Δ Γ γm} ->
                 {PfAm : M.Pf (Γm M.▸p Am) (Am M.[ M.pp ]F)} ->
-                (pp ∘ γp) ,p {! substp (λ z -> Pf Δ z _) ? (qp [ γp ]p) !}  ≡ transport (Sub Δ (Γ ▸p A)) (sym M.▸pη) γp
+                -}
+                -- (pp ∘ γp) ,p {! substp (λ z -> Pf Δ z _) ? (qp [ γp ]p) !}  ≡ transport (Sub Δ (Γ ▸p A)) (sym M.▸pη) γp
+                
                 --                         _ = (substp (M.Pf Δm) (sym M.[∘]F) (M.qp M.[ γpm ]p)
                 --                         ? = (sym [∘]F)
+        
+        ⊥   : {Γm : M.Con}{Γ : Con Γm} -> For Γ M.⊥
+        ⊥[] : {Γm Δm : M.Con}{Γ : Con Γm}{Δ : Con Δm} -> 
+              {γm : M.Sub Δm Γm}{γ : Sub Δ Γ γm} ->
+              ⊥ [ γ ]F ≡ transport (For Δ) (sym M.⊥[]) ⊥
+        exfalso : {Γm : M.Con}{Γ : Con Γm} ->
+                  {Km : M.For Γm}{K : For Γ Km} ->
+                  {pf⊥ : M.Pf Γm M.⊥} ->
+                  Pf Γ ⊥ pf⊥ -> Pf Γ K (M.exfalso pf⊥)
+
+        ⊤   : {Γm : M.Con}{Γ : Con Γm} -> For Γ M.⊤
+        ⊤[] : {Γm Δm : M.Con}{Γ : Con Γm}{Δ : Con Δm} -> 
+              {γm : M.Sub Δm Γm}{γ : Sub Δ Γ γm} ->
+              ⊤ [ γ ]F ≡ transport (For Δ) (sym M.⊤[]) ⊤
+        tt  : {Γm : M.Con}{Γ : Con Γm} ->
+              Pf Γ ⊤ M.tt
+
+        _⊃_ : {Γm : M.Con}{Γ : Con Γm} ->
+              {Am : M.For Γm}{Bm : M.For Γm} ->
+              For Γ Am -> For Γ Bm -> For Γ (Am M.⊃ Bm)
+        ⊃[] : {Γm Δm : M.Con}{Γ : Con Γm}{Δ : Con Δm} -> 
+              {γm : M.Sub Δm Γm}{γ : Sub Δ Γ γm} ->
+              {Am : M.For Γm}{Bm : M.For Γm} ->
+              {A : For Γ Am}{B : For Γ Bm} ->
+              (A ⊃ B)[ γ ]F ≡ transport (For Δ) (sym M.⊃[]) ((A [ γ ]F) ⊃ (B [ γ ]F))
+        ⊃intro : 
+            {Γm Δm : M.Con}{Γ : Con Γm}{Δ : Con Δm} -> 
+            {γm : M.Sub Δm Γm}{γ : Sub Δ Γ γm} ->
+            {Am : M.For Γm}{Bm : M.For Γm} ->
+            {A : For Γ Am}{B : For Γ Bm} ->
+            {pfab : M.Pf (Γm M.▸p Am) (Bm M.[ M.pp ]F) } ->
+            Pf (Γ ▸p A) (B [ pp ]F) pfab -> Pf Γ (A ⊃ B) (M.⊃intro pfab)
+        ⊃elim : 
+            {Γm Δm : M.Con}{Γ : Con Γm}{Δ : Con Δm} -> 
+            {γm : M.Sub Δm Γm}{γ : Sub Δ Γ γm} ->
+            {Am : M.For Γm}{Bm : M.For Γm} ->
+            {A : For Γ Am}{B : For Γ Bm} ->
+            {pfab : M.Pf Γm (Am M.⊃ Bm) } ->
+            Pf Γ (A ⊃ B) pfab ->
+            Pf (Γ ▸p A) (B [ pp ]F) (M.⊃elim pfab)  
+
+
+
+        _∧_ : {Γm : M.Con}{Γ : Con Γm} ->
+              {Am : M.For Γm}{Bm : M.For Γm} ->
+              For Γ Am -> For Γ Bm -> For Γ (Am M.∧ Bm)
+        ∧[] : {Γm Δm : M.Con}{Γ : Con Γm}{Δ : Con Δm} -> 
+              {γm : M.Sub Δm Γm}{γ : Sub Δ Γ γm} ->
+              {Am : M.For Γm}{Bm : M.For Γm} ->
+              {A : For Γ Am}{B : For Γ Bm} ->
+              (A ∧ B)[ γ ]F ≡ transport (For Δ) (sym M.∧[]) ((A [ γ ]F) ∧ (B [ γ ]F))
+        ∧intro : 
+            {Γm : M.Con}{Γ : Con Γm} -> 
+            {Am : M.For Γm}{Bm : M.For Γm} ->
+            {A : For Γ Am}{B : For Γ Bm} ->
+            {pfa : M.Pf Γm Am}{pfb : M.Pf Γm Bm} ->  
+            Pf Γ A pfa -> Pf Γ B pfb -> Pf Γ (A ∧ B) (M.∧intro pfa pfb)
+        ∧elim₁ : 
+            {Γm : M.Con}{Γ : Con Γm} -> 
+            {Am : M.For Γm}{Bm : M.For Γm} ->
+            {A : For Γ Am}{B : For Γ Bm} ->
+            {pfa∧b : M.Pf Γm (Am M.∧ Bm)} ->  
+            Pf Γ (A ∧ B) pfa∧b -> Pf Γ A (M.∧elim₁ pfa∧b)
+        ∧elim₂ : 
+            {Γm : M.Con}{Γ : Con Γm} -> 
+            {Am : M.For Γm}{Bm : M.For Γm} ->
+            {A : For Γ Am}{B : For Γ Bm} ->
+            {pfa∧b : M.Pf Γm (Am M.∧ Bm)}->  
+            Pf Γ (A ∧ B) pfa∧b -> Pf Γ B (M.∧elim₂ pfa∧b)
+
+        _∨_ : {Γm : M.Con}{Γ : Con Γm} ->
+              {Am : M.For Γm}{Bm : M.For Γm} ->
+              For Γ Am -> For Γ Bm -> For Γ (Am M.∨ Bm)
+        ∨[] : {Γm Δm : M.Con}{Γ : Con Γm}{Δ : Con Δm} -> 
+              {γm : M.Sub Δm Γm}{γ : Sub Δ Γ γm} ->
+              {Am : M.For Γm}{Bm : M.For Γm} ->
+              {A : For Γ Am}{B : For Γ Bm} ->
+              (A ∨ B)[ γ ]F ≡ transport (For Δ) (sym M.∨[]) ((A [ γ ]F) ∨ (B [ γ ]F))
+        ∨intro₁ : 
+            {Γm : M.Con}{Γ : Con Γm} -> 
+            {Am : M.For Γm}{Bm : M.For Γm} ->
+            {A : For Γ Am}{B : For Γ Bm} ->
+            {pfa : M.Pf Γm Am} ->  
+            Pf Γ A pfa -> Pf Γ (A ∨ B) (M.∨intro₁ pfa) 
+        ∨intro₂ : 
+            {Γm : M.Con}{Γ : Con Γm} -> 
+            {Am : M.For Γm}{Bm : M.For Γm} ->
+            {A : For Γ Am}{B : For Γ Bm} ->
+            {pfb : M.Pf Γm Bm} ->  
+            Pf Γ B pfb -> Pf Γ (A ∨ B) (M.∨intro₂ pfb)
+        ∨elim : 
+            {Γm : M.Con}{Γ : Con Γm} -> 
+            {Am : M.For Γm}{Bm : M.For Γm}{Cm : M.For Γm} ->
+            {A : For Γ Am}{B : For Γ Bm}{C : For Γ Cm} ->
+            {pfac : M.Pf (Γm M.▸p Am) (Cm M.[ M.pp ]F)}{pfbc : M.Pf (Γm M.▸p Bm) (Cm M.[ M.pp ]F)}{pfa∨b : M.Pf Γm (Am M.∨ Bm)} ->  
+            Pf (Γ ▸p A) (C [ pp ]F) pfac -> Pf (Γ ▸p B) (C [ pp ]F) pfbc -> Pf Γ (A ∨ B) pfa∨b -> Pf Γ C (M.∨elim pfac pfbc pfa∨b)
+
+        Tm : {Γm : M.Con} -> Con Γm -> M.Tm Γm -> Set j
+        _[_]t : 
+            {Γm Δm : M.Con}{Γ : Con Γm}{Δ : Con Δm} -> 
+            {γm : M.Sub Δm Γm}{tm : M.Tm Γm} ->
+            Tm Γ tm -> Sub Δ Γ γm -> Tm Δ (tm M.[ γm ]t)
+        [id]t :
+            {Γm : M.Con}{Γ : Con Γm} -> 
+            {tm : M.Tm Γm}{t : Tm Γ tm} ->
+            t [ id ]t ≡ transport (Tm Γ) (sym M.[id]t) t
+        [∘]t : 
+            {Γm Δm Θm : M.Con}{Γ : Con Γm}{Δ : Con Δm}{Θ : Con Θm} -> 
+            {γm : M.Sub Δm Γm}{δm : M.Sub Θm Δm} ->
+            {γ : Sub Δ Γ γm}{δ : Sub Θ Δ δm} ->
+            {tm : M.Tm Γm}{t : Tm Γ tm} ->
+            t [ γ ∘ δ ]t ≡ transport (Tm Θ) (sym M.[∘]t) ((t [ γ ]t) [ δ ]t) 
+        _▸t  :
+            {Γm : M.Con} ->
+            Con Γm -> Con (Γm M.▸t)
+        _,t_ : 
+            {Γm Δm : M.Con}{Γ : Con Γm}{Δ : Con Δm} -> 
+            {γm : M.Sub Δm Γm} ->
+            {tm : M.Tm Δm} ->
+            Sub Δ Γ γm -> Tm Δ tm -> Sub Δ (Γ ▸t) (γm M.,t tm)
+         

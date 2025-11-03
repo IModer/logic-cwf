@@ -187,6 +187,13 @@ x ∎ = refl {x = x}
 _≡⟨_⟩_ : ∀{ℓ}{A : Set ℓ}(x : A){y z : A} → x ≡ y → y ≡ z → x ≡ z
 x ≡⟨ x≡y ⟩ y≡z = trans x≡y y≡z
 
+infixl 5 the
+the : ∀{ℓ}(A : Set ℓ) → A → A
+the _ a = a
+{-# INLINE the #-}
+
+syntax the A a = a ∈ A
+
 data Fin : ℕ → Set where
   zero : {n : ℕ} → Fin (suc n)
   suc  : {n : ℕ} → Fin n → Fin (suc n)
