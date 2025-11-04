@@ -108,7 +108,7 @@ record Model (i j k l m : Level) : Set (lsuc (i ⊔ j ⊔ k ⊔ l ⊔ m)) where
     qt    : ∀{Γ} → Tm (Γ ▸t)
     ▸tβ₁  : ∀{Γ Δ}{γ : Sub Δ Γ}{t : Tm Δ} → (pt ∘ (γ ,t t)) ≡ γ
     ▸tβ₂  : ∀{Γ Δ}{γ : Sub Δ Γ}{t : Tm Δ} → (qt [ γ ,t t ]t) ≡ t
-    ▸tη   : ∀{Γ Δ}{γt : Sub Δ (Γ ▸t)} → ((pt ∘ γt) ,t (qt [ γt ]t)) ≡ γt
+    ▸tη   : ∀{Γ} → id ≡ (pt ,t qt) ∈ (Sub (Γ ▸t) (Γ ▸t))
     
     -- Telescopes of terms
     -- They are basically isomorphic to Vectors of Tm-s
@@ -165,11 +165,11 @@ record Model (i j k l m : Level) : Set (lsuc (i ⊔ j ⊔ k ⊔ l ⊔ m)) where
     Eqrefl   : ∀{Γ}{t : Tm Γ} → Pf Γ (Eq t t)
     subst' : ∀{Γ}(K : For (Γ ▸t)){t t' : Tm Γ} → Pf Γ (Eq t t') → Pf Γ (K [ id ,t t ]F) → Pf Γ (K [ id ,t t' ]F)
 
-  ,∘ : ∀{Γ Δ}{γ : Sub Δ Γ}{t : Tm Δ}{Θ}{δ : Sub Θ Δ} → (γ ,t t) ∘ δ ≡ γ ∘ δ ,t t [ δ ]t
-  ,∘ {Γ}{Δ}{γ}{t}{Θ}{δ} = trans (sym ▸tη) (cong (λ z → proj₁ z ,t proj₂ z) (mk,= (trans (sym ass) (cong (_∘ δ) ▸tβ₁)) (trans [∘]t (cong (_[ δ ]t) ▸tβ₂))))
+  -- ,∘ : ∀{Γ Δ}{γ : Sub Δ Γ}{t : Tm Δ}{Θ}{δ : Sub Θ Δ} → (γ ,t t) ∘ δ ≡ γ ∘ δ ,t t [ δ ]t
+  -- ,∘ {Γ}{Δ}{γ}{t}{Θ}{δ} = trans (sym ▸tη) (cong (λ z → proj₁ z ,t proj₂ z) (mk,= (trans (sym ass) (cong (_∘ δ) ▸tβ₁)) (trans [∘]t (cong (_[ δ ]t) ▸tβ₂))))
   
-  ▸tη' : ∀{Γ} → id {Γ ▸t} ≡ pt ,t qt
-  ▸tη' {Γ} = trans (sym ▸tη) (cong (λ z → proj₁ z ,t proj₂ z) (mk,= idr [id]t))
+  -- ▸tη' : ∀{Γ} → id {Γ ▸t} ≡ pt ,t qt
+  -- ▸tη' {Γ} = trans (sym ▸tη) (cong (λ z → proj₁ z ,t proj₂ z) (mk,= idr [id]t))
 
   _$_ : ∀{Γ K L} → Pf Γ (K ⊃ L) → Pf Γ K → Pf Γ L
   _$_ {Γ}{K}{L} m k = substp (Pf Γ) (trans (sym [∘]F) (trans (cong (L [_]F) ▸pβ₁) [id]F)) (⊃elim m [ id ,p substp (Pf Γ) (sym [id]F) k ]p)
@@ -373,4 +373,43 @@ record DepModel (i j k l m : Level)(M : Model i j k l m) : Set (lsuc (i ⊔ j �
             {γm : M.Sub Δm Γm} ->
             {tm : M.Tm Δm} ->
             Sub Δ Γ γm -> Tm Δ tm -> Sub Δ (Γ ▸t) (γm M.,t tm)
-         
+        pt : {Γm : M.Con}{Γ : Con Γm} -> Sub (Γ ▸t) Γ M.pt
+        qt : {Γm : M.Con}{Γ : Con Γm} -> Tm (Γ ▸t) M.qt
+        
+        ▸tβ₁  : 
+            {Γm Δm : M.Con}{Γ : Con Γm}{Δ : Con Δm} -> 
+            {γm : M.Sub Δm Γm}{γ : Sub Δ Γ γm} ->
+            {tm : M.Tm Δm}{t : Tm Δ tm} -> 
+            (pt ∘ (γ ,t t)) ≡ transport (Sub Δ Γ) (sym M.▸tβ₁) γ
+        ▸tβ₂  : 
+            {Γm Δm : M.Con}{Γ : Con Γm}{Δ : Con Δm} -> 
+            {γm : M.Sub Δm Γm}{γ : Sub Δ Γ γm} ->
+            {tm : M.Tm Δm}{t : Tm Δ tm} -> 
+            (qt [ γ ,t t ]t) ≡ transport (Tm Δ) (sym M.▸tβ₂) t
+        ▸tη   : 
+            {Γm : M.Con}{Γ : Con Γm} ->
+            id ≡ transport (Sub (Γ ▸t) (Γ ▸t)) (sym M.▸tη) (pt ,t qt)
+        
+        Tms : {Γm : M.Con} -> (Γ : Con Γm) -> (n : ℕ) -> M.Tms Γm n -> Set m
+        _[_]ts : 
+            {Γm Δm : M.Con}{Γ : Con Γm}{Δ : Con Δm} -> 
+            {γm : M.Sub Δm Γm}{n : ℕ}{tmsm : M.Tms Γm n} ->
+            Tms Γ n tmsm -> Sub Δ Γ γm -> Tms Δ n (tmsm M.[ γm ]ts)
+        [∘]ts :
+            {Γm Δm Θm : M.Con}{Γ : Con Γm}{Δ : Con Δm}{Θ : Con Θm} ->
+            {γm : M.Sub Δm Γm}{γ : Sub Δ Γ γm} ->
+            {δm : M.Sub Θm Δm}{δ : Sub Θ Δ δm} ->
+            {n : ℕ}{tmsm : M.Tms Γm n}{tms : Tms Γ n tmsm} -> 
+            tms [ γ ∘ δ ]ts ≡ transport (Tms Θ n) (sym M.[∘]ts) (tms [ γ ]ts [ δ ]ts)
+        [id]ts :
+            {Γm : M.Con}{Γ : Con Γm} ->
+            {n : ℕ}{tmsm : M.Tms Γm n}{tms : Tms Γ n tmsm} ->
+            tms [ id ]ts ≡ transport (Tms Γ n) (sym M.[id]ts) tms
+        εs :
+            {Γm : M.Con}{Γ : Con Γm} ->
+            Tms Γ zero M.εs
+        ◆sη :
+            {Γm : M.Con}{Γ : Con Γm} -> 
+            {tsm : M.Tms Γm zero}{ts : Tms Γ zero tsm} ->
+            ts ≡ transport (Tms Γ zero) (sym (M.◆sη tsm)) εs
+        
