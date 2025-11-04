@@ -412,4 +412,59 @@ record DepModel (i j k l m : Level)(M : Model i j k l m) : Set (lsuc (i ⊔ j �
             {Γm : M.Con}{Γ : Con Γm} -> 
             {tsm : M.Tms Γm zero}{ts : Tms Γ zero tsm} ->
             ts ≡ transport (Tms Γ zero) (sym (M.◆sη tsm)) εs
+        _,s_ : 
+            {Γm : M.Con}{Γ : Con Γm} -> 
+            {n : ℕ}{tmsm : M.Tms Γm n}{tm : M.Tm Γm} ->
+            Tms Γ n tmsm -> Tm Γ tm -> Tms Γ (suc n) (tmsm M.,s tm)
+        π₁ : 
+            {Γm : M.Con}{Γ : Con Γm} -> 
+            {n : ℕ}{tmsm : M.Tms Γm (suc n)} ->
+            Tms Γ (suc n) tmsm -> Tms Γ n (M.π₁ tmsm)
+        π₂ : 
+            {Γm : M.Con}{Γ : Con Γm} -> 
+            {n : ℕ}{tmsm : M.Tms Γm (suc n)} ->
+            Tms Γ (suc n) tmsm -> Tm Γ (M.π₂ tmsm)
+        ▸sβ₁ :
+            {Γm : M.Con}{Γ : Con Γm} -> 
+            {n : ℕ}{tmsm : M.Tms Γm n}{tm : M.Tm Γm} ->
+            {ts : Tms Γ n tmsm}{t : Tm Γ tm} ->
+            π₁ (ts ,s t) ≡ transport (Tms Γ n) (sym M.▸sβ₁) ts
+        ▸sβ₂ :
+            {Γm : M.Con}{Γ : Con Γm} ->
+            {n : ℕ}{tmsm : M.Tms Γm n}{tm : M.Tm Γm} ->
+            {ts : Tms Γ n tmsm}{t : Tm Γ tm} ->
+            π₂ (ts ,s t) ≡ transport (Tm Γ) (sym M.▸sβ₂) t
+        ▸sη :
+            {Γm : M.Con}{Γ : Con Γm} ->
+            {n : ℕ}{tmsm : M.Tms Γm (suc n)} ->
+            {ts : Tms Γ (suc n) tmsm} ->
+            π₁ ts ,s  π₂ ts ≡ transport (Tms Γ (suc n)) (sym M.▸sη) ts
+        ,[] : 
+            {Γm Δm : M.Con}{Γ : Con Γm}{Δ : Con Δm} ->
+            {γm : M.Sub Δm Γm}{γ : Sub Δ Γ γm} ->
+            {n : ℕ}{tmsm : M.Tms Γm n}{ts : Tms Γ n tmsm} ->
+            {tm : M.Tm Γm}{t : Tm Γ tm} ->
+            (ts ,s t) [ γ ]ts ≡ transport (Tms Δ (suc n)) (sym M.,[]) ((ts [ γ ]ts) ,s (t [ γ ]t))
         
+        fun : 
+            {Γm : M.Con}{Γ : Con Γm} ->
+            (n : ℕ) -> (a : funar n) -> {tmsm : M.Tms Γm n} -> Tms Γ n tmsm -> Tm Γ (M.fun n a tmsm)
+        fun[] : 
+            {Γm Δm : M.Con}{Γ : Con Γm}{Δ : Con Δm} ->
+            {γm : M.Sub Δm Γm}{γ : Sub Δ Γ γm} ->
+            {n : ℕ}{a : funar n} ->
+            {tmsm : M.Tms Γm n}{ts : Tms Γ n tmsm} ->
+            (fun n a ts) [ γ ]t ≡ transport (Tm Δ) (sym M.fun[]) (fun n a (ts [ γ ]ts))
+        rel : 
+            {Γm : M.Con}{Γ : Con Γm} ->
+            (n : ℕ) -> (a : relar n) -> {tmsm : M.Tms Γm n} -> Tms Γ n tmsm -> For Γ (M.rel n a tmsm)
+        rel[] : 
+            {Γm Δm : M.Con}{Γ : Con Γm}{Δ : Con Δm} ->
+            {γm : M.Sub Δm Γm}{γ : Sub Δ Γ γm} ->
+            {n : ℕ}{a : relar n} ->
+            {tmsm : M.Tms Γm n}{ts : Tms Γ n tmsm} ->
+            (rel n a ts) [ γ ]F ≡ transport (For Δ) (sym M.rel[]) (rel n a (ts [ γ ]ts))
+        
+        ∀' : 
+            {Γm : M.Con}{Γ : Con Γm}{Am : M.For (Γm M.▸t)} ->
+            For (Γ ▸t) Am -> For Γ (M.∀' Am)
