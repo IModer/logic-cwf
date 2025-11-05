@@ -395,20 +395,20 @@ record DepModel (i j k l m : Level)(M : Model i j k l m) : Set (lsuc (i ⊔ j �
             {Γm Δm : M.Con}{Γ : Con Γm}{Δ : Con Δm} -> 
             {γm : M.Sub Δm Γm}{n : ℕ}{tmsm : M.Tms Γm n} ->
             Tms Γ n tmsm -> Sub Δ Γ γm -> Tms Δ n (tmsm M.[ γm ]ts)
-        [∘]ts :
+        [∘]ts : 
             {Γm Δm Θm : M.Con}{Γ : Con Γm}{Δ : Con Δm}{Θ : Con Θm} ->
             {γm : M.Sub Δm Γm}{γ : Sub Δ Γ γm} ->
             {δm : M.Sub Θm Δm}{δ : Sub Θ Δ δm} ->
             {n : ℕ}{tmsm : M.Tms Γm n}{tms : Tms Γ n tmsm} -> 
             tms [ γ ∘ δ ]ts ≡ transport (Tms Θ n) (sym M.[∘]ts) (tms [ γ ]ts [ δ ]ts)
-        [id]ts :
+        [id]ts : 
             {Γm : M.Con}{Γ : Con Γm} ->
             {n : ℕ}{tmsm : M.Tms Γm n}{tms : Tms Γ n tmsm} ->
             tms [ id ]ts ≡ transport (Tms Γ n) (sym M.[id]ts) tms
-        εs :
+        εs : 
             {Γm : M.Con}{Γ : Con Γm} ->
             Tms Γ zero M.εs
-        ◆sη :
+        ◆sη : 
             {Γm : M.Con}{Γ : Con Γm} -> 
             {tsm : M.Tms Γm zero}{ts : Tms Γ zero tsm} ->
             ts ≡ transport (Tms Γ zero) (sym (M.◆sη tsm)) εs
@@ -424,17 +424,17 @@ record DepModel (i j k l m : Level)(M : Model i j k l m) : Set (lsuc (i ⊔ j �
             {Γm : M.Con}{Γ : Con Γm} -> 
             {n : ℕ}{tmsm : M.Tms Γm (suc n)} ->
             Tms Γ (suc n) tmsm -> Tm Γ (M.π₂ tmsm)
-        ▸sβ₁ :
+        ▸sβ₁ : 
             {Γm : M.Con}{Γ : Con Γm} -> 
             {n : ℕ}{tmsm : M.Tms Γm n}{tm : M.Tm Γm} ->
             {ts : Tms Γ n tmsm}{t : Tm Γ tm} ->
             π₁ (ts ,s t) ≡ transport (Tms Γ n) (sym M.▸sβ₁) ts
-        ▸sβ₂ :
+        ▸sβ₂ : 
             {Γm : M.Con}{Γ : Con Γm} ->
             {n : ℕ}{tmsm : M.Tms Γm n}{tm : M.Tm Γm} ->
             {ts : Tms Γ n tmsm}{t : Tm Γ tm} ->
             π₂ (ts ,s t) ≡ transport (Tm Γ) (sym M.▸sβ₂) t
-        ▸sη :
+        ▸sη : 
             {Γm : M.Con}{Γ : Con Γm} ->
             {n : ℕ}{tmsm : M.Tms Γm (suc n)} ->
             {ts : Tms Γ (suc n) tmsm} ->
@@ -464,7 +464,57 @@ record DepModel (i j k l m : Level)(M : Model i j k l m) : Set (lsuc (i ⊔ j �
             {n : ℕ}{a : relar n} ->
             {tmsm : M.Tms Γm n}{ts : Tms Γ n tmsm} ->
             (rel n a ts) [ γ ]F ≡ transport (For Δ) (sym M.rel[]) (rel n a (ts [ γ ]ts))
-        
         ∀' : 
             {Γm : M.Con}{Γ : Con Γm}{Am : M.For (Γm M.▸t)} ->
             For (Γ ▸t) Am -> For Γ (M.∀' Am)
+        ∀[] : 
+            {Γm Δm : M.Con}{Γ : Con Γm}{Δ : Con Δm} ->
+            {γm : M.Sub Δm Γm}{γ : Sub Δ Γ γm} ->
+            {Am : M.For (Γm M.▸t)}{A : For (Γ ▸t) Am} ->
+            (∀' A) [ γ ]F  ≡ transport (For Δ) (sym M.∀[]) (∀' (A [ (γ ∘ pt) ,t qt ]F))
+        ∀intro : 
+            {Γm : M.Con}{Γ : Con Γm} ->
+            {Am : M.For (Γm M.▸t)}{A : For (Γ ▸t) Am}{pfa : M.Pf (Γm M.▸t) Am} ->
+            Pf (Γ ▸t) A pfa -> Pf Γ (∀' A) (M.∀intro pfa)
+        ∀elim : 
+            {Γm : M.Con}{Γ : Con Γm} ->
+            {Am : M.For (Γm M.▸t)}{A : For (Γ ▸t) Am}{pfa : M.Pf Γm (M.∀' Am)} ->
+            Pf Γ (∀' A) pfa -> Pf (Γ ▸t) A (M.∀elim pfa)
+        
+        ∃' : 
+            {Γm : M.Con}{Γ : Con Γm}{Am : M.For (Γm M.▸t)} ->
+            For (Γ ▸t) Am -> For Γ (M.∃' Am)
+        ∃[] : 
+            {Γm Δm : M.Con}{Γ : Con Γm}{Δ : Con Δm} ->
+            {γm : M.Sub Δm Γm}{γ : Sub Δ Γ γm} ->
+            {Am : M.For (Γm M.▸t)}{A : For (Γ ▸t) Am} ->
+            (∃' A) [ γ ]F  ≡ transport (For Δ) (sym M.∃[]) (∃' (A [ (γ ∘ pt) ,t qt ]F))
+        ∃intro : 
+            {Γm : M.Con}{Γ : Con Γm} ->
+            {Am : M.For (Γm M.▸t)}{tm : M.Tm Γm}{A : For (Γ ▸t) Am}{pfa : M.Pf Γm (Am M.[ M.id M.,t tm ]F)} ->
+            (t : Tm Γ tm) -> Pf Γ (A [ id ,t t ]F) pfa -> Pf Γ (∃' A) (M.∃intro tm pfa)
+        ∃elim :
+            {Γm : M.Con}{Γ : Con Γm} ->
+            {Am : M.For (Γm M.▸t)}{A : For (Γ ▸t) Am} ->
+            {Bm : M.For Γm}{B : For Γ Bm} ->
+            {pfa : M.Pf Γm (M.∃' Am)}{pfab : M.Pf ((Γm M.▸t) M.▸p Am) (Bm M.[ M.pt M.∘ M.pp ]F)} ->
+            Pf Γ (∃' A) pfa -> Pf ((Γ ▸t) ▸p A) (B [ pt ∘ pp ]F) pfab -> Pf Γ B (M.∃elim pfa pfab)
+        
+        Eq :
+            {Γm : M.Con}{Γ : Con Γm} ->
+            {tm tm' : M.Tm Γm} -> 
+            Tm Γ tm -> Tm Γ tm' -> For Γ (M.Eq tm tm')
+        Eq[] :
+            {Γm Δm : M.Con}{Γ : Con Γm}{Δ : Con Δm} ->
+            {γm : M.Sub Δm Γm}{γ : Sub Δ Γ γm} ->
+            {tm tm' : M.Tm Γm}{t : Tm Γ tm}{t' : Tm Γ tm'} -> 
+            (Eq t t') [ γ ]F ≡ transport (For Δ) (sym M.Eq[]) (Eq (t [ γ ]t) (t' [ γ ]t))  
+        Eqrefl :
+            {Γm : M.Con}{Γ : Con Γm} ->
+            {tm : M.Tm Γm}{t : Tm Γ tm} -> 
+            Pf Γ (Eq t t) M.Eqrefl
+        subst' : 
+            {Γm : M.Con}{Γ : Con Γm} ->
+            {tm tm' : M.Tm Γm}{t : Tm Γ tm}{t' : Tm Γ tm'} ->
+            {Am : M.For (Γm M.▸t)}{pfeq : M.Pf Γm (M.Eq tm tm')}{pfa : M.Pf Γm (Am M.[ M.id M.,t tm ]F)} ->
+            (A : For (Γ ▸t) Am) -> Pf Γ (Eq t t') (pfeq) -> Pf Γ (A [ id ,t t ]F) pfa -> Pf Γ (A [ id ,t t' ]F) (M.subst' Am pfeq pfa)
