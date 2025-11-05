@@ -57,3 +57,49 @@ record Morphism (i j k l m : Level)(M N : Model funar relar i j k l m) : Set (ls
 
         ⟦Eq⟧   : {Γm : M.Con}{tm tm' : M.Tm Γm} -> ⟦ M.Eq tm tm' ⟧F ≡ N.Eq ⟦ tm ⟧Tm ⟦ tm' ⟧Tm
 
+record DepMorphism (i j k l m : Level)(M : Model funar relar i j k l m)(D : DepModel funar relar i j k l m M) : Set (lsuc (i ⊔ j ⊔ k ⊔ l ⊔ m)) where
+    private module M = Model M
+    private module D = DepModel D
+
+    field
+      ⟦_⟧C : (Γm : M.Con) -> D.Con Γm
+      ⟦_⟧S : {Γm Δm : M.Con} -> (γm : M.Sub Δm Γm) -> D.Sub (⟦ Δm ⟧C) (⟦ Γm ⟧C) γm
+      ⟦id⟧ : {Γm : M.Con} -> ⟦ M.id {Γm} ⟧S ≡ D.id
+      ⟦∘⟧  : {Γm Δm Θm : M.Con}{γm : M.Sub Δm Γm}{δm : M.Sub Θm Δm} -> ⟦ γm M.∘ δm ⟧S ≡ ⟦ γm ⟧S D.∘ ⟦ δm ⟧S
+      ⟦◆⟧  : ⟦ M.◆ ⟧C ≡ D.◆
+      ⟦ε⟧   : {Γm : M.Con} -> ⟦ M.ε {Γm} ⟧S ≡ transport (λ z -> D.Sub ⟦ Γm ⟧C z M.ε) (sym ⟦◆⟧) (D.ε {Γ = ⟦ Γm ⟧C})
+      
+      ⟦_⟧F  : {Γm : M.Con} -> (Am : M.For Γm) -> D.For ⟦ Γm ⟧C Am
+      ⟦[]F⟧ : {Γm Δm : M.Con}{Am : M.For Γm}{γm : M.Sub Δm Γm} -> ⟦ (Am M.[ γm ]F) ⟧F ≡ (⟦ Am ⟧F) D.[ (⟦ γm ⟧S) ]F
+      ⟦⊥⟧  : {Γm : M.Con} -> ⟦ M.⊥ {Γm} ⟧F ≡ D.⊥
+      ⟦⊤⟧  : {Γm : M.Con} -> ⟦ M.⊤ {Γm} ⟧F ≡ D.⊤
+      ⟦∧⟧  : {Γm : M.Con}{Am Bm : M.For Γm} -> ⟦ Am M.∧ Bm ⟧F ≡ ⟦ Am ⟧F D.∧ ⟦ Bm ⟧F
+      ⟦∨⟧  : {Γm : M.Con}{Am Bm : M.For Γm} -> ⟦ Am M.∨ Bm ⟧F ≡ ⟦ Am ⟧F D.∨ ⟦ Bm ⟧F
+      ⟦⊃⟧  : {Γm : M.Con}{Am Bm : M.For Γm} -> ⟦ Am M.⊃ Bm ⟧F ≡ ⟦ Am ⟧F D.⊃ ⟦ Bm ⟧F
+
+      ⟦_⟧Pf : {Γm : M.Con}{Am : M.For Γm} -> (pfa : M.Pf Γm Am) -> D.Pf (⟦ Γm ⟧C) (⟦ Am ⟧F) pfa
+      ⟦▸p⟧ : {Γm : M.Con}{Am : M.For Γm} -> ⟦ Γm M.▸p Am ⟧C ≡ ⟦ Γm ⟧C D.▸p ⟦ Am ⟧F
+      ⟦,p⟧ : {Γm Δm : M.Con}{Am : M.For Γm}{γm : M.Sub Δm Γm}{PfAm : M.Pf Δm (Am M.[ γm ]F )} -> ⟦ γm M.,p PfAm ⟧S ≡ transport (λ z -> D.Sub ⟦ Δm ⟧C z (γm M.,p PfAm)) (sym ⟦▸p⟧) (⟦ γm ⟧S D.,p (substp (λ z -> D.Pf ⟦ Δm ⟧C z PfAm) ⟦[]F⟧ ⟦ PfAm ⟧Pf)) -- transport (N.Sub ⟦ Δm ⟧C) (sym ⟦▸p⟧) (⟦ γm ⟧S N.,p substp (N.Pf ⟦ Δm ⟧C) ⟦[]F⟧ ⟦ PfAm ⟧Pf)
+      ⟦pp⟧ : {Γm : M.Con}{Am : M.For Γm} -> ⟦ M.pp {Γm} {Am} ⟧S ≡ transport (λ z -> D.Sub z ⟦ Γm ⟧C M.pp) (sym ⟦▸p⟧) D.pp
+      
+      ⟦_⟧Tm : {Γm : M.Con} -> (tm : M.Tm Γm) -> D.Tm ⟦ Γm ⟧C tm
+      ⟦[]t⟧ : {Γm Δm : M.Con}{γm : M.Sub Δm Γm}{tm : M.Tm Γm} -> ⟦ tm M.[ γm ]t ⟧Tm ≡ ⟦ tm ⟧Tm D.[ ⟦ γm ⟧S ]t
+      ⟦▸t⟧  : {Γm : M.Con} -> ⟦ Γm M.▸t ⟧C ≡ ⟦ Γm ⟧C D.▸t
+      ⟦,t⟧  : {Γm Δm : M.Con}{γm : M.Sub Δm Γm}{tm : M.Tm Δm} -> ⟦ γm M.,t tm ⟧S ≡ transport (λ z -> D.Sub ⟦ Δm ⟧C z (γm M.,t tm)) (sym ⟦▸t⟧) (⟦ γm ⟧S D.,t ⟦ tm ⟧Tm)
+      ⟦pt⟧  : {Γm : M.Con} -> ⟦ M.pt {Γm} ⟧S  ≡ transport (λ z -> D.Sub z ⟦ Γm ⟧C M.pt) (sym ⟦▸t⟧) D.pt
+      ⟦qt⟧  : {Γm : M.Con} -> ⟦ M.qt {Γm} ⟧Tm ≡ transport (λ z -> D.Tm z M.qt) (sym ⟦▸t⟧) D.qt
+
+      ⟦_⟧Tms : {Γm : M.Con}{n : ℕ} -> (tmsm : M.Tms Γm n) -> D.Tms ⟦ Γm ⟧C n tmsm
+      ⟦[]ts⟧ : {Γm Δm : M.Con}{γm : M.Sub Δm Γm}{n : ℕ}{tmsm : M.Tms Γm n} -> ⟦ tmsm M.[ γm ]ts ⟧Tms ≡ ((⟦ tmsm ⟧Tms) D.[ ⟦ γm ⟧S ]ts)
+      ⟦εs⟧   : {Γm : M.Con} -> ⟦ M.εs {Γm} ⟧Tms ≡ D.εs
+      ⟦,s⟧   : {Γm Δm : M.Con}{γm : M.Sub Δm Γm}{n : ℕ}{tmsm : M.Tms Γm n}{tm : M.Tm Γm} -> ⟦ tmsm M.,s tm ⟧Tms ≡ (⟦ tmsm ⟧Tms D.,s ⟦ tm ⟧Tm)
+      ⟦π₁⟧   : {Γm Δm : M.Con}{n : ℕ}{tmsm : M.Tms Γm (suc n)} -> ⟦ M.π₁ tmsm ⟧Tms ≡ D.π₁ ⟦ tmsm ⟧Tms
+      ⟦π₂⟧   : {Γm Δm : M.Con}{n : ℕ}{tmsm : M.Tms Γm (suc n)} -> ⟦ M.π₂ tmsm ⟧Tm  ≡ D.π₂ ⟦ tmsm ⟧Tms
+      
+      ⟦fun⟧  : {Γm : M.Con}{n : ℕ}{ar : funar n}{tmsm : M.Tms Γm n} -> ⟦ M.fun n ar tmsm ⟧Tm ≡ D.fun n ar ⟦ tmsm ⟧Tms
+      ⟦rel⟧  : {Γm : M.Con}{n : ℕ}{ar : relar n}{tmsm : M.Tms Γm n} -> ⟦ M.rel n ar tmsm ⟧F  ≡ D.rel n ar ⟦ tmsm ⟧Tms
+
+      ⟦∀⟧    : {Γm : M.Con}{Am : M.For (Γm M.▸t)} -> ⟦ M.∀' Am ⟧F ≡ D.∀' (transport (λ z -> D.For z Am) ⟦▸t⟧ ⟦ Am ⟧F)
+      ⟦∃⟧    : {Γm : M.Con}{Am : M.For (Γm M.▸t)} -> ⟦ M.∃' Am ⟧F ≡ D.∃' (transport (λ z -> D.For z Am) ⟦▸t⟧ ⟦ Am ⟧F)
+
+      ⟦Eq⟧   : {Γm : M.Con}{tm tm' : M.Tm Γm} -> ⟦ M.Eq tm tm' ⟧F ≡ D.Eq ⟦ tm ⟧Tm ⟦ tm' ⟧Tm
