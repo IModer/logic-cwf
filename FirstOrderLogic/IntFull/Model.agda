@@ -209,8 +209,8 @@ record DepModel (i j k l m : Level)(M : Model i j k l m) : Set (lsuc (i ⊔ j �
               (γ ∘ δ) ∘ θ ≡ transport (Sub Ξ Γ) (sym M.ass) (γ ∘ (δ ∘ θ))
             
         ◆  : Con M.◆
-        ε   : {Γm : M.Con}{Γ : Con Γm} -> Sub Γ ◆ M.ε
-        ◆η  : {Γm : M.Con}{Γ : Con Γm}{σm : M.Sub Γm M.◆} -> (σ : Sub Γ ◆ σm) -> σ ≡ transport (Sub Γ ◆) (sym (M.◆η σm)) ε
+        ε  : {Γm : M.Con}{Γ : Con Γm} -> Sub Γ ◆ M.ε
+        ◆η : {Γm : M.Con}{Γ : Con Γm}{σm : M.Sub Γm M.◆} -> (σ : Sub Γ ◆ σm) -> σ ≡ transport (Sub Γ ◆) (sym (M.◆η σm)) ε
 
         For   : {Γm : M.Con} -> Con Γm -> M.For Γm -> Set k
         _[_]F : ∀{Γm Δm : M.Con}{Γ : Con Γm}{Δ : Con Δm}{Am : M.For Γm}{γm : M.Sub Δm Γm} → For Γ Am → Sub Δ Γ γm → For Δ (Am M.[ γm ]F)

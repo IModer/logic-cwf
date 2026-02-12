@@ -23,7 +23,7 @@ module PropositionalLogic.IntFull.BoolModel
   
   BoolM : Model Atom _ _ _ _
   BoolM = record
-    { Con = Prop
+    { Con = Prop 
     ; Sub = λ Γ Δ → Γ → Δ
     ; _∘_ = λ γ δ θ → γ (δ θ)
     ; id = λ γ → γ

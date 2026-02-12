@@ -25,7 +25,7 @@ record Model (i j k l : Level) : Set (lsuc (i ⊔ j ⊔ k ⊔ l)) where
         
         -- For Pf, we have additional operations _▸p_ (context extention) 
         -- Pf : For → Prop
-        Pf    : Con → For → Prop l -- mivel Propba megy ezért nem kellenek a funktor törvények
+        Pf   : Con → For → Prop l -- mivel Propba megy ezért nem kellenek a funktor törvények
         _[_] : ∀{Γ K} → Pf Γ K → ∀{Δ} → (γ : Sub Δ Γ) → Pf Δ K
         -- this functor is locally representable
         _▸_  : Con → For → Con
@@ -33,11 +33,13 @@ record Model (i j k l : Level) : Set (lsuc (i ⊔ j ⊔ k ⊔ l)) where
         p    : ∀{Γ K} → Sub (Γ ▸ K) Γ
         q    : ∀{Γ K} → Pf  (Γ ▸ K) K
         
-        ⊥       : For
-        exfalso : ∀{Γ K} → Pf Γ ⊥ → Pf Γ K
-
         ⊤  : For
         tt : ∀{Γ} → Pf Γ ⊤
+
+        _∧_    : For → For → For
+        ∧intro : ∀{Γ K L} → Pf Γ K → Pf Γ L → Pf Γ (K ∧ L)
+        ∧elim₁ : ∀{Γ K L} → Pf Γ (K ∧ L) → Pf Γ K
+        ∧elim₂ : ∀{Γ K L} → Pf Γ (K ∧ L) → Pf Γ L
 
         _⊃_    : For → For → For
         ⊃intro : ∀{Γ K L} → Pf (Γ ▸ K) L → Pf Γ (K ⊃ L)
@@ -57,12 +59,6 @@ record Model (i j k l : Level) : Set (lsuc (i ⊔ j ⊔ k ⊔ l)) where
     db2 : ∀{Γ K L M} → Pf (Γ ▸ K ▸ L ▸ M) K 
     db2 = (q [ p ]) [ p ]
 
-    ¬_ : For → For
-    ¬ A = A ⊃ ⊥
-
     -- modus ponens
     _$_ : ∀{Γ A B} → Pf Γ (A ⊃ B) → Pf Γ A → Pf Γ B
     PfAB $ PfA = ⊃elim PfAB [ id , PfA ]
-
-    contrad : ∀{Γ K X} → Pf Γ K → Pf Γ (¬ K) → Pf Γ X
-    contrad K ¬K = exfalso (¬K $ K)

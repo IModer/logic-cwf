@@ -29,6 +29,7 @@ record Σp {i j}(A : Prop i)(B : A → Prop j) : Prop (i ⊔ j) where
     proj₁ : A
     proj₂ : B proj₁
 open Σp public
+
 _×p_ : ∀{i j} → Prop i → Prop j → Prop (i ⊔ j)
 A ×p B = Σp A λ _ → B
 
@@ -98,6 +99,16 @@ ind+p : ∀{i j k}{A : Prop i}{B : Prop j}(C : A +p B → Prop k) →
   ((x : A) → C (inj₁ x)) → ((y : B) → C (inj₂ y)) → (w : A +p B) → C w
 ind+p C u v (inj₁ x) = u x
 ind+p C u v (inj₂ y) = v y
+
+data _+_ {i j}(A : Set i)(B : Set j) : Set (i ⊔ j) where
+  inj₁ : A → A + B
+  inj₂ : B → A + B
+
+ind+ : ∀{i j k}{A : Set i}{B : Set j}(C : A + B → Set k) →
+  ((x : A) → C (inj₁ x)) → ((y : B) → C (inj₂ y)) → (w : A + B) → C w
+ind+ C u v (inj₁ x) = u x
+ind+ C u v (inj₂ y) = v y
+
 
 data ∃ {i}{j}(A : Set i)(B : A → Prop j) : Prop (i ⊔ j) where
   _,∃_ : (a : A) → B a → ∃ A B
