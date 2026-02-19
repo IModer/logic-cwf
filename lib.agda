@@ -1,4 +1,4 @@
-{-# OPTIONS --prop #-}
+{-# OPTIONS --prop --rewriting #-}
 
 module lib where
 
@@ -157,7 +157,7 @@ record LiftProp {a ℓ} (A : Prop a) : Prop (a ⊔ ℓ) where
 data _≡_ {i}{A : Set i}(x : A) : A → Prop i where
   refl : x ≡ x
 
--- {-# BUILTIN REWRITE _≡_ #-}
+{-# BUILTIN REWRITE _≡_ #-}
 
 infix 4 _≡_
 infix  3 _∎
@@ -179,6 +179,7 @@ postulate
   -- {-# REWRITE transport-refl #-}
 
   funext : {A : Set}{B : A → Set}{f g : (a : A) → (B a)} → ((x : A) → f x ≡ g x) → f ≡ g
+  funext-imp : {A : Set}{B : A → Set}{f g : {x : A} → B x} → (∀ {x} → f {x} ≡ g {x}) → (λ {x} → f {x}) ≡ (λ {x} → g {x})
 
 substp : ∀{i j}{A : Set i}(B : A → Prop j){a a' : A} → a ≡ a' → B a → B a'
 substp B refl u = u
@@ -221,6 +222,8 @@ data Squash {ℓ} (A : Set ℓ) : Prop ℓ where
 squash-elim : ∀ {ℓ₁ ℓ₂} (A : Set ℓ₁) (P : Prop ℓ₂) → (A → P) → Squash A → P
 squash-elim A P f (squash x) = f x
 
+postulate
+  unsquash :  ∀ {ℓ₁}{A : Set ℓ₁} -> Squash A -> A
 
 module Extra where
 
