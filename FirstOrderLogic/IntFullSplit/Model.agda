@@ -2,125 +2,51 @@
 
 open import lib
 
-module FirstOrderLogic.IntFull.Model
+module FirstOrderLogic.IntFullSplit.Model
   (funar : ℕ → Set)
   (relar : ℕ → Set)
   where
 
 record Model (i j k l m : Level) : Set (lsuc (i ⊔ j ⊔ k ⊔ l ⊔ m)) where
   infixl 5 _▸t _▸p_
-  infixl 5 _,t_ _,p_
-  infixr 7 _∘_
-  infixl 8 _[_]t _[_]ts _[_]F _[_]p
+  infixl 5 _,t_ _,p_ _,s_
+  infixr 7 _∘t_ _∘p_
+  infixl 8 _[_]t _[_]ts _[_]F _[_]P _[_]p _[_]C
   infixr 6 _⊃_
   field
-    -- We translate the Second order example into a first order GAT
-    -- The main idea of the traslation is to encode the variables
-    -- that we got from the second order operators for free
 
-    -- These variables will be handles via a Cartesian Closed Category
-    -- The objects are Contexts which will story our variables, and arrows are morphisms between context
-    -- these are substitutions
-    -- Cartesian Closed Category
-    Con   : Set i                                           -- Objects
-    Sub   : Con → Con → Set j                               -- Morphisms/Arrows
-    _∘_   : ∀{Γ Δ Θ} → Sub Δ Γ → Sub Θ Δ → Sub Θ Γ          -- Composition arrows
-    id    : ∀{Γ} → Sub Γ Γ                                  -- Identity arrows
-    -- Equations
-    ass   : ∀{Γ Δ}{γ : Sub Δ Γ}{Θ}{δ : Sub Θ Δ}{Ξ}{θ : Sub Ξ Θ} → (γ ∘ δ) ∘ θ ≡ γ ∘ (δ ∘ θ)
-    idl   : ∀{Γ Δ}{γ : Sub Δ Γ} → id ∘ γ ≡ γ
-    idr   : ∀{Γ Δ}{γ : Sub Δ Γ} → γ ∘ id ≡ γ
-    -- Our category comes with a terminal object
-    ◆     : Con
-    ε     : ∀{Γ} → Sub Γ ◆
-    -- Universal property
-    ◆η    : ∀{Γ}(σ : Sub Γ ◆) → σ ≡ ε
+    Cont : Set i
+    Subt : Cont → Cont → Set j
+    _∘t_ : ∀{Γ Δ Θ} → Subt Δ Γ → Subt Θ Δ → Subt Θ Γ
+    idt  : ∀{Γ} → Subt Γ Γ
+    asst : ∀{Γ Δ}{γ : Subt Δ Γ}{Θ}{δ : Subt Θ Δ}{Ξ}{θ : Subt Ξ Θ} → (γ ∘t δ) ∘t θ ≡ γ ∘t (δ ∘t θ)
+    idlt : ∀{Γ Δ}{γ : Subt Δ Γ} → idt ∘t γ ≡ γ
+    idrt : ∀{Γ Δ}{γ : Subt Δ Γ} → γ ∘t idt ≡ γ
+    ◆t   : Cont
+    εt   : ∀{Γ} → Subt Γ ◆t
+    ◆tη  : ∀{Γ}(σ : Subt Γ ◆t) → σ ≡ εt
 
-    -- We then translate each of our sort into a functor from the 
-    -- opposite of the base category (category of contexts (Conᵒᵖ)) to the category of Sets
-    -- This is also called the presheaf over the base category (PrShf(Con))
-    -- For : Set
-    -- The functors action on Objects (Con)
-    For   : Con → Set k
-    -- The functors action on Arrows (Sub Δ Γ)
-    _[_]F : ∀{Γ Δ} → For Γ → Sub Δ Γ → For Δ   -- Sub Δ Γ → (For Γ → For Δ) == Γ ⇒ Δ → (For Γ )
-    -- because For is a Functor it must preserve the equations
-    [∘]F  : ∀{Γ}{K : For Γ}{Δ}{γ : Sub Δ Γ}{Θ}{δ : Sub Θ Δ} → K [ γ ∘ δ ]F ≡ K [ γ ]F [ δ ]F
-    [id]F : ∀{Γ}{K : For Γ} → K [ id ]F ≡ K
+    For : Cont -> Set k
+    _[_]F : ∀{Γ Δ} → For Γ → Subt Δ Γ → For Δ
+    [∘]F  : ∀{Γ}{K : For Γ}{Δ}{γ : Subt Δ Γ}{Θ}{δ : Subt Θ Δ} → K [ γ ∘t δ ]F ≡ K [ γ ]F [ δ ]F
+    [id]F : ∀{Γ}{K : For Γ} → K [ idt ]F ≡ K
 
-    -- For Pf, we have additional operations _▸p_ (context extention) 
-    -- Pf : For → Prop
-    Pf    : (Γ : Con) → For Γ → Prop l -- mivel Propba megy ezért nem kellenek a funktor 
-    _[_]p : ∀{Γ K} → Pf Γ K → ∀{Δ} → (γ : Sub Δ Γ) → Pf Δ (K [ γ ]F)
-    -- this functor is locally representable
-    _▸p_  : (Γ : Con) → For Γ → Con
-    _,p_  : ∀{Γ Δ} → (γ : Sub Δ Γ) → ∀{K} → Pf Δ (K [ γ ]F) → Sub Δ (Γ ▸p K)
-    pp    : ∀{Γ K} → Sub (Γ ▸p K) Γ
-    qp    : ∀{Γ K} → Pf  (Γ ▸p K) (K [ pp ]F)
-    ▸pβ₁  : ∀{Γ Δ}{γ : Sub Δ Γ}{K}{k : Pf Δ (K [ γ ]F)} → pp ∘ (γ ,p k) ≡ γ
-    -- β₂ nem kell mert Pf propba van
-    -- kell η
-    ▸pη   : ∀{Γ K} -> id ≡ (pp ,p qp) ∈ Sub (Γ ▸p K) (Γ ▸p K)
-    -- ∀{Γ Δ K}{γp : Sub Δ (Γ ▸p K)}  → (pp ∘ γp) ,p substp (λ K → Pf Δ K) (sym [∘]F) (qp [ γp ]p) ≡ γp
-    -- The second half has to be transported because
-    -- qp [ γp ]p : Pf Δ (K [ pp ]F [ γp ]F)
-    -- but we need ? : Pf Δ (K [ pp ∘ γp ]F)
-
-    -- propositional connectives (they don't depend on the term context)
-
-    -- Then for every operation on For and Pf we can just add them and say how they behave over _[_]
-    -- ⊥ : For, exfalso : Pf ⊥ → Pf K
-    ⊥    : ∀{Γ} → For Γ
-    ⊥[]  : ∀{Γ Δ}{γ : Sub Δ Γ} → ⊥ [ γ ]F ≡ ⊥
-    exfalso : ∀{Γ K} → Pf Γ ⊥ → Pf Γ K
-
-    -- ⊤ : For, tt : Pf ⊤
-    ⊤    : ∀{Γ} → For Γ
-    ⊤[]  : ∀{Γ Δ}{γ : Sub Δ Γ} → ⊤ [ γ ]F ≡ ⊤
-    tt   : ∀{Γ} → Pf Γ ⊤
-
-    -- ⊃ : For → For → For, (Pf K → Pf L) ↔ Pf (K ⊃ L)
-    _⊃_  : ∀{Γ} → For Γ → For Γ → For Γ
-    ⊃[]  : ∀{Γ K L Δ}{γ : Sub Δ Γ} → (K ⊃ L) [ γ ]F ≡ K [ γ ]F ⊃ L [ γ ]F
-    ⊃intro  : ∀{Γ K L} → Pf (Γ ▸p K) (L [ pp ]F) → Pf Γ (K ⊃ L)
-    ⊃elim  : ∀{Γ K L} → Pf Γ (K ⊃ L) → Pf (Γ ▸p K) (L [ pp ]F) -- Pf Γ (K ⊃ L) → Pf Γ K → Pf Γ L -- Pf (Γ ▸p K) (L [ pp ]F)
-
-    _∧_  : ∀{Γ} → For Γ → For Γ → For Γ
-    ∧[]  : ∀{Γ K L Δ}{γ : Sub Δ Γ} → (K ∧ L) [ γ ]F ≡ (K [ γ ]F) ∧ (L [ γ ]F)
-    ∧intro : ∀{Γ}{K L} → Pf Γ K → Pf Γ L → Pf Γ (K ∧ L)
-    ∧elim₁ : ∀{Γ}{K L} → Pf Γ (K ∧ L) → Pf Γ K
-    ∧elim₂ : ∀{Γ}{K L} → Pf Γ (K ∧ L) → Pf Γ L
-
-    _∨_  : ∀{Γ} → For Γ → For Γ → For Γ
-    ∨[]  : ∀{Γ K L Δ}{γ : Sub Δ Γ} → (K ∨ L) [ γ ]F ≡ (K [ γ ]F) ∨ (L [ γ ]F)
-    ∨elim : ∀{Γ}{K L C} → Pf (Γ ▸p K) (C [ pp ]F) → Pf (Γ ▸p L) (C [ pp ]F) → Pf Γ (K ∨ L) → Pf Γ C
-    ∨intro₁ : ∀{Γ}{K L} → Pf Γ K → Pf Γ (K ∨ L)
-    ∨intro₂ : ∀{Γ}{K L} → Pf Γ L → Pf Γ (K ∨ L)
-
-    -- terms (Tm : Set)
-    Tm    : Con → Set j
-    _[_]t : ∀{Γ} → Tm Γ → ∀{Δ} → Sub Δ Γ → Tm Δ
-    [∘]t  : ∀{Γ}{t : Tm Γ}{Δ}{γ : Sub Δ Γ}{Θ}{δ : Sub Θ Δ} → t [ γ ∘ δ ]t ≡ t [ γ ]t [ δ ]t
-    [id]t : ∀{Γ}{t : Tm Γ} → t [ id ]t ≡ t
-    _▸t   : Con → Con
-    _,t_  : ∀{Γ Δ} → Sub Δ Γ → Tm Δ → Sub Δ (Γ ▸t)
-    pt    : ∀{Γ} → Sub (Γ ▸t) Γ
+    Tm    : Cont → Set j
+    _[_]t : ∀{Γ} → Tm Γ → ∀{Δ} → Subt Δ Γ → Tm Δ
+    [∘]t  : ∀{Γ}{t : Tm Γ}{Δ}{γ : Subt Δ Γ}{Θ}{δ : Subt Θ Δ} → t [ γ ∘t δ ]t ≡ t [ γ ]t [ δ ]t
+    [id]t : ∀{Γ}{t : Tm Γ} → t [ idt ]t ≡ t
+    _▸t   : Cont → Cont
+    _,t_  : ∀{Γ Δ} → Subt Δ Γ → Tm Δ → Subt Δ (Γ ▸t)
+    pt    : ∀{Γ} → Subt (Γ ▸t) Γ
     qt    : ∀{Γ} → Tm (Γ ▸t)
-    ▸tβ₁  : ∀{Γ Δ}{γ : Sub Δ Γ}{t : Tm Δ} → (pt ∘ (γ ,t t)) ≡ γ
-    ▸tβ₂  : ∀{Γ Δ}{γ : Sub Δ Γ}{t : Tm Δ} → (qt [ γ ,t t ]t) ≡ t
-    ▸tη   : ∀{Γ} → id ≡ (pt ,t qt) ∈ (Sub (Γ ▸t) (Γ ▸t))
-    
-    -- Telescopes of terms
-    -- They are basically isomorphic to Vectors of Tm-s
-    -- Why do we nned them? Its more principled to build these into the theory rather then relaying on out metatheorys Vectors
-    -- We only rely on natural numbers from our metatheory
-    -- It is also a contravariant functor from Con
-    Tms : Con → ℕ → Set m
-    -- Action on morphisms
-    _[_]ts : ∀{Γ n} → Tms Γ n → ∀{Δ} → Sub Δ Γ → Tms Δ n
-    -- Functor laws
-    [∘]ts  : ∀{Γ n}{ts : Tms Γ n}{Δ}{γ : Sub Δ Γ}{Θ}{δ : Sub Θ Δ} → ts [ γ ∘ δ ]ts ≡ ts [ γ ]ts [ δ ]ts
-    [id]ts : ∀{Γ n}{ts : Tms Γ n} → ts [ id ]ts ≡ ts
+    ▸tβ₁  : ∀{Γ Δ}{γ : Subt Δ Γ}{t : Tm Δ} → (pt ∘t (γ ,t t)) ≡ γ
+    ▸tβ₂  : ∀{Γ Δ}{γ : Subt Δ Γ}{t : Tm Δ} → (qt [ γ ,t t ]t) ≡ t
+    ▸tη   : ∀{Γ} → idt ≡ (pt ,t qt) ∈ (Subt (Γ ▸t) (Γ ▸t))
+
+    Tms    : Cont → ℕ → Set m
+    _[_]ts : ∀{Γ n} → Tms Γ n → ∀{Δ} → Subt Δ Γ → Tms Δ n
+    [∘]ts  : ∀{Γ n}{ts : Tms Γ n}{Δ}{γ : Subt Δ Γ}{Θ}{δ : Subt Θ Δ} → ts [ γ ∘t δ ]ts ≡ ts [ γ ]ts [ δ ]ts
+    [id]ts : ∀{Γ n}{ts : Tms Γ n} → ts [ idt ]ts ≡ ts
     εs     : ∀{Γ} → Tms Γ zero
     ◆sη    : ∀{Γ}(ts : Tms Γ zero) → ts ≡ εs
     _,s_   : ∀{Γ n} → Tms Γ n → Tm Γ → Tms Γ (suc n)
@@ -129,78 +55,84 @@ record Model (i j k l m : Level) : Set (lsuc (i ⊔ j ⊔ k ⊔ l ⊔ m)) where
     ▸sβ₁   : ∀{Γ n}{ts : Tms Γ n}{t : Tm Γ} → π₁ (ts ,s t) ≡ ts
     ▸sβ₂   : ∀{Γ n}{ts : Tms Γ n}{t : Tm Γ} → π₂ (ts ,s t) ≡ t
     ▸sη    : ∀{Γ n}{ts : Tms Γ (suc n)} → π₁ ts ,s π₂ ts ≡ ts
-    ,[]    : ∀{Γ n}{ts : Tms Γ n}{t : Tm Γ}{Δ}{γ : Sub Δ Γ} → (ts ,s t) [ γ ]ts ≡ (ts [ γ ]ts) ,s (t [ γ ]t)
-
-    -- function and relation symbols (fun : (n : ℕ) → funar n → Tms n → Tm, rel : (n : ℕ) → relar n → Tms n → For)
-    -- kell helyettesítési szabály
-    --fun  : ∀{Γ}(n : ℕ) → funar n → (Tm Γ) ^ n → Tm Γ
-    --fun[] : ∀{Γ n a ts Δ}{γ : Sub Δ Γ} → fun n a ts [ γ ]t ≡ fun n a (ind^ {C = ((Tm Δ) ^_)} (λ _ → *) (λ _ t ts → t [ γ ]t ,Σ ts) ts)
-    --rel  : ∀{Γ}(n : ℕ) → relar n → (Tm Γ) ^ n → For Γ
-    --rel[] : ∀{Γ n a ts Δ}{γ : Sub Δ Γ} → (rel n a ts) [ γ ]F ≡ rel n a (ind^ {C = ((Tm Δ) ^_)} (λ _ → *) (λ _ t ts → t [ γ ]t ,Σ ts) ts)
+    ,[]    : ∀{Γ n}{ts : Tms Γ n}{t : Tm Γ}{Δ}{γ : Subt Δ Γ} → (ts ,s t) [ γ ]ts ≡ (ts [ γ ]ts) ,s (t [ γ ]t)
 
     fun  : ∀{Γ}(n : ℕ) → funar n → Tms Γ n → Tm Γ
-    fun[] : ∀{Γ n a ts Δ}{γ : Sub Δ Γ} → (fun n a ts [ γ ]t) ≡ fun n a (ts [ γ ]ts)
+    fun[] : ∀{Γ n a ts Δ}{γ : Subt Δ Γ} → ((fun n a ts) [ γ ]t) ≡ fun n a (ts [ γ ]ts)
     rel  : ∀{Γ}(n : ℕ) → relar n → Tms Γ n → For Γ
-    rel[] : ∀{Γ n a ts Δ}{γ : Sub Δ Γ} → ((rel n a ts) [ γ ]F) ≡ rel n a (ts [ γ ]ts)
+    rel[] : ∀{Γ n a ts Δ}{γ : Subt Δ Γ} → ((rel n a ts) [ γ ]F) ≡ rel n a (ts [ γ ]ts)
 
+    Conp  : Cont -> Set i
+    _[_]C : ∀{Γt Δt} -> Conp Γt -> Subt Δt Γt -> Conp Δt
+    [id]C : ∀{Γt}{Γ : Conp Γt} -> Γ [ idt ]C ≡ Γ
+    [∘]C  : ∀{Γt Δt Θt}{Γ : Conp Γt}{γ : Subt Δt Γt}{δ : Subt Θt Δt} -> Γ [ γ ∘t δ ]C ≡ Γ [ γ ]C [ δ ]C
 
-    -- first order connectives
+    Subp : ∀{Γt} -> Conp Γt → Conp Γt → Prop j
+    _∘p_ : ∀{Γt}{Γ Δ Θ : Conp Γt} → Subp Δ Γ → Subp Θ Δ → Subp Θ Γ
+    idp  : ∀{Γt}{Γ : Conp Γt} → Subp Γ Γ
+    --assp : ∀{Γt}{Γ Δ : Conp Γt}{γ : Subp Δ Γ}{Θ}{δ : Subp Θ Δ}{Ξ}{θ : Subp Ξ Θ} → (γ ∘p δ) ∘p θ ≡ γ ∘p (δ ∘p θ)
+    --idlp : ∀{Γt}{Γ Δ : Conp Γt}{γ : Subp Δ Γ} → idp ∘p γ ≡ γ
+    --idrp : ∀{Γt}{Γ Δ : Conp Γt}{γ : Subp Δ Γ} → γ ∘p idp ≡ γ
+    ◆p   : ∀{Γt} -> Conp Γt 
+    εp   : ∀{Γt}{Γ : Conp Γt} → Subp Γ ◆p
+    --◆pη  : ∀{Γt}{Γ : Conp Γt}(σ : Subp Γ ◆p) → σ ≡ εp
 
-    -- ∀ : (Tm → For) → For, ((t : Tm) → Pf (K t)) ↔ Pf (∀ K)
-    ∀'     : ∀{Γ} → For (Γ ▸t) → For Γ
-    ∀[]    : ∀{Γ K Δ}{γ : Sub Δ Γ} → (∀' K) [ γ ]F ≡ ∀' (K [ (γ ∘ pt) ,t qt ]F)
-    ∀intro : ∀{Γ K} → Pf (Γ ▸t) K → Pf Γ (∀' K)
-    ∀elim  : ∀{Γ K} → Pf Γ (∀' K) → Pf (Γ ▸t) K
+    Pf    : {Γt : Cont} → Conp Γt -> For Γt → Prop l
+    _[_]P : ∀{Γt}{Γ : Conp Γt}{K} → Pf Γ K → ∀{Δt} → (γt : Subt Δt Γt) → Pf (Γ [ γt ]C) (K [ γt ]F)
+    _[_]p : ∀{Γt}{Γ : Conp Γt}{K} → Pf Γ K → ∀{Δ} → (γ : Subp Δ Γ) → Pf Δ K
+    _▸p_  : ∀{Γt} -> Conp Γt → For Γt → Conp Γt
+    _,p_  : ∀{Γt}{Γ Δ : Conp Γt} → (γ : Subp Δ Γ) → ∀{K : For Γt} → Pf Δ K → Subp Δ (Γ ▸p K)
+    pp    : ∀{Γt}{Γ : Conp Γt}{K} → Subp (Γ ▸p K) Γ
+    qp    : ∀{Γt}{Γ : Conp Γt}{K} → Pf   (Γ ▸p K) K
+    --▸pβ₁  : ∀{Γt}{Γ Δ : Conp Γt}{γ : Subp Δ Γ}{K}{k : Pf Δ K} → pp ∘p (γ ,p k) ≡ γ
+    --▸pη   : ∀{Γt}{Γ : Conp Γt}{K} -> idp ≡ (pp ,p qp) ∈ Subp (Γ ▸p K) (Γ ▸p K)
+    
+    ⊥    : ∀{Γt} → For Γt
+    ⊥[]  : ∀{Γt Δt}{γ : Subt Δt Γt} → ⊥ [ γ ]F ≡ ⊥
+    exfalso : ∀{Γt K}{Γ : Conp Γt} → Pf Γ ⊥ → Pf Γ K
 
-    ∃'      : ∀{Γ} → For (Γ ▸t) → For Γ
-    ∃[]    : ∀{Γ K Δ}{γ : Sub Δ Γ} → (∃' K) [ γ ]F ≡ ∃' (K [ (γ ∘ pt) ,t qt ]F)
-    ∃intro : ∀{Γ K} → (t : Tm Γ) → Pf Γ (K [ id ,t t ]F) → Pf Γ (∃' K)
-    --∃intro : ∀{Γ K} → (∃ (Tm Γ) (λ t → Pf Γ (K [ id ,t t ]F))) → Pf Γ (∃' K)
-    ∃elim  : ∀{Γ K L} → Pf Γ (∃' K) → Pf ((Γ ▸t) ▸p K) (L [ pt ∘ pp ]F) → Pf Γ L
+    ⊤    : ∀{Γt} → For Γt
+    ⊤[]  : ∀{Γt Δt}{γt : Subt Δt Γt} → ⊤ [ γt ]F ≡ ⊤
+    tt   : ∀{Γt}{Γ : Conp Γt} → Pf Γ ⊤
 
-    -- Eq : Tm → Tm → For, ref : (t : Tm) → Eq t t, subst : (K : Tm → For) → Pf (Eq t t') → Pf (K t) → Pf (K t')
-    Eq    : ∀{Γ} → Tm Γ → Tm Γ → For Γ
-    Eq[]  : ∀{Γ Δ}{γ : Sub Δ Γ}{t t' : Tm Γ} → (Eq t t') [ γ ]F ≡ Eq (t [ γ ]t) (t' [ γ ]t)
-    Eqrefl   : ∀{Γ}{t : Tm Γ} → Pf Γ (Eq t t)
-    subst' : ∀{Γ}(K : For (Γ ▸t)){t t' : Tm Γ} → Pf Γ (Eq t t') → Pf Γ (K [ id ,t t ]F) → Pf Γ (K [ id ,t t' ]F)
+    _⊃_    : ∀{Γt} → For Γt → For Γt → For Γt
+    ⊃[]    : ∀{Γt K L Δt}{γt : Subt Δt Γt} → (K ⊃ L) [ γt ]F ≡ K [ γt ]F ⊃ L [ γt ]F
+    ⊃intro : ∀{Γt K L}{Γ : Conp Γt} → Pf (Γ ▸p K) L → Pf Γ (K ⊃ L)
+    ⊃elim  : ∀{Γt K L}{Γ : Conp Γt} → Pf Γ (K ⊃ L) → Pf (Γ ▸p K) L
 
-  -- ,∘ : ∀{Γ Δ}{γ : Sub Δ Γ}{t : Tm Δ}{Θ}{δ : Sub Θ Δ} → (γ ,t t) ∘ δ ≡ γ ∘ δ ,t t [ δ ]t
-  -- ,∘ {Γ}{Δ}{γ}{t}{Θ}{δ} = trans (sym ▸tη) (cong (λ z → proj₁ z ,t proj₂ z) (mk,= (trans (sym ass) (cong (_∘ δ) ▸tβ₁)) (trans [∘]t (cong (_[ δ ]t) ▸tβ₂))))
-  
-  -- ▸tη' : ∀{Γ} → id {Γ ▸t} ≡ pt ,t qt
-  -- ▸tη' {Γ} = trans (sym ▸tη) (cong (λ z → proj₁ z ,t proj₂ z) (mk,= idr [id]t))
+    _∧_    : ∀{Γt} → For Γt → For Γt → For Γt
+    ∧[]    : ∀{Γt K L Δt}{γt : Subt Δt Γt} → (K ∧ L) [ γt ]F ≡ (K [ γt ]F) ∧ (L [ γt ]F)
+    ∧intro : ∀{Γt}{K L}{Γ : Conp Γt} → Pf Γ K → Pf Γ L → Pf Γ (K ∧ L)
+    ∧elim₁ : ∀{Γt}{K L}{Γ : Conp Γt} → Pf Γ (K ∧ L) → Pf Γ K
+    ∧elim₂ : ∀{Γt}{K L}{Γ : Conp Γt} → Pf Γ (K ∧ L) → Pf Γ L
 
-  mk∧= : ∀{Γ}{A B C D : For Γ} -> A ≡ C -> B ≡ D -> A ∧ B ≡ C ∧ D 
-  mk∧= refl refl = refl
+    _∨_     : ∀{Γt} → For Γt → For Γt → For Γt
+    ∨[]     : ∀{Γt K L Δt}{γt : Subt Δt Γt} → (K ∨ L) [ γt ]F ≡ (K [ γt ]F) ∨ (L [ γt ]F)
+    ∨elim   : ∀{Γt}{K L C}{Γ : Conp Γt} → Pf (Γ ▸p K) C → Pf (Γ ▸p L) C → Pf Γ (K ∨ L) → Pf Γ C
+    ∨intro₁ : ∀{Γt}{K L}{Γ : Conp Γt} → Pf Γ K → Pf Γ (K ∨ L)
+    ∨intro₂ : ∀{Γt}{K L}{Γ : Conp Γt} → Pf Γ L → Pf Γ (K ∨ L)
 
-  _$_ : ∀{Γ K L} → Pf Γ (K ⊃ L) → Pf Γ K → Pf Γ L
-  _$_ {Γ}{K}{L} m k = substp (Pf Γ) (trans (sym [∘]F) (trans (cong (L [_]F) ▸pβ₁) [id]F)) (⊃elim m [ id ,p substp (Pf Γ) (sym [id]F) k ]p)
-
-  un∀' : ∀{Γ K} → Pf Γ (∀' K) → (t : Tm Γ) → Pf Γ (K [ id ,t t ]F)
-  un∀' {Γ}{K} k t = (∀elim k) [ id ,t t ]p
-
-  pp⁺ : ∀{Γ Δ}{K} → (γ : Sub Γ Δ) → Sub (Γ ▸p K [ γ ]F) (Δ ▸p K)
-  pp⁺ {Γ}{Δ}{K} γ = (γ ∘ pp) ,p substp (Pf (Γ ▸p K [ γ ]F)) (sym [∘]F) qp
-
-  pt⁺ : ∀{Γ Δ} → (γ : Sub Γ Δ) → Sub (Γ ▸t) (Δ ▸t)
-  pt⁺ γ = (γ ∘ pt) ,t qt
-
-  -- ∃x (P ∧ Q) -> ∃x P ∧ ∃x Q
-  -- λ (x , Px , Qx) -> (x , Px) , (x , Qx)
-  example3F : (P Q : For (◆ ▸t)) -> For ◆
-  example3F P Q = ∃' (P ∧ Q) ⊃ (∃' P ∧ ∃' Q)
-
-  -- ∃intro {◆} {P} {◆ ▸p ∃' (P ∧ Q)} {!   !} {!   !}
-  example3P : (P Q : For (◆ ▸t)) -> Pf ◆ (example3F P Q)
-  example3P P Q = ⊃intro 
-    (∃elim 
-        (substp (Pf (◆ ▸p ∃' (P ∧ Q))) ∃[] (qp {◆}{∃' (P ∧ Q)})) 
-        (substp (Pf _) (trans (trans (mk∧= (sym ∃[]) (sym ∃[])) (sym ∧[])) [∘]F) 
-        (∧intro 
-            (∃intro (qt [ pp ]t) ({! qp  !})) 
-            (∃intro (qt [ pp ]t) ({!     !}))) 
-        ))
-
+    ∀'     : ∀{Γt} → For (Γt ▸t) → For Γt
+    ∀[]    : ∀{Γt K Δt}{γt : Subt Δt Γt} → (∀' K) [ γt ]F ≡ ∀' (K [ γt ∘t pt ,t qt ]F)
+    ∀intro : ∀{Γt}{K}{Γ : Conp (Γt ▸t)} → Pf (Γ [ pt ]C) K → Pf Γ (∀' K)
+    ∀elim  : ∀{Γt}{K}{Γ : Conp (Γt ▸t)} → Pf Γ (∀' K) → Pf (Γ [ pt ]C) K
+    
+    ∃'     : ∀{Γt} → For (Γt ▸t) → For Γt
+    ∃[]    : ∀{Γt K Δt}{γt : Subt Δt Γt} → (∃' K) [ γt ]F ≡ ∃' (K [ (γt ∘t pt) ,t qt ]F)
+    
+    -- ∃ : (Tm -> For) -> For
+    -- ∃intro : (t : Tm) -> Pf (K t) -> Pf (∃ K)
+    -- ∃elim  : Pf (∃ K) -> ∃ (t : Tm) Pf (K t)
+    -- ∃elim₁ : Pf (∃ K) -> ((t : Tm) -> Pf (K t) -> Pf L) -> Pf L
+    ∃intro : ∀{Γt K} → (t : Tm Γt){Γ : Conp Γt} → Pf Γ (K [ idt ,t t ]F) → Pf Γ (∃' K)
+--    ∃elim  : ∀{Γt K L}{Γ : Conp (Γt ▸t)} → Pf Γ (∃' K) → Pf (Γ ▸p K [ idt ,t qt ]F) L -> Pf Γ L
+    ∃elim : ∀{Γt}{K : For (Γt ▸t)}{Γp : Conp Γt}{Γp' : Conp (Γt ▸t)}{L : For Γt} ->
+          Pf Γp (∃' K) -> Pf (Γp' ▸p K [ pt ,t qt ]F) (L [ pt ]F) -> Pf Γp L
+    Eq     : ∀{Γt} → Tm Γt → Tm Γt → For Γt
+    Eq[]   : ∀{Γt Δt}{γt : Subt Δt Γt}{t t' : Tm Γt} → (Eq t t') [ γt ]F ≡ Eq (t [ γt ]t) (t' [ γt ]t)
+    Eqrefl : ∀{Γt}{t : Tm Γt}{Γ : Conp Γt} → Pf Γ (Eq t t)
+    subst' : ∀{Γt}(K : For (Γt ▸t)){t t' : Tm Γt}{Γ : Conp Γt} → Pf Γ (Eq t t') → Pf Γ (K [ idt ,t t ]F) → Pf Γ (K [ idt ,t t' ]F)
+{-
 record DepModel (i j k l m : Level)(M : Model i j k l m) : Set (lsuc (i ⊔ j ⊔ k ⊔ l ⊔ m)) where
     infixl 5 _▸t _▸p_
     infixl 5 _,t_ _,p_
@@ -535,4 +467,5 @@ record DepModel (i j k l m : Level)(M : Model i j k l m) : Set (lsuc (i ⊔ j �
             {Γm : M.Con}{Γ : Con Γm} ->
             {tm tm' : M.Tm Γm}{t : Tm Γ tm}{t' : Tm Γ tm'} ->
             {Am : M.For (Γm M.▸t)}{pfeq : M.Pf Γm (M.Eq tm tm')}{pfa : M.Pf Γm (Am M.[ M.id M.,t tm ]F)} ->
-            (A : For (Γ ▸t) Am) -> Pf Γ (Eq t t') (pfeq) -> Pf Γ (A [ id ,t t ]F) pfa -> Pf Γ (A [ id ,t t' ]F) (M.subst' Am pfeq pfa)     
+            (A : For (Γ ▸t) Am) -> Pf Γ (Eq t t') (pfeq) -> Pf Γ (A [ id ,t t ]F) pfa -> Pf Γ (A [ id ,t t' ]F) (M.subst' Am pfeq pfa)
+-}      
