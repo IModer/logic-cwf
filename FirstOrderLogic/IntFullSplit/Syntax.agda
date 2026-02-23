@@ -322,8 +322,8 @@ module FirstOrderLogic.IntFullSplit.Syntax
         -- ∃elim  : Pf ∃' K -> (∃ (t : Tm) (Pf (K t)) -> Pf C) -> Pf C
         -- ∃elim  : Pf ∃' K -> ((t : Tm) -> (Pf (K t)) -> Pf C) -> Pf C
 
-        ∃elim  : ∀{Γt}{K : For (Γt ▸t)}{Γp : ConPf Γt}{Γp' : ConPf (Γt ▸t)}{L : For Γt} ->
-          Pf Γp (∃' K) -> Pf (Γp' ▸p K [ pt ,t qt ]F) (L [ pt ]F) -> Pf Γp L
+        ∃elim  : ∀{Γt}{K : For (Γt ▸t)}{Γp : ConPf Γt}{L : For Γt} ->
+          Pf Γp (∃' K) -> Pf ((Γp [ pt ]C) ▸p K [ pt ,t qt ]F) (L [ pt ]F) -> Pf Γp L
         -- ∃elim  : ∀{Γt : ConTm}{K : For (Γt ▸t)}{Γp : ConPf Γt} -> 
         --    Pf Γp (∃' K) -> {!   !}
             {-
@@ -342,17 +342,17 @@ module FirstOrderLogic.IntFullSplit.Syntax
         
         ref  : ∀{Γt}{a}{Γp : ConPf Γt} → Pf Γp (Eq a a)
         subst' : ∀{Γt}(K : For (Γt ▸t)){t t' : Tm Γt}{Γp} → Pf Γp (Eq t t') → Pf Γp (K [ idt ,t t ]F) → Pf Γp (K [ idt ,t t' ]F)
-        _[_]P : ∀{Γt}{K}{Γp : ConPf Γt} → Pf Γp K → ∀{Δt : ConTm} → (γ : Subt Δt Γt) → Pf (Γp [ γ ]C) (K [ γ ]F)
-        _[_]p : ∀{Γt}{Γp : ConPf Γt}{K : For Γt} → Pf Γp K → ∀{Γp'} → Subp Γp' Γp → Pf Γp' K
+        _[_]p : ∀{Γt}{K}{Γp : ConPf Γt} → Pf Γp K → ∀{Δt : ConTm} → (γ : Subt Δt Γt) → Pf (Γp [ γ ]C) (K [ γ ]F)
+        _[_]P : ∀{Γt}{Γp : ConPf Γt}{K : For Γt} → Pf Γp K → ∀{Γp'} → Subp Γp' Γp → Pf Γp' K
         qp : ∀{Γt}{Γp : ConPf Γt}{K : For Γt} → Pf (Γp ▸p K) K
 
     ⊃elim : ∀{Γ K L}{Γp : ConPf Γ} → Pf Γp (K ⊃ L) → Pf (Γp ▸p K) L
-    ⊃elim m = (m [ pp ]p) $ qp
+    ⊃elim m = (m [ pp ]P) $ qp
 
     ∀elim : ∀{Γ K Γp} → Pf {Γ} Γp (∀' K) → Pf {Γ ▸t} (Γp [ pt ]C) K
     ∀elim {K = K}{Γp} k = substp (Pf (Γp [ pt ]C))
         (trans (trans (sym [∘]F) (cong (λ z → K [ z ,t var vz ]F) (trans ass (trans (cong (pt ∘t_) ▸tβ₁) idr)))) [id]F)
-        (un∀ (k [ pt ]P) (var vz))
+        (un∀ (k [ pt ]p) (var vz))
 
     -- ∀x P ∧ ∀x Q -> ∀ x (P ∧ Q)
     example1F : (P Q : For (◆t ▸t)) -> For ◆t
@@ -366,8 +366,8 @@ module FirstOrderLogic.IntFullSplit.Syntax
 
     example2P : {A B C : For ◆t} -> Pf ◆p (example2F {A}{B}{C})
     example2P = ⊃intro (∨elim 
-        (∨intro₁ (∧intro qp (∧elim₂ (qp [ pp ]p)))) 
-        (∨intro₂ (∧intro qp (∧elim₂ (qp [ pp ]p)))) 
+        (∨intro₁ (∧intro qp (∧elim₂ (qp [ pp ]P)))) 
+        (∨intro₂ (∧intro qp (∧elim₂ (qp [ pp ]P)))) 
         (∧elim₁ qp))
 
     example2F' : {A B C : For ◆t} -> For ◆t
@@ -384,7 +384,7 @@ module FirstOrderLogic.IntFullSplit.Syntax
     example3F P Q = ∃' (P ∧ Q) ⊃ (∃' P ∧ ∃' Q)
     -- ∃intro {◆t} {P} {◆p ▸p ∃' (P ∧ Q)} {!   !} {!   !}
     example3P : (P Q : For (◆t ▸t)) -> Pf (◆p) (example3F P Q)
-    example3P P Q = ⊃intro (∃elim {Γp' = ◆p} qp 
+    example3P P Q = ⊃intro (∃elim qp 
       (∧intro 
         (∃intro qt (substp (Pf _) [∘]F (∧elim₁ qp))) 
         (∃intro qt (substp (Pf _) [∘]F (∧elim₂ qp)))))

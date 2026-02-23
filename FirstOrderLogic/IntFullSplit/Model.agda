@@ -78,8 +78,8 @@ record Model (i j k l m : Level) : Set (lsuc (i ⊔ j ⊔ k ⊔ l ⊔ m)) where
     --◆pη  : ∀{Γt}{Γ : Conp Γt}(σ : Subp Γ ◆p) → σ ≡ εp
 
     Pf    : {Γt : Cont} → Conp Γt -> For Γt → Prop l
-    _[_]P : ∀{Γt}{Γ : Conp Γt}{K} → Pf Γ K → ∀{Δt} → (γt : Subt Δt Γt) → Pf (Γ [ γt ]C) (K [ γt ]F)
-    _[_]p : ∀{Γt}{Γ : Conp Γt}{K} → Pf Γ K → ∀{Δ} → (γ : Subp Δ Γ) → Pf Δ K
+    _[_]p : ∀{Γt}{Γ : Conp Γt}{K} → Pf Γ K → ∀{Δt} → (γt : Subt Δt Γt) → Pf (Γ [ γt ]C) (K [ γt ]F)
+    _[_]P : ∀{Γt}{Γ : Conp Γt}{K} → Pf Γ K → ∀{Δ} → (γ : Subp Δ Γ) → Pf Δ K
     _▸p_  : ∀{Γt} -> Conp Γt → For Γt → Conp Γt
     _,p_  : ∀{Γt}{Γ Δ : Conp Γt} → (γ : Subp Δ Γ) → ∀{K : For Γt} → Pf Δ K → Subp Δ (Γ ▸p K)
     pp    : ∀{Γt}{Γ : Conp Γt}{K} → Subp (Γ ▸p K) Γ
@@ -126,8 +126,8 @@ record Model (i j k l m : Level) : Set (lsuc (i ⊔ j ⊔ k ⊔ l ⊔ m)) where
     -- ∃elim₁ : Pf (∃ K) -> ((t : Tm) -> Pf (K t) -> Pf L) -> Pf L
     ∃intro : ∀{Γt K} → (t : Tm Γt){Γ : Conp Γt} → Pf Γ (K [ idt ,t t ]F) → Pf Γ (∃' K)
 --    ∃elim  : ∀{Γt K L}{Γ : Conp (Γt ▸t)} → Pf Γ (∃' K) → Pf (Γ ▸p K [ idt ,t qt ]F) L -> Pf Γ L
-    ∃elim : ∀{Γt}{K : For (Γt ▸t)}{Γp : Conp Γt}{Γp' : Conp (Γt ▸t)}{L : For Γt} ->
-          Pf Γp (∃' K) -> Pf (Γp' ▸p K [ pt ,t qt ]F) (L [ pt ]F) -> Pf Γp L
+    ∃elim : ∀{Γt}{K : For (Γt ▸t)}{Γp : Conp Γt}{L : For Γt} ->
+          Pf Γp (∃' K) -> Pf ((Γp [ pt ]C) ▸p K [ pt ,t qt ]F) (L [ pt ]F) -> Pf Γp L
     Eq     : ∀{Γt} → Tm Γt → Tm Γt → For Γt
     Eq[]   : ∀{Γt Δt}{γt : Subt Δt Γt}{t t' : Tm Γt} → (Eq t t') [ γt ]F ≡ Eq (t [ γt ]t) (t' [ γt ]t)
     Eqrefl : ∀{Γt}{t : Tm Γt}{Γ : Conp Γt} → Pf Γ (Eq t t)
