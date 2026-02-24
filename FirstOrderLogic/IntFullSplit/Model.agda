@@ -114,8 +114,8 @@ record Model (i j k l m : Level) : Set (lsuc (i ⊔ j ⊔ k ⊔ l ⊔ m)) where
 
     ∀'     : ∀{Γt} → For (Γt ▸t) → For Γt
     ∀[]    : ∀{Γt K Δt}{γt : Subt Δt Γt} → (∀' K) [ γt ]F ≡ ∀' (K [ γt ∘t pt ,t qt ]F)
-    ∀intro : ∀{Γt}{K}{Γ : Conp (Γt ▸t)} → Pf (Γ [ pt ]C) K → Pf Γ (∀' K)
-    ∀elim  : ∀{Γt}{K}{Γ : Conp (Γt ▸t)} → Pf Γ (∀' K) → Pf (Γ [ pt ]C) K
+    ∀intro : ∀{Γt}{K}{Γ : Conp Γt} → Pf (Γ [ pt ]C) K → Pf Γ (∀' K)
+    ∀elim  : ∀{Γt}{K : For (Γt ▸t)}{Γ : Conp Γt} → Pf Γ (∀' K) → Pf (Γ [ pt ]C) K
     
     ∃'     : ∀{Γt} → For (Γt ▸t) → For Γt
     ∃[]    : ∀{Γt K Δt}{γt : Subt Δt Γt} → (∃' K) [ γt ]F ≡ ∃' (K [ (γt ∘t pt) ,t qt ]F)

@@ -265,4 +265,4 @@ module FirstOrderLogic.IntFull.KripkeModel
     ; ∨elim = λ PfKC PfLC PfKL Γw → ind+p _ (λ Kw → PfKC (Γw ,Σ Kw)) (λ Lw → PfLC (Γw ,Σ Lw)) (PfKL Γw)
     ; atom = λ x → Psh (∣ x ∣pv) (_pv:_⟨_⟩ x)
     }
-    -}  
+    -}

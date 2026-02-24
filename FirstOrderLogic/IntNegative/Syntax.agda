@@ -1,12 +1,9 @@
 {-# OPTIONS --prop #-}
 
-open import FirstOrderLogic.IntFullSplit.Model
+open import FirstOrderLogic.IntNegative.Model
 open import lib
 
--- We give the initial model of FOLClassicMinimal
--- We give it as a normal form, meaning its a inductive
--- datatype but we can prove it satisfies the equations
-module FirstOrderLogic.IntFullSplit.Syntax
+module FirstOrderLogic.IntNegative.Syntax
     (funar : ℕ → Set)
     (relar : ℕ → Set)
     where
@@ -16,16 +13,9 @@ module FirstOrderLogic.IntFullSplit.Syntax
     infixr 7 _∘t_ _∘p_
     infixl 8 _[_]t _[_]F _[_]C _[_]P _[_]p _[_]v {-_[_]s-} _[_]ts
     infixr 6 _⊃_
-    infixr 7 _∧_ _∨_
+    infixr 7 _∧_
     infixl 6 _$_
 
-    -- We give the context in two different parts, a context of Tm-s and a context of Pf variable
-    -- Then out context will be Con = Σ ConTm ConPf
-    -- Along the way we prove all the ass,id, and β,η laws
-
-
-    -- Contexts for terms
-    -- ConTm ≅ ℕ
     data ConTm : Set where
       ◆t : ConTm
       _▸t : ConTm → ConTm
@@ -212,49 +202,34 @@ module FirstOrderLogic.IntFullSplit.Syntax
     -- Formulas
 
     data For (Γt : ConTm) : Set where
-        ⊥    : For Γt
         ⊤    : For Γt
         _⊃_  : For Γt → For Γt → For Γt
         _∧_  : For Γt → For Γt → For Γt
-        _∨_  : For Γt → For Γt → For Γt
         ∀'   : For (Γt ▸t) → For Γt
-        ∃'   : For (Γt ▸t) → For Γt
         Eq   : Tm Γt → Tm Γt → For Γt
         rel  : (n : ℕ) → relar n → Tms Γt n → For Γt
 
-    ¬_ : ∀{Γt} → For Γt → For Γt
-    ¬ A = A ⊃ ⊥
-
     _[_]F : ∀{Γt Δt} → For Γt → Subt Δt Γt → For Δt
-    ⊥ [ γ ]F = ⊥
     ⊤ [ γ ]F = ⊤
     (K ⊃ L) [ γ ]F = K [ γ ]F ⊃ L [ γ ]F
     (K ∧ L) [ γ ]F = K [ γ ]F ∧ L [ γ ]F
-    (K ∨ L) [ γ ]F = (K [ γ ]F) ∨ (L [ γ ]F)
-    (∃' K) [ γ ]F = ∃' (K [ (γ ∘t pt) ,t qt ]F)
     ∀' K [ γ ]F = ∀' (K [ γ ∘t pt ,t qt ]F)
     Eq t t' [ γ ]F = Eq (t [ γ ]t) (t' [ γ ]t)
     rel n a ts [ γ ]F = rel n a (ts [ γ ]ts)
 
     [∘]F : ∀{Γt}{K : For Γt}{Δt}{γ : Subt Δt Γt}{Θt}{δ : Subt Θt Δt} → K [ γ ∘t δ ]F ≡ K [ γ ]F [ δ ]F
-    [∘]F {K = ⊥} = refl
     [∘]F {K = ⊤} = refl
     [∘]F {K = K ⊃ L} = cong (λ z → proj₁ z ⊃ proj₂ z) (mk,= [∘]F [∘]F)
     [∘]F {K = K ∧ L} = cong (λ z → proj₁ z ∧ proj₂ z) (mk,= [∘]F [∘]F)
-    [∘]F {K = K ∨ L} = cong (λ z → proj₁ z ∨ proj₂ z) (mk,= [∘]F [∘]F)
     [∘]F {K = ∀' K}{γ = γ}{δ = δ} = cong ∀' (trans (cong (K [_]F) (cong (_,t var vz) (trans (trans ass (cong (γ ∘t_) (sym (▸tβ₁ {γ = δ ∘t pt})))) (sym ass)))) [∘]F)
-    [∘]F {K = ∃' K}{γ = γ}{δ = δ} = cong ∃' (trans (cong (K [_]F) (cong (_,t var vz) (trans (trans ass (cong (γ ∘t_) (sym (▸tβ₁ {γ = δ ∘t pt})))) (sym ass)))) [∘]F)
     [∘]F {K = Eq t t'} = cong (λ z → Eq (proj₁ z) (proj₂ z)) (mk,= ([∘]t {t = t}) ([∘]t {t = t'}))
     [∘]F {K = rel n a ts} = cong (rel n a) ([∘]ts {ts = ts})
 
     [id]F : ∀{Γt}{K : For Γt} → K [ idt ]F ≡ K
-    [id]F {K = ⊥} = refl
     [id]F {K = ⊤} = refl
     [id]F {K = K ⊃ L} = cong (λ z → proj₁ z ⊃ proj₂ z) (mk,= ([id]F {K = K}) ([id]F {K = L}))
     [id]F {K = K ∧ L} = cong (λ z → proj₁ z ∧ proj₂ z) (mk,= ([id]F {K = K}) ([id]F {K = L}))
-    [id]F {K = K ∨ L} = cong (λ z → proj₁ z ∨ proj₂ z) (mk,= ([id]F {K = K}) ([id]F {K = L}))
     [id]F {K = ∀' K} = cong ∀' (trans (cong (K [_]F) (cong (_,t var vz) idl)) ([id]F {K = K}))
-    [id]F {K = ∃' K} = cong ∃' (trans (cong (K [_]F) (cong (_,t var vz) idl)) ([id]F {K = K}))
     [id]F {K = Eq t t'} = cong (λ z → Eq (proj₁ z) (proj₂ z)) (mk,= ([id]t {t = t}) ([id]t {t = t'}))
     [id]F {K = rel n a ts} = cong (rel n a) ([id]ts {ts = ts})
 
@@ -285,17 +260,12 @@ module FirstOrderLogic.IntFullSplit.Syntax
         --_[_]s : ∀{Γt}{Δt}{Γp Γp' : ConPf Γt} → Subp Γp' Γp → (γ : Subt Δt Γt) → Subp (Γp' [ γ ]C) (Γp [ γ ]C)
 
     data Pf where
-        exfalso : ∀{Γt}{Γp : ConPf Γt}{K} → Pf Γp ⊥ → Pf Γp K
         tt   : ∀{Γt}{Γp : ConPf Γt} → Pf Γp ⊤
         ⊃intro  : ∀{Γt}{K L}{Γp : ConPf Γt} → Pf (Γp ▸p K) L → Pf Γp (K ⊃ L)
         _$_  : ∀{Γt}{K L}{Γp : ConPf Γt} → Pf Γp (K ⊃ L) → Pf Γp K → Pf Γp L
         ∧intro : ∀{Γt}{K L}{Γp : ConPf Γt} → Pf Γp K → Pf Γp L → Pf Γp (K ∧ L)
         ∧elim₁  : ∀{Γt}{K L}{Γp : ConPf Γt} → Pf Γp (K ∧ L) → Pf Γp K
         ∧elim₂  : ∀{Γt}{K L}{Γp : ConPf Γt} → Pf Γp (K ∧ L) → Pf Γp L
-
-        ∨elim : ∀{Γt}{K L C}{Γp : ConPf Γt} → Pf (Γp ▸p K) C → Pf (Γp ▸p L) C → Pf Γp (K ∨ L) → Pf Γp C
-        ∨intro₁ : ∀{Γt}{K L}{Γp : ConPf Γt} → Pf Γp K → Pf Γp (K ∨ L)
-        ∨intro₂ : ∀{Γt}{K L}{Γp : ConPf Γt} → Pf Γp L → Pf Γp (K ∨ L)
 
         ∀intro  : ∀{Γt}{K Γp} → 
             Pf {Γt ▸t} (Γp [ pt ]C) K → 
@@ -306,35 +276,6 @@ module FirstOrderLogic.IntFullSplit.Syntax
             Pf Γp (∀' K) → (t : Tm Γt) → 
             -----------------------------
                 Pf Γp (K [ idt ,t t ]F)
-
-        ∃intro : ∀{Γt K}{Γp : ConPf Γt} → 
-            (t : Tm Γt) → Pf Γp (K [ idt ,t t ]F) →
-            ------------------------------------------
-            Pf Γp (∃' K)
-
-        -- ∃intro : ∃ (t : Tm) (Pf (K t))  -> Pf ∃' K
-        -- ∃intro : (t : Tm) -> (Pf (K t)) -> Pf ∃' K
-        -- ∃elim  : Pf ∃' K -> ∃ (t : Tm) (Pf (K t))
-        -- ∃elim  : Pf ∃' K -> (∃ (t : Tm) (Pf (K t)) -> Pf C) -> Pf C
-        -- ∃elim  : Pf ∃' K -> ((t : Tm) -> (Pf (K t)) -> Pf C) -> Pf C
-
-        ∃elim  : ∀{Γt}{K : For (Γt ▸t)}{Γp : ConPf Γt}{L : For Γt} ->
-          Pf Γp (∃' K) -> Pf ((Γp [ pt ]C) ▸p K [ pt ,t qt ]F) (L [ pt ]F) -> Pf Γp L
-        -- ∃elim  : ∀{Γt : ConTm}{K : For (Γt ▸t)}{Γp : ConPf Γt} -> 
-        --    Pf Γp (∃' K) -> {!   !}
-            {-
-            ∀{Γt : ConTm}{K : For (Γt ▸t)}{Γp : ConPf Γt}{Γp' : ConPf (Γt ▸t)}{L : For Γt} → 
-            Pf Γp (∃' K) → Pf (Γp' ▸p (K [ idt ,t qt ]F)) (L ) {-Pf (Γ ▸p K [ idt ,t qt ]F) L-} -> 
-            ------------------------------------------
-            Pf Γp L
-            -} 
-
-          {-
-          ∀{Γt : ConTm}{K : For (Γt ▸t)}{L : For Γt}{Γp : ConPf Γt} → 
-            Pf Γp (∃' K) → Pf {!   !} L → 
-            ---------------------------------------------
-                        Pf Γp L
-          -}
         
         ref  : ∀{Γt}{a}{Γp : ConPf Γt} → Pf Γp (Eq a a)
         subst' : ∀{Γt}(K : For (Γt ▸t)){t t' : Tm Γt}{Γp} → Pf Γp (Eq t t') → Pf Γp (K [ idt ,t t ]F) → Pf Γp (K [ idt ,t t' ]F)
@@ -349,41 +290,6 @@ module FirstOrderLogic.IntFullSplit.Syntax
     ∀elim {K = K}{Γp} k = substp (Pf (Γp [ pt ]C))
         (trans (trans (sym [∘]F) (cong (λ z → K [ z ,t var vz ]F) (trans ass (trans (cong (pt ∘t_) ▸tβ₁) idr)))) [id]F)
         (un∀ (k [ pt ]p) (var vz))
-
-    -- ∀x P ∧ ∀x Q -> ∀ x (P ∧ Q)
-    example1F : (P Q : For (◆t ▸t)) -> For ◆t
-    example1F P Q = ((∀' P) ∧ (∀' Q)) ⊃ (∀' (P ∧ Q))
-
-    example1P : (P Q : For (◆t ▸t)) -> Pf (◆p) (example1F P Q)
-    example1P P Q = ⊃intro (∀intro (∧intro (∀elim (∧elim₁ qp)) (∀elim (∧elim₂ qp))))
-
-    example2F : {A B C : For ◆t} -> For ◆t
-    example2F {A}{B}{C} = (A ∨ B) ∧ C ⊃ (A ∧ C) ∨ (B ∧ C)
-
-    example2P : {A B C : For ◆t} -> Pf ◆p (example2F {A}{B}{C})
-    example2P = ⊃intro (∨elim 
-        (∨intro₁ (∧intro qp (∧elim₂ (qp [ pp ]P)))) 
-        (∨intro₂ (∧intro qp (∧elim₂ (qp [ pp ]P)))) 
-        (∧elim₁ qp))
-
-    example2F' : {A B C : For ◆t} -> For ◆t
-    example2F' {A}{B}{C} = (A ∧ C) ∨ (B ∧ C) ⊃ (A ∨ B) ∧ C
-
-    example2P' : {A B C : For ◆t} -> Pf ◆p (example2F' {A}{B}{C})
-    example2P' = ⊃intro (∨elim 
-        (∧intro (∨intro₁ (∧elim₁ qp)) (∧elim₂ qp)) 
-        (∧intro (∨intro₂ (∧elim₁ qp)) (∧elim₂ qp)) 
-        qp)
-
-    -- ∃x (P ∧ Q) -> ∃x P ∧ ∃x Q
-    example3F : (P Q : For (◆t ▸t)) -> For ◆t
-    example3F P Q = ∃' (P ∧ Q) ⊃ (∃' P ∧ ∃' Q)
-    -- ∃intro {◆t} {P} {◆p ▸p ∃' (P ∧ Q)} {!   !} {!   !}
-    example3P : (P Q : For (◆t ▸t)) -> Pf (◆p) (example3F P Q)
-    example3P P Q = ⊃intro (∃elim qp 
-      (∧intro 
-        (∃intro qt (substp (Pf _) [∘]F (∧elim₁ qp))) 
-        (∃intro qt (substp (Pf _) [∘]F (∧elim₂ qp)))))
 
     I : Model funar relar _ _ _ _ _
     I = record
@@ -445,9 +351,6 @@ module FirstOrderLogic.IntFullSplit.Syntax
       ; _,p_ = λ γ -> _,p_ γ
       ; pp = pp
       ; qp = qp
-      ; ⊥ = ⊥
-      ; ⊥[] = refl
-      ; exfalso = exfalso
       ; ⊤ = ⊤
       ; ⊤[] = refl
       ; tt = tt
@@ -460,19 +363,10 @@ module FirstOrderLogic.IntFullSplit.Syntax
       ; ∧intro = ∧intro
       ; ∧elim₁ = ∧elim₁
       ; ∧elim₂ = ∧elim₂
-      ; _∨_ = _∨_
-      ; ∨[] = refl
-      ; ∨elim = ∨elim
-      ; ∨intro₁ = ∨intro₁
-      ; ∨intro₂ = ∨intro₂
       ; ∀' = ∀'
       ; ∀[] = refl
       ; ∀intro = ∀intro
       ; ∀elim = ∀elim
-      ; ∃' = ∃'
-      ; ∃[] = refl
-      ; ∃intro = λ t -> ∃intro t
-      ; ∃elim = ∃elim
       ; Eq = Eq
       ; Eq[] = refl
       ; Eqrefl = ref
