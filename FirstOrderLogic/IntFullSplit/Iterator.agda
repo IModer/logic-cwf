@@ -70,15 +70,62 @@ module Ite
     ⟦_⟧Conp : ∀{Γt} -> I.Conp Γt -> M.Conp ⟦ Γt ⟧Cont
     ⟦_⟧Subp : ∀{Γt}{Δ Γ : I.Conp Γt} -> I.Subp Δ Γ -> M.Subp ⟦ Δ ⟧Conp ⟦ Γ ⟧Conp
     ⟦_⟧Pf   : ∀{Γt}{Γ : I.Conp Γt}{K : I.For Γt} -> I.Pf Γ K -> M.Pf ⟦ Γ ⟧Conp ⟦ K ⟧For
+    ⟦_⟧Var  : ∀{Γt} -> V.Tm Γt -> M.Tm ⟦ Γt ⟧Cont
 
     ⟦ ◆t ⟧Cont = M.◆t
     ⟦ Γt ▸t ⟧Cont = ⟦ Γt ⟧Cont M.▸t
 
-    ⟦ εt ⟧Subt = M.εt -- M.εt
-    ⟦ γ ,t t ⟧Subt = ⟦ γ ⟧Subt M.,t ⟦ t ⟧Tm    
+    ⟦ εt  ⟧Subt = M.εt
+    ⟦ _,t_ {Δt} γ t ⟧Subt = ⟦ γ ⟧Subt M.,t ⟦ t ⟧Tm
+
+    ⟦ V.vz ⟧Var = M.qt
+    ⟦ V.vs t ⟧Var = ⟦ t ⟧Var M.[ M.pt ]t
+
+    ⟦ var t ⟧Tm = ⟦ t ⟧Var
+    ⟦ fun n a ts ⟧Tm = M.fun n a ⟦ ts ⟧Tms
+
+    ⟦_⟧Tms {Γt} {zero} * = M.εs
+    ⟦_⟧Tms {Γt} {suc n} (ts ,Σ t) = ⟦ ts ⟧Tms M.,s ⟦ t ⟧Tm
+    
+    ⟦[]v⟧ : ∀{Γt Δt}{t : V.Tm Γt}{γ : Subt Δt Γt} -> ⟦ t [ γ ]v ⟧Tm ≡ ⟦ t ⟧Var M.[ ⟦ γ ⟧Subt ]t
+    ⟦[]v⟧ {Γt} {Δt} {V.vz}   {γ ,t t} = sym M.▸tβ₂
+    ⟦[]v⟧ {Γt ▸t} {Δt} {V.vs x} {γ ,t t} = trans (⟦[]v⟧ {t = x}) (trans (cong (λ z → ⟦ x ⟧Var M.[ z ]t) (sym M.▸tβ₁)) M.[∘]t)
+
+    ⟦[]t⟧ : ∀{Γt Δt}{t : Tm Γt}{γt : Subt Δt Γt} -> ⟦ t [ γt ]t ⟧Tm ≡ ⟦ t ⟧Tm M.[ ⟦ γt ⟧Subt ]t
+    ⟦[]ts⟧ : ∀{Γt Δt n}{ts : Tms Γt n}{γt : Subt Δt Γt} -> ⟦ ts [ γt ]ts ⟧Tms ≡ ⟦ ts ⟧Tms M.[ ⟦ γt ⟧Subt ]ts
+    
+    ⟦[]t⟧ {Γt} {Δt} {var x} {γt} = ⟦[]v⟧ {t = x}
+    ⟦[]t⟧ {Γt} {Δt} {fun n a ts} {γt} = trans (cong (M.fun n a) ⟦[]ts⟧) (sym M.fun[]) 
+    ⟦[]ts⟧ {Γt} {Δt} {zero} {ts} {γt} = sym (M.◆sη (M.εs M.[ ⟦ γt ⟧Subt ]ts))
+    ⟦[]ts⟧ {Γt} {Δt} {suc n} {ts ,Σ t} {γt} = trans (cong (λ z → proj₁ z M.,s proj₂ z) (mk,= ⟦[]ts⟧ (⟦[]t⟧ {t = t}))) (sym M.,[])
+
+    ⟦π₁⟧ : ∀{Γt n}{ts : Tms Γt (suc n)} -> ⟦ π₁ ts ⟧Tms ≡ M.π₁ ⟦ ts ⟧Tms
+    ⟦π₁⟧ = (sym M.▸sβ₁)
+
+    ⟦π₂⟧ : ∀{Γt n}{ts : Tms Γt (suc n)} -> ⟦ π₂ ts ⟧Tm  ≡ M.π₂ ⟦ ts ⟧Tms
+    ⟦π₂⟧ = sym M.▸sβ₂    
+
+    ⟦∘t⟧ : ∀{Γt Δt Θt}{γt : Subt Δt Γt}{δt : Subt Θt Δt} -> ⟦ γt ∘t δt ⟧Subt ≡ ⟦ γt ⟧Subt M.∘t ⟦ δt ⟧Subt
+    ⟦∘t⟧ {◆t} {Δt} {Θt} {εt} {δt} = sym (M.◆tη (M.εt M.∘t ⟦ δt ⟧Subt)) -- sym (M.◆tη (⟦ εt ⟧Subt M.∘t ⟦ δt ⟧Subt))
+    ⟦∘t⟧ {Γt ▸t} {Δt} {Θt} {γt ,t t} {δt} = 
+        trans (cong (λ z -> proj₁ z M.,t proj₂ z) 
+        (mk,= (⟦∘t⟧ {γt = γt}{δt = δt}) (⟦[]t⟧ {t = t}))) 
+        (sym M.,t∘t)
+
+    ⟦_⟧Subv : ∀{Δ Γ} -> V.Sub Δ Γ -> M.Subt ⟦ Δ ⟧Cont ⟦ Γ ⟧Cont
+    ⟦ V.εt ⟧Subv = M.εt
+    ⟦ γ V.,t t ⟧Subv = ⟦ γ ⟧Subv M.,t ⟦ var t ⟧Tm
+
+    ⟦wk⟧ : ∀{Γ Δ}{γv : V.Sub Δ Γ} -> ⟦ ⌜ V.wk γv ⌝ ⟧Subt ≡ ⟦ ⌜ γv ⌝ ⟧Subt M.∘t M.pt
+    ⟦wk⟧ {◆t} {Δ} {V.εt} = sym (M.◆tη (M.εt M.∘t M.pt))
+    ⟦wk⟧ {Γ ▸t} {Δ} {γv V.,t x} = trans (cong (λ z → z M.,t (⟦ x ⟧Var M.[ M.pt ]t)) (⟦wk⟧ {γv = γv})) (sym (M.,t∘t {γt = ⟦ ⌜ γv ⌝ ⟧Subt}{t = ⟦ x ⟧Var}))
 
     ⟦idt⟧ : ∀{Γt} -> ⟦ I.idt {Γt} ⟧Subt ≡ M.idt
-    ⟦idt⟧ {Γt} = {!   !}
+    ⟦idt⟧ {◆t}    = sym (M.◆tη M.idt)
+    ⟦idt⟧ {Γt ▸t} = trans (cong (M._,t M.qt) (trans (⟦wk⟧ {Γt}{Γt}{V.id}) (trans (cong (M._∘t M.pt) (⟦idt⟧ {Γt})) M.idlt))) M.▸tη'
+    
+    ⟦pt⟧ : ∀{Γt} -> ⟦ pt {Γt} ⟧Subt ≡ M.pt
+    ⟦pt⟧ {Γt} = trans (⟦wk⟧ {Γt}{Γt}{V.id}) (trans (cong (M._∘t M.pt) (⟦idt⟧ {Γt})) M.idlt)
 
     ⟦ ⊥ ⟧For = M.⊥
     ⟦ ⊤ ⟧For = M.⊤
@@ -90,32 +137,29 @@ module Ite
     ⟦ Eq t t' ⟧For = M.Eq ⟦ t ⟧Tm ⟦ t' ⟧Tm
     ⟦ rel n a ts ⟧For = M.rel n a ⟦ ts ⟧Tms
 
-    ⟦ var V.vz ⟧Tm = M.qt
-    ⟦ var (V.vs t) ⟧Tm = ⟦ var t ⟧Tm M.[ M.pt ]t
-    ⟦ fun n a ts ⟧Tm = M.fun n a ⟦ ts ⟧Tms
-
-    ⟦_⟧Tms {Γt} {zero} * = M.εs
-    ⟦_⟧Tms {Γt} {suc n} (ts ,Σ t) = ⟦ ts ⟧Tms M.,s ⟦ t ⟧Tm
+    ⟦[]F⟧   : ∀{Γt Δt}{K : I.For Γt}{γt : I.Subt Δt Γt} -> ⟦ K I.[ γt ]F ⟧For ≡ ⟦ K ⟧For M.[ ⟦ γt ⟧Subt ]F
+    ⟦[]F⟧ {Γt} {Δt} {⊥} {γt} = sym M.⊥[]
+    ⟦[]F⟧ {Γt} {Δt} {⊤} {γt} = sym M.⊤[]
+    ⟦[]F⟧ {Γt} {Δt} {K ⊃ L} {γt} = trans (cong (λ z → proj₁ z M.⊃ proj₂ z) (mk,= (⟦[]F⟧ {K = K}) (⟦[]F⟧ {K = L}))) (sym M.⊃[])
+    ⟦[]F⟧ {Γt} {Δt} {K ∧ L} {γt} = trans (cong (λ z → proj₁ z M.∧ proj₂ z) (mk,= (⟦[]F⟧ {K = K}) (⟦[]F⟧ {K = L}))) (sym M.∧[])
+    ⟦[]F⟧ {Γt} {Δt} {K ∨ L} {γt} = trans (cong (λ z → proj₁ z M.∨ proj₂ z) (mk,= (⟦[]F⟧ {K = K}) (⟦[]F⟧ {K = L}))) (sym M.∨[])
+    ⟦[]F⟧ {Γt} {Δt} {∀' K} {γt} = {!   !}
+    ⟦[]F⟧ {Γt} {Δt} {∃' K} {γt} = {!   !}
+    ⟦[]F⟧ {Γt} {Δt} {Eq t t'} {γt} = trans (cong (λ z → M.Eq (proj₁ z) (proj₂ z)) (mk,= (⟦[]t⟧ {t = t}) (⟦[]t⟧ {t = t'}))) (sym M.Eq[])
+    ⟦[]F⟧ {Γt} {Δt} {rel n x ts} {γt} = trans (cong (M.rel n x) (⟦[]ts⟧ {ts = ts})) (sym M.rel[])     
 
     ⟦ ◆p ⟧Conp = M.◆p
     ⟦ Γ ▸p K ⟧Conp = ⟦ Γ ⟧Conp M.▸p ⟦ K ⟧For
 
+    ⟦[]C⟧ : ∀{Γt Δt}{Γ : I.Conp Γt}{γt : I.Subt Δt Γt} -> ⟦ Γ I.[ γt ]C ⟧Conp ≡ (⟦ Γ ⟧Conp M.[ ⟦ γt ⟧Subt ]C)
+    ⟦[]C⟧ {Γt} {Δt} {◆p} {γt} = {!   !}
+    ⟦[]C⟧ {Γt} {Δt} {Γ ▸p K} {γt} = trans (cong (λ z → proj₁ z M.▸p proj₂ z) (mk,= (⟦[]C⟧ {Γ = Γ}) (⟦[]F⟧ {K = K}))) (sym {!   !})
+    
     ⟦ εp       ⟧Subp = M.εp
+    ⟦ γ ,p PfK ⟧Subp = ⟦ γ ⟧Subp M.,p ⟦ PfK ⟧Pf
     ⟦ idp      ⟧Subp = M.idp
     ⟦ γ ∘p δ   ⟧Subp = ⟦ γ ⟧Subp M.∘p ⟦ δ ⟧Subp
     ⟦ pp       ⟧Subp = M.pp
-    ⟦ γ ,p PfK ⟧Subp = ⟦ γ ⟧Subp M.,p ⟦ PfK ⟧Pf
-    
-    ⟦[]C⟧ : ∀{Γt Δt}{Γ : I.Conp Γt}{γt : I.Subt Δt Γt} -> ⟦ Γ I.[ γt ]C ⟧Conp ≡ (⟦ Γ ⟧Conp M.[ ⟦ γt ⟧Subt ]C)
-    ⟦[]C⟧ {◆t}    {Δt} {Γ} {εt} = {!   !}
-    ⟦[]C⟧ {Γt ▸t} {Δt} {Γ} {γt ,t t} = trans ({!   !}) {!   !}
-
-    ⟦[]F⟧   : ∀{Γt Δt}{K : I.For Γt}{γt : I.Subt Δt Γt} -> ⟦ K I.[ γt ]F ⟧For ≡ ⟦ K ⟧For M.[ ⟦ γt ⟧Subt ]F
-    ⟦[]F⟧ {Γt} {Δt} {K} {γt} = {!   !}     
-
-    ⟦pt⟧ : ∀{Γt : I.Cont} -> ⟦ I.pt {Γt} ⟧Subt ≡ M.pt -- transport (λ z -> M.Subt z ⟦ Γt ⟧Cont) refl M.pt
-    ⟦pt⟧ {◆t} = {!   !}
-    ⟦pt⟧ {Γt ▸t} = {!   !}
 
     ⟦ exfalso PfK ⟧Pf = M.exfalso ⟦ PfK ⟧Pf
     ⟦ tt ⟧Pf = M.tt
@@ -131,13 +175,15 @@ module Ite
         let PfK' = substp (λ z -> M.Pf z ⟦ K ⟧For) (trans (⟦[]C⟧ {Γt}{Γt ▸t}{Γ}{pt}) (cong (λ z → ⟦ Γ ⟧Conp M.[ z ]C) (⟦pt⟧ {Γt}))) ⟦ PfK ⟧Pf in 
         M.∀intro PfK'
     ⟦ un∀ PfK t ⟧Pf = {!    !}
-    ⟦ ∃intro {Γt}{K}{Γ} t PfK ⟧Pf = M.∃intro ⟦ t ⟧Tm (substp (M.Pf ⟦ Γ ⟧Conp) (trans (⟦[]F⟧ {Γt ▸t} {Γt} {K} {idt ,t t}) (cong (λ z → ⟦ K ⟧For M.[ z M.,t ⟦ t ⟧Tm ]F) (⟦idt⟧ {Γt}))) ⟦ PfK ⟧Pf)
+    ⟦ ∃intro {Γt}{K}{Γ} t PfK ⟧Pf = {!   !} -- M.∃intro ⟦ t ⟧Tm (substp (M.Pf ⟦ Γ ⟧Conp) (trans (⟦[]F⟧ {Γt ▸t} {Γt} {K} {idt ,t t}) (cong (λ z → ⟦ K ⟧For M.[ z M.,t ⟦ t ⟧Tm ]F) (⟦idt⟧ {Γt}))) ⟦ PfK ⟧Pf)
     ⟦ ∃elim PfK PfKL ⟧Pf = M.∃elim ⟦ PfK ⟧Pf {!   !}
     ⟦ ref ⟧Pf = M.Eqrefl
-    ⟦ subst' {Γt} K {t}{t'}{Γ} PfK PfL ⟧Pf = 
+    ⟦ subst' {Γt} K {t}{t'}{Γ} PfK PfL ⟧Pf = {!   !}
+        {-
         substp (M.Pf ⟦ Γ ⟧Conp) (sym (trans (⟦[]F⟧ {Γt ▸t} {Γt} {K} {idt ,t t'}) (cong (λ z → ⟦ K ⟧For M.[ z M.,t ⟦ t' ⟧Tm ]F) (⟦idt⟧ {Γt})))) 
         (M.subst' {⟦ Γt ⟧Cont} ⟦ K ⟧For {⟦ t ⟧Tm}{⟦ t' ⟧Tm}{⟦ Γ ⟧Conp} ⟦ PfK ⟧Pf 
         (substp (M.Pf ⟦ Γ ⟧Conp) (trans (⟦[]F⟧ {Γt ▸t} {Γt} {K} {idt ,t t}) ((cong (λ z → ⟦ K ⟧For M.[ z M.,t ⟦ t ⟧Tm ]F) (⟦idt⟧ {Γt})))) ⟦ PfL ⟧Pf))
+        -}
     ⟦ _[_]p {Γt}{K}{Γp} PfK {Δt} γt ⟧Pf  = substp (λ z -> M.Pf (proj₁ z) (proj₂ z)) (mk,= (sym (⟦[]C⟧ {Γt}{Δt}{Γp}{γt})) (sym (⟦[]F⟧ {Γt}{Δt}{K}{γt}))) (⟦ PfK ⟧Pf M.[ ⟦ γt ⟧Subt ]p)
     ⟦ PfK [ γ ]P ⟧Pf = ⟦ PfK ⟧Pf M.[ ⟦ γ ⟧Subp ]P
     ⟦ qp ⟧Pf = M.qp
@@ -154,22 +200,22 @@ module Ite
       ; ⟦_⟧Pf = ⟦_⟧Pf
       ; ⟦◆t⟧ = refl
       ; ⟦▸t⟧ = refl
-      ; ⟦idt⟧ = {!   !}
-      ; ⟦∘t⟧ = {!   !}
-      ; ⟦εt⟧ = (sym transport-refl)
-      ; ⟦[]F⟧ = {!   !}
-      ; ⟦[]t⟧ = {!   !}
-      ; ⟦,t⟧ = sym transport-refl
-      ; ⟦pt⟧ = {!   !} -- trans {!   !} (sym transport-refl)
+      ; ⟦idt⟧ = λ {Γt} -> ⟦idt⟧ {Γt}
+      ; ⟦∘t⟧ = λ {Γt}{Δt}{Θt}{γt}{δt} -> ⟦∘t⟧ {Γt}{Δt}{Θt}{γt}{δt}
+      ; ⟦εt⟧ = sym transport-refl
+      ; ⟦[]F⟧ = λ {Γt}{Δt}{K}{γt} -> ⟦[]F⟧ {Γt}{Δt}{K}{γt}
+      ; ⟦[]t⟧ = λ {Γt}{Δt}{t}{γt} -> ⟦[]t⟧ {Γt}{Δt}{t}{γt}
+      ; ⟦,t⟧ = sym transport-refl 
+      ; ⟦pt⟧ = λ {Γt} -> trans (⟦pt⟧ {Γt}) (sym transport-refl)
       ; ⟦qt⟧ = sym transport-refl
-      ; ⟦[]ts⟧ = {!   !}
+      ; ⟦[]ts⟧ = λ {Γt}{Δt}{n}{γt} -> ⟦[]ts⟧ {Γt}{Δt}{n}{γt}
       ; ⟦εs⟧ = refl
       ; ⟦,s⟧ = refl
-      ; ⟦π₁⟧ = {!   !}
-      ; ⟦π₂⟧ = {!   !}
+      ; ⟦π₁⟧ = λ {Γt}{n}{ts} -> ⟦π₁⟧ {Γt}{n}{ts}
+      ; ⟦π₂⟧ = λ {Γt}{n}{ts} -> ⟦π₂⟧ {Γt}{n}{ts}
       ; ⟦◆p⟧ = refl
       ; ⟦▸p⟧ = refl
-      ; ⟦[]C⟧ = {!   !}
+      ; ⟦[]C⟧ = λ {Γt}{Δt}{Γ}{γt} -> ⟦[]C⟧ {Γt}{Δt}{Γ}{γt}
       ; ⟦⊥⟧ = refl
       ; ⟦⊤⟧ = refl
       ; ⟦⊃⟧ = refl
@@ -179,4 +225,4 @@ module Ite
       ; ⟦∃⟧ = cong M.∃' (sym transport-refl)
       }
     
-     
+      

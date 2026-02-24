@@ -104,6 +104,11 @@ module FirstOrderLogic.IntFullSplit.Syntax
     Tms Γt zero = 𝟙
     Tms Γt (suc n) = Tms Γt n × Tm Γt
 
+    π₁     : ∀{Γ n} → Tms Γ (suc n) → Tms Γ n
+    π₁ = proj₁
+    
+    π₂     : ∀{Γ n} → Tms Γ (suc n) → Tm Γ
+    π₂ = proj₂
     --data Tm (Γt : ConTm) : Set where
     --  var  : V.Tm Γt → Tm Γt
     --  fun  : (n : ℕ) → funar n → Tm Γt ^ n → Tm Γt
@@ -411,7 +416,7 @@ module FirstOrderLogic.IntFullSplit.Syntax
       ; qt = qt
       ; ▸tβ₁ = ▸tβ₁
       ; ▸tβ₂ = refl
-      ; ▸tη = refl
+      ; ▸tη = ▸tη
       ; Tms = Tms
       ; _[_]ts = _[_]ts
       ; [∘]ts = [∘]ts
@@ -419,8 +424,8 @@ module FirstOrderLogic.IntFullSplit.Syntax
       ; εs = *
       ; ◆sη = λ ts → refl
       ; _,s_ = _,Σ_
-      ; π₁ = proj₁
-      ; π₂ = proj₂
+      ; π₁ = π₁
+      ; π₂ = π₂
       ; ▸sβ₁ = refl
       ; ▸sβ₂ = refl
       ; ▸sη = refl
