@@ -42,6 +42,9 @@ record Morphism{i j k l m i' j' k' l' m' : Level}(A : Model i j k l m)(B : Model
         ⟦π₂⟧    : ∀{Γt n}{ts : M.Tms Γt (suc n)} -> ⟦ M.π₂ ts ⟧Tm  ≡ N.π₂ ⟦ ts ⟧Tms
         -- fun rel
 
+        ⟦fun⟧ : ∀{Γt n a}{ts : M.Tms Γt n} -> ⟦ M.fun n a ts ⟧Tm  ≡ N.fun n a ⟦ ts ⟧Tms
+        ⟦rel⟧ : ∀{Γt n a}{ts : M.Tms Γt n} -> ⟦ M.rel n a ts ⟧For ≡ N.rel n a ⟦ ts ⟧Tms
+
         ⟦◆p⟧    : ∀{Γt} -> ⟦ M.◆p {Γt} ⟧Conp ≡ N.◆p
         ⟦▸p⟧    : ∀{Γt}{Γ : M.Conp Γt}{K : M.For Γt} -> ⟦ Γ M.▸p K ⟧Conp ≡ ⟦ Γ ⟧Conp N.▸p ⟦ K ⟧For
         ⟦[]C⟧   : ∀{Γt Δt}{Γ : M.Conp Γt}{γt : M.Subt Δt Γt} -> ⟦ Γ M.[ γt ]C ⟧Conp ≡ (⟦ Γ ⟧Conp N.[ ⟦ γt ⟧Subt ]C)
@@ -143,8 +146,8 @@ module Ite
     ⟦[]F⟧ {Γt} {Δt} {K ⊃ L} {γt} = trans (cong (λ z → proj₁ z M.⊃ proj₂ z) (mk,= (⟦[]F⟧ {K = K}) (⟦[]F⟧ {K = L}))) (sym M.⊃[])
     ⟦[]F⟧ {Γt} {Δt} {K ∧ L} {γt} = trans (cong (λ z → proj₁ z M.∧ proj₂ z) (mk,= (⟦[]F⟧ {K = K}) (⟦[]F⟧ {K = L}))) (sym M.∧[])
     ⟦[]F⟧ {Γt} {Δt} {K ∨ L} {γt} = trans (cong (λ z → proj₁ z M.∨ proj₂ z) (mk,= (⟦[]F⟧ {K = K}) (⟦[]F⟧ {K = L}))) (sym M.∨[])
-    ⟦[]F⟧ {Γt} {Δt} {∀' K} {γt} = {!   !}
-    ⟦[]F⟧ {Γt} {Δt} {∃' K} {γt} = {!   !}
+    ⟦[]F⟧ {Γt} {Δt} {∀' K} {γt} = trans (cong M.∀' (⟦[]F⟧ {K = K})) (trans (cong (λ z → M.∀' (⟦ K ⟧For M.[ z M.,t M.qt ]F)) (trans (⟦∘t⟧ {γt = γt}{δt = pt}) (cong (⟦ γt ⟧Subt M.∘t_) (⟦pt⟧ {Δt})))) (sym (M.∀[] {K = ⟦ K ⟧For} {γt = ⟦ γt ⟧Subt})))
+    ⟦[]F⟧ {Γt} {Δt} {∃' K} {γt} = trans (cong M.∃' (⟦[]F⟧ {K = K})) (trans (cong (λ z → M.∃' (⟦ K ⟧For M.[ z M.,t M.qt ]F)) (trans (⟦∘t⟧ {γt = γt}{δt = pt}) (cong (⟦ γt ⟧Subt M.∘t_) (⟦pt⟧ {Δt})))) (sym (M.∃[] {K = ⟦ K ⟧For} {γt = ⟦ γt ⟧Subt})))
     ⟦[]F⟧ {Γt} {Δt} {Eq t t'} {γt} = trans (cong (λ z → M.Eq (proj₁ z) (proj₂ z)) (mk,= (⟦[]t⟧ {t = t}) (⟦[]t⟧ {t = t'}))) (sym M.Eq[])
     ⟦[]F⟧ {Γt} {Δt} {rel n x ts} {γt} = trans (cong (M.rel n x) (⟦[]ts⟧ {ts = ts})) (sym M.rel[])     
 
@@ -174,12 +177,17 @@ module Ite
     ⟦ ∀intro {Γt}{K}{Γ} PfK ⟧Pf  =
         let PfK' = substp (λ z -> M.Pf z ⟦ K ⟧For) (trans (⟦[]C⟧ {Γt}{Γt ▸t}{Γ}{pt}) (cong (λ z → ⟦ Γ ⟧Conp M.[ z ]C) (⟦pt⟧ {Γt}))) ⟦ PfK ⟧Pf in 
         M.∀intro PfK'
-    -- TODO : Change Syntax to ∀elim
-    ⟦ un∀ PfK t ⟧Pf = {!    !}
-    ⟦ ∃intro {Γt}{K}{Γ} t PfK ⟧Pf = {!   !} -- M.∃intro ⟦ t ⟧Tm (substp (M.Pf ⟦ Γ ⟧Conp) (trans (⟦[]F⟧ {Γt ▸t} {Γt} {K} {idt ,t t}) (cong (λ z → ⟦ K ⟧For M.[ z M.,t ⟦ t ⟧Tm ]F) (⟦idt⟧ {Γt}))) ⟦ PfK ⟧Pf)
-    ⟦ ∃elim PfK PfKL ⟧Pf = M.∃elim ⟦ PfK ⟧Pf {!   !}
+    ⟦ ∀elim {Γt}{K}{Γ} PfK ⟧Pf = substp (λ z -> M.Pf z ⟦ K ⟧For) (sym (trans (⟦[]C⟧ {Γ = Γ} {γt = pt}) (cong (⟦ Γ ⟧Conp M.[_]C) (⟦pt⟧ {Γt})))) (M.∀elim ⟦ PfK ⟧Pf)
+    ⟦ ∃intro {Γt}{K}{Γ} t PfK ⟧Pf = M.∃intro ⟦ t ⟧Tm (substp (M.Pf ⟦ Γ ⟧Conp) (trans (⟦[]F⟧ {K = K}{γt = idt ,t t}) (cong (λ z → ⟦ K ⟧For M.[ z M.,t ⟦ t ⟧Tm ]F) (⟦idt⟧ {Γt}))) ⟦ PfK ⟧Pf)
+    ⟦ ∃elim {Γt}{K}{Γ}{L} PfK PfKL ⟧Pf = 
+        M.∃elim ⟦ PfK ⟧Pf (substp (λ z -> M.Pf (proj₁ z) (proj₂ z)) (mk,= (trans (cong (λ z -> (proj₁ z) M.▸p (proj₂ z)) 
+        (mk,= (trans (⟦[]C⟧ {Γ = Γ} {γt = pt}) 
+        (cong (⟦ Γ ⟧Conp M.[_]C) (⟦pt⟧ {Γt}))) (⟦[]F⟧ {K = K}))) (cong (λ z -> (⟦ Γ ⟧Conp M.[ M.pt ]C) M.▸p ⟦ K ⟧For M.[ z M.,t M.qt ]F) (⟦pt⟧ {Γt}))) 
+        (trans ((⟦[]F⟧ {K = L}{γt = pt})) (cong (⟦ L ⟧For M.[_]F) (⟦pt⟧ {Γt})))) ⟦ PfKL ⟧Pf)
     ⟦ ref ⟧Pf = M.Eqrefl
-    ⟦ subst' {Γt} K {t}{t'}{Γ} PfK PfL ⟧Pf = substp (M.Pf ⟦ Γ ⟧Conp) (trans (cong (λ z → ⟦ K ⟧For M.[ z M.,t ⟦ t' ⟧Tm ]F) (sym (⟦idt⟧ {Γt}))) (sym (⟦[]F⟧ {Γt ▸t}{Γt}{K}{idt ,t t'}))) (M.subst' ⟦ K ⟧For ⟦ PfK ⟧Pf {!   !})
+    ⟦ subst' {Γt} K {t}{t'}{Γ} PfK PfL ⟧Pf = 
+        substp (M.Pf ⟦ Γ ⟧Conp) (trans (cong (λ z → ⟦ K ⟧For M.[ z M.,t ⟦ t' ⟧Tm ]F) (sym (⟦idt⟧ {Γt}))) (sym (⟦[]F⟧ {Γt ▸t}{Γt}{K}{idt ,t t'}))) 
+        (M.subst' ⟦ K ⟧For ⟦ PfK ⟧Pf (substp (M.Pf ⟦ Γ ⟧Conp) (trans (⟦[]F⟧ {K = K}) (cong (λ z → ⟦ K ⟧For M.[ z M.,t ⟦ t ⟧Tm ]F) (⟦idt⟧ {Γt}))) ⟦ PfL ⟧Pf))
         {-
         substp (M.Pf ⟦ Γ ⟧Conp) (sym (trans (⟦[]F⟧ {Γt ▸t} {Γt} {K} {idt ,t t'}) (cong (λ z → ⟦ K ⟧For M.[ z M.,t ⟦ t' ⟧Tm ]F) (⟦idt⟧ {Γt})))) 
         (M.subst' {⟦ Γt ⟧Cont} ⟦ K ⟧For {⟦ t ⟧Tm}{⟦ t' ⟧Tm}{⟦ Γ ⟧Conp} ⟦ PfK ⟧Pf 
@@ -214,6 +222,8 @@ module Ite
       ; ⟦,s⟧ = refl
       ; ⟦π₁⟧ = λ {Γt}{n}{ts} -> ⟦π₁⟧ {Γt}{n}{ts}
       ; ⟦π₂⟧ = λ {Γt}{n}{ts} -> ⟦π₂⟧ {Γt}{n}{ts}
+      ; ⟦fun⟧ = refl
+      ; ⟦rel⟧ = refl
       ; ⟦◆p⟧ = refl
       ; ⟦▸p⟧ = refl
       ; ⟦[]C⟧ = λ {Γt}{Δt}{Γ}{γt} -> ⟦[]C⟧ {Γt}{Δt}{Γ}{γt}

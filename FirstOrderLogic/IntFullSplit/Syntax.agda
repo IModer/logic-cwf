@@ -306,11 +306,15 @@ module FirstOrderLogic.IntFullSplit.Syntax
             Pf {Γt ▸t} (Γp [ pt ]C) K → 
             -----------------------------
             Pf {Γt} Γp (∀' K)
-        
+        {-
         un∀ : ∀{Γt}{K Γp} → 
             Pf Γp (∀' K) → (t : Tm Γt) → 
             -----------------------------
                 Pf Γp (K [ idt ,t t ]F)
+        -}
+
+        ∀elim : ∀{Γ K Γp} → Pf {Γ} Γp (∀' K) → Pf {Γ ▸t} (Γp [ pt ]C) K
+    
 
         ∃intro : ∀{Γt K}{Γp : ConPf Γt} → 
             (t : Tm Γt) → Pf Γp (K [ idt ,t t ]F) →
@@ -350,10 +354,12 @@ module FirstOrderLogic.IntFullSplit.Syntax
     ⊃elim : ∀{Γ K L}{Γp : ConPf Γ} → Pf Γp (K ⊃ L) → Pf (Γp ▸p K) L
     ⊃elim m = (m [ pp ]P) $ qp
 
+    {-
     ∀elim : ∀{Γ K Γp} → Pf {Γ} Γp (∀' K) → Pf {Γ ▸t} (Γp [ pt ]C) K
     ∀elim {K = K}{Γp} k = substp (Pf (Γp [ pt ]C))
         (trans (trans (sym [∘]F) (cong (λ z → K [ z ,t var vz ]F) (trans ass (trans (cong (pt ∘t_) ▸tβ₁) idr)))) [id]F)
         (un∀ (k [ pt ]p) (var vz))
+    -}
 
     -- ∀x P ∧ ∀x Q -> ∀ x (P ∧ Q)
     example1F : (P Q : For (◆t ▸t)) -> For ◆t
