@@ -346,13 +346,13 @@ module Kripke
     ∣ ∀' K ∣ I Γi = ∀(d : D) -> ∣ K ∣ I (Γi ,Σ d)
     ∀' K ∶ x ⟨ f ⟩ = λ d → K ∶ x d ⟨ f ⟩
 
-    ∀intro : {Γt : Cont} {K : For ((Γt ▸t) ▸t)} {Γ : Conp (Γt ▸t)} →
+    ∀intro : {Γt : Cont} {K : For (Γt ▸t)} {Γ : Conp Γt} →
       Pf (Γ [ pt ]C) K → Pf Γ (∀' K)
     ∣ ∀intro PfK ∣ Γi d = ∣ PfK ∣ Γi
 
-    ∀elim : {Γt : Cont} {K : For ((Γt ▸t) ▸t)} {Γ : Conp (Γt ▸t)} →
+    ∀elim : {Γt : Cont} {K : For (Γt ▸t)} {Γ : Conp Γt} →
       Pf Γ (∀' K) → Pf (Γ [ pt ]C) K
-    ∣ ∀elim PfK ∣ {I} {(Γti ,Σ d) ,Σ d'} Γi = ∣ PfK ∣ Γi d'
+    ∣ ∀elim PfK ∣ {I} {Γti ,Σ d} Γi = ∣ PfK ∣ Γi d
 
     ∃' : {Γt : Cont} → For (Γt ▸t) → For Γt
     ∣ ∃' {Γt} K ∣ I Γi = ∃ D λ d -> ∣ K ∣ I (Γi ,Σ d)
@@ -383,6 +383,12 @@ module Kripke
       Pf Γ (Eq t t') → Pf Γ (K [ idt ,t t ]F) → Pf Γ (K [ idt ,t t' ]F)
     ∣ subst' K t=t' PfK ∣ {I}{i} x = substp (λ z → ∣ K ∣ I (i ,Σ z)) (∣ t=t' ∣ x) (∣ PfK ∣ x)
     
+    ◆p[] : ∀{Γt Δt}{γt : Subt Δt Γt} -> ◆p [ γt ]C ≡ ◆p
+    ◆p[] = refl
+
+    ▸p[] : ∀{Γt Δt}{Γp : Conp Γt}{K : For Γt}{γt : Subt Δt Γt} -> ((Γp ▸p K) [ γt ]C) ≡ ((Γp [ γt ]C) ▸p (K [ γt ]F)) 
+    ▸p[] = refl
+
     Kripke : Model funar relar _ _ _ _ _
     Kripke = record
       { Cont = Cont
@@ -443,6 +449,8 @@ module Kripke
       ; _,p_ = _,p_
       ; pp = λ {Γt}{Γ}{K = K} -> pp {K = K} 
       ; qp = λ {Γt}{Γ}{K} -> qp {Γ = Γ}
+      ; ◆p[] = λ {Γt}{Δt}{γt} -> ◆p[] {Γt}{Δt}{γt}
+      ; ▸p[] = λ {Γt}{Δt}{Γp}{K}{γt} -> ▸p[] {Γt}{Δt}{Γp}{K}{γt}
       ; ⊥ = ⊥
       ; ⊥[] = refl
       ; exfalso = exfalso

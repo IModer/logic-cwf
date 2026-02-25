@@ -390,6 +390,12 @@ module FirstOrderLogic.IntFullSplit.Syntax
         (∃intro qt (substp (Pf _) [∘]F (∧elim₁ qp))) 
         (∃intro qt (substp (Pf _) [∘]F (∧elim₂ qp)))))
 
+    ◆p[] : ∀{Γt Δt}{γt : Subt Δt Γt} -> ◆p [ γt ]C ≡ ◆p
+    ◆p[] = refl
+
+    ▸p[] : ∀{Γt Δt}{Γp : ConPf Γt}{K : For Γt}{γt : Subt Δt Γt} -> (Γp ▸p K) [ γt ]C ≡ (Γp [ γt ]C ▸p K [ γt ]F) 
+    ▸p[] = refl
+
     I : Model funar relar _ _ _ _ _
     I = record
       { Cont = ConTm
@@ -450,6 +456,8 @@ module FirstOrderLogic.IntFullSplit.Syntax
       ; _,p_ = λ γ -> _,p_ γ
       ; pp = pp
       ; qp = qp
+      ; ◆p[] = λ {Γt}{Δt}{γt} -> ◆p[] {Γt}{Δt}{γt}
+      ; ▸p[] = ▸p[]
       ; ⊥ = ⊥
       ; ⊥[] = refl
       ; exfalso = exfalso

@@ -78,6 +78,7 @@ record Model (i j k l m : Level) : Set (lsuc (i ⊔ j ⊔ k ⊔ l ⊔ m)) where
         εp   : ∀{Γt}{Γ : Conp Γt} → Subp Γ ◆p
         -- ◆pη  : ∀{Γt}{Γ : Conp Γt}(σ : Subp Γ ◆p) → σ ≡ εp
 
+
         Pf    : {Γt : Cont} → Conp Γt -> For Γt → Prop l
         _[_]p : ∀{Γt}{Γ : Conp Γt}{K} → Pf Γ K → ∀{Δt} → (γt : Subt Δt Γt) → Pf (Γ [ γt ]C) (K [ γt ]F)
         _[_]P : ∀{Γt}{Γ : Conp Γt}{K} → Pf Γ K → ∀{Δ} → (γ : Subp Δ Γ) → Pf Δ K
@@ -85,6 +86,8 @@ record Model (i j k l m : Level) : Set (lsuc (i ⊔ j ⊔ k ⊔ l ⊔ m)) where
         _,p_  : ∀{Γt}{Γ Δ : Conp Γt} → (γ : Subp Δ Γ) → ∀{K : For Γt} → Pf Δ K → Subp Δ (Γ ▸p K)
         pp    : ∀{Γt}{Γ : Conp Γt}{K} → Subp (Γ ▸p K) Γ
         qp    : ∀{Γt}{Γ : Conp Γt}{K} → Pf   (Γ ▸p K) K
+        ◆p[] : ∀{Γt Δt}{γt : Subt Δt Γt} -> ◆p [ γt ]C ≡ ◆p
+        ▸p[] : ∀{Γt Δt}{Γp : Conp Γt}{K : For Γt}{γt : Subt Δt Γt} -> (Γp ▸p K) [ γt ]C ≡ (Γp [ γt ]C ▸p K [ γt ]F) 
         --▸pβ₁  : ∀{Γt}{Γ Δ : Conp Γt}{γ : Subp Δ Γ}{K}{k : Pf Δ K} → pp ∘p (γ ,p k) ≡ γ
         --▸pη   : ∀{Γt}{Γ : Conp Γt}{K} -> idp ≡ (pp ,p qp) ∈ Subp (Γ ▸p K) (Γ ▸p K)
         

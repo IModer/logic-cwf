@@ -152,8 +152,8 @@ module Ite
     ⟦ Γ ▸p K ⟧Conp = ⟦ Γ ⟧Conp M.▸p ⟦ K ⟧For
 
     ⟦[]C⟧ : ∀{Γt Δt}{Γ : I.Conp Γt}{γt : I.Subt Δt Γt} -> ⟦ Γ I.[ γt ]C ⟧Conp ≡ (⟦ Γ ⟧Conp M.[ ⟦ γt ⟧Subt ]C)
-    ⟦[]C⟧ {Γt} {Δt} {◆p} {γt} = {!   !}
-    ⟦[]C⟧ {Γt} {Δt} {Γ ▸p K} {γt} = trans (cong (λ z → proj₁ z M.▸p proj₂ z) (mk,= (⟦[]C⟧ {Γ = Γ}) (⟦[]F⟧ {K = K}))) (sym {!   !})
+    ⟦[]C⟧ {Γt} {Δt} {◆p} {γt} = sym M.◆p[]
+    ⟦[]C⟧ {Γt} {Δt} {Γ ▸p K} {γt} = trans (cong (λ z → proj₁ z M.▸p proj₂ z) (mk,= (⟦[]C⟧ {Γ = Γ}) (⟦[]F⟧ {K = K}))) (sym M.▸p[])
     
     ⟦ εp       ⟧Subp = M.εp
     ⟦ γ ,p PfK ⟧Subp = ⟦ γ ⟧Subp M.,p ⟦ PfK ⟧Pf
@@ -174,11 +174,12 @@ module Ite
     ⟦ ∀intro {Γt}{K}{Γ} PfK ⟧Pf  =
         let PfK' = substp (λ z -> M.Pf z ⟦ K ⟧For) (trans (⟦[]C⟧ {Γt}{Γt ▸t}{Γ}{pt}) (cong (λ z → ⟦ Γ ⟧Conp M.[ z ]C) (⟦pt⟧ {Γt}))) ⟦ PfK ⟧Pf in 
         M.∀intro PfK'
+    -- TODO : Change Syntax to ∀elim
     ⟦ un∀ PfK t ⟧Pf = {!    !}
     ⟦ ∃intro {Γt}{K}{Γ} t PfK ⟧Pf = {!   !} -- M.∃intro ⟦ t ⟧Tm (substp (M.Pf ⟦ Γ ⟧Conp) (trans (⟦[]F⟧ {Γt ▸t} {Γt} {K} {idt ,t t}) (cong (λ z → ⟦ K ⟧For M.[ z M.,t ⟦ t ⟧Tm ]F) (⟦idt⟧ {Γt}))) ⟦ PfK ⟧Pf)
     ⟦ ∃elim PfK PfKL ⟧Pf = M.∃elim ⟦ PfK ⟧Pf {!   !}
     ⟦ ref ⟧Pf = M.Eqrefl
-    ⟦ subst' {Γt} K {t}{t'}{Γ} PfK PfL ⟧Pf = {!   !}
+    ⟦ subst' {Γt} K {t}{t'}{Γ} PfK PfL ⟧Pf = substp (M.Pf ⟦ Γ ⟧Conp) (trans (cong (λ z → ⟦ K ⟧For M.[ z M.,t ⟦ t' ⟧Tm ]F) (sym (⟦idt⟧ {Γt}))) (sym (⟦[]F⟧ {Γt ▸t}{Γt}{K}{idt ,t t'}))) (M.subst' ⟦ K ⟧For ⟦ PfK ⟧Pf {!   !})
         {-
         substp (M.Pf ⟦ Γ ⟧Conp) (sym (trans (⟦[]F⟧ {Γt ▸t} {Γt} {K} {idt ,t t'}) (cong (λ z → ⟦ K ⟧For M.[ z M.,t ⟦ t' ⟧Tm ]F) (⟦idt⟧ {Γt})))) 
         (M.subst' {⟦ Γt ⟧Cont} ⟦ K ⟧For {⟦ t ⟧Tm}{⟦ t' ⟧Tm}{⟦ Γ ⟧Conp} ⟦ PfK ⟧Pf 
