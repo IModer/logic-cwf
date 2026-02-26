@@ -22,7 +22,7 @@ record Category : Set₁ where
         idlC : ∀{A B}{f : Hom A B} -> idC ∘C f ≡ f
         idrC : ∀{A B}{f : Hom A B} -> f ∘C idC ≡ f
 
-module Kripke
+module Semantics
     (C : Category)
     (open Category C)
     (D : Set)
@@ -32,8 +32,6 @@ module Kripke
     (fun  : (n : ℕ) → funar n → D ^ n → D)
     -- (⟨fun⟩ : ∀{n i ds I J} → fun n i ds I → Hom J I → fun n i ds J)
     where
-
-    --open Category C
 
     record Cont : Set₁ where
         constructor mk
@@ -303,8 +301,8 @@ module Kripke
 
     ∀elim : {Γt : Cont} {K : For (Γt ▸t)} {Γ : Conp Γt} →
       Pf Γ (∀' K) → Pf (Γ [ pt ]C) K
-    ∣ ∀elim PfK ∣ {I} {Γi ,Σ d} x = ∣ PfK ∣ x d
-    
+    ∣ ∀elim PfK ∣ {I} {Γti ,Σ d} Γi = ∣ PfK ∣ Γi d
+
     Eq : {Γt : Cont} → Tm Γt → Tm Γt → For Γt
     ∣ Eq t t' ∣ I Γi = ∣ t ∣ I Γi ≡ ∣ t' ∣ I Γi
     _∶_⟨_⟩ (Eq {Γt} t t') x f = trans (sym (nat t)) (trans x (nat t'))
@@ -319,7 +317,7 @@ module Kripke
     subst' : {Γt : Cont} (K : For (Γt ▸t)) {t t' : Tm Γt} {Γ : Conp Γt} →
       Pf Γ (Eq t t') → Pf Γ (K [ idt ,t t ]F) → Pf Γ (K [ idt ,t t' ]F)
     ∣ subst' K t=t' PfK ∣ {I}{i} x = substp (λ z → ∣ K ∣ I (i ,Σ z)) (∣ t=t' ∣ x) (∣ PfK ∣ x)
-    
+
     Kripke : Model funar relar _ _ _ _ _
     Kripke = record
       { Cont = Cont
@@ -380,6 +378,8 @@ module Kripke
       ; _,p_ = _,p_
       ; pp = λ {Γt}{Γ}{K = K} -> pp {K = K} 
       ; qp = λ {Γt}{Γ}{K} -> qp {Γ = Γ}
+      ; ◆p[] = refl
+      ; ▸p[] = refl
       ; ⊤ = ⊤
       ; ⊤[] = refl
       ; tt = tt
@@ -400,4 +400,103 @@ module Kripke
       ; Eq[] = refl
       ; Eqrefl = λ {Γt}{t}{Γ} -> Eqrefl {Γt}{t}{Γ}
       ; subst' = subst'
-      }     
+      }
+    
+module Completeness 
+    (D : Set)
+    where
+    
+    open import FirstOrderLogic.IntNegative.Syntax funar relar as I
+
+    C : Category
+    C = record
+      { Ob = I.ConTm
+      ; Hom = I.Subt
+      ; idC = I.idt
+      ; _∘C_ = λ {Γt}{Δt}{Θt} γt δt -> γt I.∘t δt
+      ; assC = I.ass
+      ; idlC = I.idl
+      ; idrC = I.idr
+      }
+
+    postulate
+      relS  : (n : ℕ) → relar n → D ^ n → I.ConTm → Prop
+      ⟨relS⟩ : ∀{n i ds I J} → relS n i ds I → I.Subt J I → relS n i ds J
+      funS  : (n : ℕ) → funar n → D ^ n → D
+    
+    _▸ts_ : I.ConTm -> ℕ -> I.ConTm
+    Γt ▸ts zero = Γt
+    Γt ▸ts (suc n) = (Γt ▸ts n) ▸t
+
+    reify-Tms : ∀{n} -> (Γt : I.ConTm) -> D ^ n -> I.Tms (Γt ▸ts n) n
+    reify-Tms {zero} Γt x = *
+    reify-Tms {suc n} Γt (_ ,Σ ds) = (reify-Tms {n} Γt ds I.[ I.pt ]ts) ,Σ I.qt
+
+    _↑t : ∀{Γt Δt} -> Subt Δt Γt -> Subt (Δt ▸t) (Γt ▸t)
+    γt ↑t = γt ∘t pt ,t qt
+
+    _↑t_ : ∀{Γt Δt} -> Subt Δt Γt -> (n : ℕ) -> Subt (Δt ▸ts n) (Γt ▸ts n)
+    γt ↑t zero = γt
+    γt ↑t suc n = (γt ↑t n) ↑t
+
+    ⟨reify-Tms⟩ : ∀{n a I J ds} -> Pf ◆p (I.rel n a (reify-Tms I ds)) -> I.Subt J I -> Pf ◆p (I.rel n a (reify-Tms J ds))
+    ⟨reify-Tms⟩ {zero} {a} {I} {J} {ds} Pfrel γ = Pfrel [ γ ]p
+    ⟨reify-Tms⟩ {suc n} {a} {I} {J} {ds} Pfrel γ = 
+        substp (Pf ◆p) (cong (rel (suc n) a) (mk,= (trans (sym [∘]ts) {!   !}) refl)) 
+        (Pfrel [ γ ↑t (suc n) ]p)
+    
+    open Semantics C D (λ n a ds Γt → Pf ◆p (I.rel n a (reify-Tms Γt ds))) (λ PfDs γt → {!   !}) funS
+
+--    open Semantics C D relS ⟨relS⟩ funS 
+
+    open import FirstOrderLogic.IntNegative.Iterator
+    open Ite funar relar Kripke
+
+    reflect-cont : ∀{Γt} Δt -> I.Subt Γt Δt -> ∣ ⟦ Δt ⟧Cont ∣ Γt
+    reflect-conp : ∀{Γt}{Γ : I.ConPf Γt} -> (Δ : I.ConPf Γt) -> I.Subp Γ Δ -> ∣ ⟦ Δ ⟧Conp ∣ Γt (reflect-cont Γt I.idt)
+    
+    reify   : ∀{Γt Δt Γ}{γt : I.Subt Δt Γt}(A : I.For Γt) -> ∣ ⟦ A ⟧For ∣ Δt (reflect-cont Γt γt) -> I.Pf Γ A
+    reflect : ∀{Γt Δt Γ}{γt : I.Subt Δt Γt}(A : I.For Γt) -> I.Pf Γ A -> ∣ ⟦ A ⟧For ∣ Δt (reflect-cont Γt γt)
+
+    reflect-cont ◆t             I.εt = *
+    reflect-cont (Δt ▸t) (γt I.,t t) = (reflect-cont Δt γt) ,Σ {!   !}
+
+
+{-
+    reflect-cont : ∀{Γt} Δt -> I.Subt Γt Δt -> ∣ ⟦ Δt ⟧Cont ∣ Γt
+    reflect-conp : ∀{Γt}{Γ : I.ConPf Γt} -> (Δ : I.ConPf Γt) -> I.Subp Γ Δ -> ∣ ⟦ Δ ⟧Conp ∣ Γt (reflect-cont Γt I.idt)
+    reflect-Tm   : ∀{Γt} -> (t : I.Tm Γt) -> D
+-- Reflect terms?
+-- Or dont need to reflect cont?    
+    reify   : ∀{Γt Γ}(A : I.For Γt) -> ∣ ⟦ A ⟧For ∣ Γt (reflect-cont Γt I.idt) -> I.Pf Γ A
+    reify-∀ : ∀{Γt Γ}(A : I.For (Γt I.▸t)) -> ∣ ⟦ I.∀' A ⟧For ∣ Γt ((reflect-cont Γt I.idt)) -> I.Pf Γ (I.∀' A)
+    reflect : ∀{Γt Γ}(A : I.For Γt) -> I.Pf Γ A -> ∣ ⟦ A ⟧For ∣ Γt (reflect-cont Γt I.idt)
+
+    reflect-Tm {Γt} t = ∣ ⟦ t ⟧Tm ∣ Γt (reflect-cont Γt I.idt)
+    reflect-conp ◆p       γ = *
+    reflect-conp (Δ ▸p K) γ = (reflect-conp Δ (I.pp I.∘p γ)) ,Σ reflect K (I.qp I.[ γ ]P )
+
+    reflect-cont ◆t           I.εt      = *
+    reflect-cont {Γt} (Δt ▸t) (γt ,t t) = (reflect-cont Δt γt) ,Σ {!   !}
+
+    reify ⊤ x = I.tt
+    reify {Γt} (A ⊃ B) PfAB = I.⊃intro (reify B (substp (∣ ⟦ B ⟧For ∣ Γt) {!   !} (PfAB Γt {!   !} {! reflect A I.qp  !})))
+    reify (A ∧ B) (PfA ,Σ PfB) = I.∧intro (reify A PfA) (reify B PfB)
+    reify (∀' A) x = I.∀intro (reify A {! x  !})
+    reify (Eq t t') x = {!   !}
+    reify (rel n a ts) x = {!  !}
+    
+    reify-∀ A x = I.∀intro (reify A {! ⟦ A ⟧For ∶ (x ?) ⟨ ? ⟩   !}) -- (reify A {!   !})
+    -- I.Pf (Γ I.[ I.pt ]C) A
+    -- ? : ∣ ⟦ A      ⟧For ∣ (Γt I.▸t) (reflect-cont pt ,Σ ?4 )
+    -- x : ∣ ⟦ I.∀' A ⟧For ∣ Γt        (reflect-cont Γt I.idt)
+    -- ⟦ A ⟧For ∶ (x ?) ⟨ ? ⟩ :  ⟦ A ⟧For ∣ ? ((⟦ Γt ⟧Cont ∶ reflect-cont Γt I.idt ⟨ ? ⟩) ,Σ ?)
+
+    reflect ⊤ x = *
+    reflect {Γt}{Γ} (A ⊃ B) x = λ J f PfA → (⟦ B ⟧For) ∶ (reflect B ((I.⊃elim x))) ⟨ f ⟩
+    reflect (A ∧ B) x = (reflect A (I.∧elim₁ x)) ,Σ (reflect B (I.∧elim₂ x))
+    reflect (∀' A) x = λ d → {!   !}
+    reflect (Eq t t') x = {!   !}
+    reflect (rel n a ts) x = {! x  !} -- x
+
+-} 

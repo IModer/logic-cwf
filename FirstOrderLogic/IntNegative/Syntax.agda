@@ -3,6 +3,9 @@
 open import FirstOrderLogic.IntNegative.Model
 open import lib
 
+-- We give the initial model of FOLClassicMinimal
+-- We give it as a normal form, meaning its a inductive
+-- datatype but we can prove it satisfies the equations
 module FirstOrderLogic.IntNegative.Syntax
     (funar : ℕ → Set)
     (relar : ℕ → Set)
@@ -11,7 +14,7 @@ module FirstOrderLogic.IntNegative.Syntax
     infixl 5 _▸t _▸p_
     infixl 5 _,t_ _,p_
     infixr 7 _∘t_ _∘p_
-    infixl 8 _[_]t _[_]F _[_]C _[_]P _[_]p _[_]v {-_[_]s-} _[_]ts
+    infixl 8 _[_]t _[_]F _[_]C _[_]P _[_]p _[_]v _[_]ts
     infixr 6 _⊃_
     infixr 7 _∧_
     infixl 6 _$_
@@ -22,7 +25,6 @@ module FirstOrderLogic.IntNegative.Syntax
 
     module V where
     
-        --De Bruijn indicies
         data Tm : ConTm → Set where
           vz : ∀{Γ} → Tm (Γ ▸t)
           vs : ∀{Γ} → Tm Γ → Tm (Γ ▸t)
@@ -83,8 +85,6 @@ module FirstOrderLogic.IntNegative.Syntax
 
     open V using (vz; vs)
 
-    -- Because we use Tms in our notion of model we have to define Tms and Tm mutually inductively
-    -- This is one of the "negatives" of using Tms but this is also the case for substitutions in Tm and Tm ^ n
     data Tm (Γt : ConTm) : Set
     Tms : ConTm → ℕ → Set
 
@@ -94,9 +94,11 @@ module FirstOrderLogic.IntNegative.Syntax
     Tms Γt zero = 𝟙
     Tms Γt (suc n) = Tms Γt n × Tm Γt
 
-    --data Tm (Γt : ConTm) : Set where
-    --  var  : V.Tm Γt → Tm Γt
-    --  fun  : (n : ℕ) → funar n → Tm Γt ^ n → Tm Γt
+    π₁     : ∀{Γ n} → Tms Γ (suc n) → Tms Γ n
+    π₁ = proj₁
+    
+    π₂     : ∀{Γ n} → Tms Γ (suc n) → Tm Γ
+    π₂ = proj₂
 
     data Subt : ConTm → ConTm → Set where
       εt : ∀{Δt} → Subt Δt ◆t
@@ -112,14 +114,6 @@ module FirstOrderLogic.IntNegative.Syntax
     _[_]v : ∀{Γt Δt} → V.Tm Γt → Subt Δt Γt → Tm Δt
     vz [ γ ,t t ]v = t
     vs x [ γ ,t t ]v = x [ γ ]v
-
-    -- Substitution on terms and Tm ^ n
-    --_[_]ts : ∀{Γt n} → Tm Γt ^ n → ∀{Δt} → Subt Δt Γt → Tm Δt ^ n
-    --_[_]t  : ∀{Γt} → Tm Γt → ∀{Δt} → Subt Δt Γt → Tm Δt
-    --_[_]ts {n = zero} _ _ = *
-    --_[_]ts {n = suc n} (t ,Σ ts) γ = (t [ γ ]t) ,Σ (ts [ γ ]ts)
-    --var x [ γ ]t = x [ γ ]v
-    --(fun n a ts) [ γ ]t  = fun n a (ts [ γ ]ts)
 
     -- Substitution on terms
     _[_]t  : ∀{Γt} → Tm Γt → ∀{Δt} → Subt Δt Γt → Tm Δt
@@ -271,12 +265,9 @@ module FirstOrderLogic.IntNegative.Syntax
             Pf {Γt ▸t} (Γp [ pt ]C) K → 
             -----------------------------
             Pf {Γt} Γp (∀' K)
-        
-        un∀ : ∀{Γt}{K Γp} → 
-            Pf Γp (∀' K) → (t : Tm Γt) → 
-            -----------------------------
-                Pf Γp (K [ idt ,t t ]F)
-        
+
+        ∀elim : ∀{Γ K Γp} → Pf {Γ} Γp (∀' K) → Pf {Γ ▸t} (Γp [ pt ]C) K
+
         ref  : ∀{Γt}{a}{Γp : ConPf Γt} → Pf Γp (Eq a a)
         subst' : ∀{Γt}(K : For (Γt ▸t)){t t' : Tm Γt}{Γp} → Pf Γp (Eq t t') → Pf Γp (K [ idt ,t t ]F) → Pf Γp (K [ idt ,t t' ]F)
         _[_]p : ∀{Γt}{K}{Γp : ConPf Γt} → Pf Γp K → ∀{Δt : ConTm} → (γ : Subt Δt Γt) → Pf (Γp [ γ ]C) (K [ γ ]F)
@@ -285,11 +276,6 @@ module FirstOrderLogic.IntNegative.Syntax
 
     ⊃elim : ∀{Γ K L}{Γp : ConPf Γ} → Pf Γp (K ⊃ L) → Pf (Γp ▸p K) L
     ⊃elim m = (m [ pp ]P) $ qp
-
-    ∀elim : ∀{Γ K Γp} → Pf {Γ} Γp (∀' K) → Pf {Γ ▸t} (Γp [ pt ]C) K
-    ∀elim {K = K}{Γp} k = substp (Pf (Γp [ pt ]C))
-        (trans (trans (sym [∘]F) (cong (λ z → K [ z ,t var vz ]F) (trans ass (trans (cong (pt ∘t_) ▸tβ₁) idr)))) [id]F)
-        (un∀ (k [ pt ]p) (var vz))
 
     I : Model funar relar _ _ _ _ _
     I = record
@@ -317,7 +303,7 @@ module FirstOrderLogic.IntNegative.Syntax
       ; qt = qt
       ; ▸tβ₁ = ▸tβ₁
       ; ▸tβ₂ = refl
-      ; ▸tη = refl
+      ; ▸tη = ▸tη
       ; Tms = Tms
       ; _[_]ts = _[_]ts
       ; [∘]ts = [∘]ts
@@ -325,8 +311,8 @@ module FirstOrderLogic.IntNegative.Syntax
       ; εs = *
       ; ◆sη = λ ts → refl
       ; _,s_ = _,Σ_
-      ; π₁ = proj₁
-      ; π₂ = proj₂
+      ; π₁ = π₁
+      ; π₂ = π₂
       ; ▸sβ₁ = refl
       ; ▸sβ₂ = refl
       ; ▸sη = refl
@@ -351,6 +337,8 @@ module FirstOrderLogic.IntNegative.Syntax
       ; _,p_ = λ γ -> _,p_ γ
       ; pp = pp
       ; qp = qp
+      ; ◆p[] = refl
+      ; ▸p[] = refl
       ; ⊤ = ⊤
       ; ⊤[] = refl
       ; tt = tt

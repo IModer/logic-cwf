@@ -483,4 +483,4 @@ module Kripke
       ; Eq[] = refl
       ; Eqrefl = λ {Γt}{t}{Γ} -> Eqrefl {Γt}{t}{Γ}
       ; subst' = subst'
-      }     
+      }
