@@ -1,4 +1,4 @@
-{-# OPTIONS --prop --rewriting #-}
+{-# OPTIONS --prop #-}
 
 module lib where
 
@@ -90,6 +90,10 @@ ind^' : ∀{i}{n} → {T : Set i}{C : ℕ → Set i} → C zero → (∀{m} → 
 ind^' {i} {zero} {T} {C} f g * = f
 ind^' {i} {suc n} {T} {C} f g (t ,Σ ts) = g t (ind^' {i}{n}{T}{C} f g ts)
 
+map^ : ∀{i}{A B : Set i}{n} -> A ^ n -> (A -> B) -> B ^ n
+map^ {i}{A}{B}{zero} * f = *
+map^ {i}{A}{B}{suc n} (t ,Σ ts) f = f t ,Σ map^ ts f
+
 
 data _+p_ {i j}(A : Prop i)(B : Prop j) : Prop (i ⊔ j) where
   inj₁ : A → A +p B
@@ -157,7 +161,10 @@ record LiftProp {a ℓ} (A : Prop a) : Prop (a ⊔ ℓ) where
 data _≡_ {i}{A : Set i}(x : A) : A → Prop i where
   refl : x ≡ x
 
-{-# BUILTIN REWRITE _≡_ #-}
+data _≡p_ {i}{A : Prop i}(x : A) : A → Prop i where
+  refl : x ≡p x
+
+-- {-# BUILTIN REWRITE _≡_ #-}
 
 infix 4 _≡_
 infix  3 _∎
@@ -174,15 +181,22 @@ eqP (x ≡≡ y) = refl
 eqP (x ∎∎) = refl
 
 postulate
-  transport : ∀ {i j} {A : Set i}(P : A → Set j){x y : A} → x ≡ y → P x → P y
+  transport  : ∀ {i j} {A : Set i}(P : A → Set j){x y : A} → x ≡ y → P x → P y
+  --transportP : ∀ {i j} {A : Prop i}(P : A → Set j){x y : A} -> P x -> P y
   transport-refl : ∀ {i j} {A : Set i}{P : A → Set j}{x : A}{px : P x} → transport P refl px ≡ px
   -- {-# REWRITE transport-refl #-}
 
-  funext : {A : Set}{B : A → Set}{f g : (a : A) → (B a)} → ((x : A) → f x ≡ g x) → f ≡ g
-  funext-imp : {A : Set}{B : A → Set}{f g : {x : A} → B x} → (∀ {x} → f {x} ≡ g {x}) → (λ {x} → f {x}) ≡ (λ {x} → g {x})
-
+  -- funext A A' B B' 
+  funext      : ∀{i j}{A : Set i }{B : A → Set j}{f g : (a : A) → B a} → (∀(x : A) → f x   ≡ g x) → f ≡ g
+  funextp     : ∀{i j}{A : Prop i}{B : A → Set j}{f g : (a : A) → B a} → (∀(x : A) → f x   ≡ g x) → f ≡ g
+  funext-imp  : ∀{i j}{A : Set i }{B : A → Set j}{f g : {a : A} → B a} → (∀{x} ->    f {x} ≡ g {x}) → (λ {x} → f {x}) ≡ (λ {x} → g {x})
+  funextp-imp : ∀{i j}{A : Prop i}{B : A → Set j}{f g : {a : A} → B a} → (∀{x} ->    f {x} ≡ g {x}) → (λ {x} → f {x}) ≡ (λ {x} → g {x})
+  
 substp : ∀{i j}{A : Set i}(B : A → Prop j){a a' : A} → a ≡ a' → B a → B a'
 substp B refl u = u
+
+substP : ∀{i j}{A : Prop i}(B : A → Prop j){a a' : A} → B a → B a'
+substP B u = u
 
 sym : ∀{i}{A : Set i}{a a' : A} → a ≡ a' → a' ≡ a
 sym refl = refl
