@@ -550,10 +550,10 @@ module Completeness where
         reflect-cont ◆t x = *
         reflect-cont (Δt ▸t) (γ ,t t) = reflect-cont Δt γ ,Σ t
         
-        reflect-conp : ∀{Γt}{Γ}{Δt} (Δ : I.ConPf Δt) -> (γt : I.Subt Γt Δt) -> I.Subp Γ (Δ I.[ γt ]C) -> ∣ ⟦ Δ ⟧Conp ∣ (Γt ,Σ Γ) (reflect-cont Δt γt)
+        reflect-conp : ∀{Γt}{Γ}{Δt} (Δ : I.ConPf Δt) -> (γt : I.Subt Γt Δt) -> (γ : I.Subp Γ (Δ I.[ γt ]C)) -> ∣ ⟦ Δ ⟧Conp ∣ (Γt ,Σ Γ) (reflect-cont Δt γt)
         reflect-conp {Γt}{Γ}{Δt} ◆p γ γt = *
         reflect-conp {Γt}{Γ}{Δt} (Δ ▸p K) γt γ = (reflect-conp Δ γt (I.pp I.∘p γ)) ,Σ reflect {Δt}{Γt}{Δ I.▸p K}{Γ}{γt ,Σ γ} K (I.qp I.[ γ ]P)
-       
+        
         reflect-con : ∀{Γ : Con} (Δ : Con) -> Sub Γ Δ -> Σsp (∣ ⟦ proj₁ Δ ⟧Cont ∣ Γ) (∣ ⟦ proj₂ Δ ⟧Conp ∣ Γ)
         reflect-con {Γt ,Σ Γ} (Δt ,Σ Δ) (γt ,Σ γ) = reflect-cont Δt γt ,Σ reflect-conp Δ γt γ
 
@@ -573,9 +573,50 @@ module Completeness where
         reflect-Tms {zero} {Γt} {Δt} {Δ} {γt} {*} = refl
         reflect-Tms {suc n} {Γt} {Δt} {Δ} {γt} {(ts ,Σ t)} = mk,= reflect-Tms (reflect-Tm {Γt}{Δt}{Δ}{γt}{t})
 
+        ⟦∧⟧ : ∀ {Γ@(Γt ,Σ Γp) Θ@(Θt ,Σ Θp) : Con}{Θi}{A B : I.For Γt}{γt : I.Subt Θt Γt} -> 
+            ∣ ⟦ A I.∧ B ⟧For ∣ Θ Θi ≡ ∣ ⟦ A ⟧For ∣ Θ Θi ×p ∣ ⟦ B ⟧For ∣ Θ Θi -- ∣ ⟦ A ⟧ ∣
+        ⟦∧⟧ {◆t ,Σ Γp} {Θt ,Σ Θp}{Θi} {Γi} {A} {B} = refl
+        ⟦∧⟧ {(Γt ▸t) ,Σ Γp} {Θt ,Σ Θp}{Θi} {Γi} {A} {B} = refl
+
+        cong×p : ∀{A A' B B' : Prop} -> A ≡ A' -> B ≡ B' -> A ×p B ≡ A' ×p B'
+        cong×p refl refl = refl
+
+        ⟨∘⟩-reflect-cont : ∀{Γ@(Γt ,Σ Γp) Δ@(Δt ,Σ Δp) Θ@(Θt ,Σ Θp) : Con}{A : I.For Γt}{γ@(γt ,Σ γp) : Sub Δ Γ}{δ@(δt ,Σ δp) : Sub Θ Δ} -> 
+            ∣ ⟦ A ⟧For ∣ Θ (reflect-cont Γt (proj₁ (γ ∘ δ))) ≡ 
+            ∣ ⟦ A ⟧For ∣ Θ (⟦ Γt ⟧Cont ∶ reflect-cont Γt γt ⟨ δ ⟩)
+        ⟨∘⟩-reflect-cont {◆t ,Σ Γ} {Δ} {Θ} {A} {γ} {δ} = refl
+        ⟨∘⟩-reflect-cont {(Γt ▸t) ,Σ Γ} {Δ} {Θ} {⊤} {γ@((γt ,t t) ,Σ γp)} {δ@(δt ,Σ δp)} = refl
+        ⟨∘⟩-reflect-cont {(Γt ▸t) ,Σ Γ} {Δ} {Θ} {A ⊃ B} {γ@((γt ,t t) ,Σ γp)} {δ@(δt ,Σ δp)} = 
+            cong (λ Z -> (J : Con) -> (f@(ft ,Σ fp) : Sub J Θ) -> Z J f) -- (a : ∣ ⟦ A ⟧For ∣ J {!   !}) 
+            (funext (λ J@(Jt ,Σ Jp) -> funext (λ f@(ft ,Σ fp) -> 
+            {!   !})))
+        ⟨∘⟩-reflect-cont {(Γt ▸t) ,Σ Γ} {Δ} {Θ} {A ∧ B} {γ@((γt ,t t) ,Σ γp)} {δ@(δt ,Σ δp)} = 
+            let Aeq = ⟨∘⟩-reflect-cont {(Γt I.▸t) ,Σ Γ}{Δ}{Θ}{A}{(γt I.,t t) ,Σ γp}{δ} in
+            let Beq = ⟨∘⟩-reflect-cont {(Γt I.▸t) ,Σ Γ}{Δ}{Θ}{B}{(γt I.,t t) ,Σ γp}{δ} in
+            let h = ⟦∧⟧ {(Γt I.▸t) ,Σ Γ}{Θ}{reflect-cont (Γt I.▸t) (proj₁ (((γt I.,t t) ,Σ γp) ∘ δ))}{A}{B}{(γt I.,t t) I.∘t δt} in
+            let h' = sym (⟦∧⟧ {(Γt I.▸t) ,Σ Γ}{Θ}{⟦ Γt I.▸t ⟧Cont ∶ reflect-cont (Γt I.▸t) (γt I.,t t) ⟨ δ ⟩}{A}{B}{(γt I.,t t) I.∘t δt}) in
+            trans h (trans (cong×p Aeq Beq) h')
+        ⟨∘⟩-reflect-cont {(Γt ▸t) ,Σ Γ} {Δ} {Θ} {∀' A} {γ@((γt ,t t) ,Σ γp)} {δ@(δt ,Σ δp)} = {!   !}
+        ⟨∘⟩-reflect-cont {(Γt ▸t) ,Σ Γ} {Δ} {Θ} {Eq t t'} {γ@((γt ,t t'') ,Σ γp)} {δ@(δt ,Σ δp)} = {!   !}
+        ⟨∘⟩-reflect-cont {(Γt ▸t) ,Σ Γ} {Δ} {Θ} {rel zero a ts} {γ@((γt ,t t) ,Σ γp)} {δ@(δt ,Σ δp)} = refl
+        ⟨∘⟩-reflect-cont {(Γt ▸t) ,Σ Γ} {Δ} {Θ} {rel (suc n) a ts} {γ@((γt ,t t) ,Σ γp)} {δ@(δt ,Σ δp)} = {!   !} -- cong (∣ ⟦ A ⟧For ∣ Θ) (mk,= {! ⟨∘⟩-reflect-cont {Γt ,Σ ?}{Δ}{Θ}{A I.[ ? ]F}{γt ,Σ ?}{δ}  !} refl)
+
+        ⟨pp⟩-reflect-cont : ∀{Γ@(Γt ,Σ Γp) Δ@(Δt ,Σ Δp) : Con}{A B : I.For Γt}{γ@(γt ,Σ γp) : Sub Δ Γ} -> ∣ ⟦ B ⟧For ∣ (Δt ,Σ (Δp I.▸p A I.[ γt ]F)) (reflect-cont Γt γt) 
+          ≡ ∣ ⟦ B ⟧For ∣ (Δt ,Σ (Δp I.▸p A I.[ γt ]F)) (⟦ Γt ⟧Cont ∶ reflect-cont Γt γt ⟨ pp' ⟩)
+        ⟨pp⟩-reflect-cont {Γ@(Γt ,Σ Γp)} {Δ} {A} {B} {γ@(γt ,Σ γp)} = 
+            let h = ⟨∘⟩-reflect-cont {Γ}{Δ}{Δ ▸p' (A I.[ γt ]F)}{B}{γ}{pp'} in 
+            trans (cong (λ z -> ∣ ⟦ B ⟧For ∣ (Δ ▸p' (A I.[ γt ]F)) (reflect-cont Γt z)) (sym idr)) h
+        
         reify : ∀{Γt Δt}{Γ : I.ConPf Γt}{Δ : I.ConPf Δt}{γ : Sub (Δt ,Σ Δ) (Γt ,Σ Γ)}(A : I.For Γt) -> ∣ ⟦ A ⟧For ∣ (Δt ,Σ Δ) (reflect-cont Γt (proj₁ γ)) -> I.Pf Δ (A I.[ proj₁ γ ]F)
         reify ⊤ x = I.tt
-        reify (A ⊃ B) x = {!   !}
+        reify {Γt} {Δt} {Γ} {Δ} γ@{γt ,Σ γp} (A ⊃ B) x =
+            let qp' = substp (I.Pf (Δ I.▸p A I.[ γt ]F)) (cong (A I.[_]F) (sym idr)) (I.qp {Δt}{Δ}{A I.[ γt ]F}) in
+            let ha  = ⟨pp⟩-reflect-cont {Γt ,Σ Γ}{Δt ,Σ Δ}{A}{A}{γ} in
+            let hb  = ⟨pp⟩-reflect-cont {Γt ,Σ Γ}{Δt ,Σ Δ}{A}{B}{γ} in
+            let pa = substp (λ z -> z) (trans (cong (λ z -> ∣ ⟦ A ⟧For ∣ (Δt ,Σ (Δ I.▸p A I.[ γt ]F)) (reflect-cont Γt z)) idr) ha) (reflect {Γt}{Δt}{Γ}{Δ I.▸p A I.[ γt ]F}{γ ∘ pp' {Δt ,Σ Δ}{A I.[ γt ]F}} A qp') in
+            let pb = substp (λ z -> z) (trans (sym hb) (cong (λ z -> ∣ ⟦ B ⟧For ∣ (Δt ,Σ (Δ I.▸p A I.[ γt ]F)) (reflect-cont Γt z)) (sym idr))) (x (Δt ,Σ (Δ I.▸p A I.[ γt ]F)) pp' pa) in
+            let PfB = (reify {Γt}{Δt}{Γ}{Δ I.▸p A I.[ γt ]F}{γ ∘ (pp' {Δt ,Σ Δ}{A I.[ γt ]F})} B pb) in
+            I.⊃intro (substp (λ z -> I.Pf (Δ I.▸p A I.[ γt ]F) (B I.[ z ]F)) idr PfB)
         reify (A ∧ B) x = {!   !}
         reify (∀' A) x = {!   !}
         reify (Eq t t') x = {!   !}
@@ -583,15 +624,14 @@ module Completeness where
 
         reflect : ∀{Γt Δt}{Γ : I.ConPf Γt}{Δ : I.ConPf Δt}{γ : Sub (Δt ,Σ Δ) (Γt ,Σ Γ)}(A : I.For Γt) -> (PfA : I.Pf Δ (A I.[ proj₁ γ ]F)) -> ∣ ⟦ A ⟧For ∣ (Δt ,Σ Δ) (reflect-cont Γt (proj₁ γ))
         reflect ⊤ x = *
-        reflect {Γt} {Δt} {Γ} {Δ} γ@{γt ,Σ γp} (A ⊃ B) x (Θt ,Σ Θ) δ@(δt ,Σ δp) PfA = 
-            let PfA = (I.qp I.[ I.idp I.,p {! reify A  !} ]P) in
-            {! reflect {Γt}{Δt}{Γ}{Δ}{γ} A  !}
+        reflect {Γt} {Δt} {Γ} {Δ} γ@{γt ,Σ γp} (A ⊃ B) x (Θt ,Σ Θ) δ@(δt ,Σ δp) pa =
+            let PfA = reify {Γt}{Θt}{Γ}{Θ}{γ ∘ δ} A (substp (λ z -> z) (sym (⟨∘⟩-reflect-cont {Γt ,Σ Γ}{Δt ,Σ Δ}{Θt ,Σ Θ}{A}{γ}{δ})) pa) in 
+            substp (λ z -> z)  (⟨∘⟩-reflect-cont {Γt ,Σ Γ}{Δt ,Σ Δ}{Θt ,Σ Θ}{B}{γ}{δ}) 
+            (reflect {Γt}{Θt}{Γ}{Θ}{γ ∘ δ} B ((I.⊃elim (substp (I.Pf Θ) (cong (λ z → proj₁ z I.⊃ proj₂ z) (mk,= (sym [∘]F) (sym [∘]F))) (x I.[ δt ]p I.[ δp ]P))) I.[ I.idp I.,p PfA ]P))
         reflect (A ∧ B) x = {!   !}
         reflect (∀' A) x = {!   !}
         reflect (Eq t t') x = {!   !}
         reflect (rel n a ts) x = {!   !}
-        
-
         
         {- -- Doesnt work
         reflect-cont-backwards : ∀{Γt : I.ConTm}{Γ : I.ConPf Γt}(Δt : I.ConTm) -> (γt : I.Subt Δt Γt) -> ∣ ⟦ Δt ⟧Cont ∣ (Γt ,Σ Γ)
@@ -621,11 +661,11 @@ module Completeness where
 
         
         
-        help : ∀{Γ}{K}{PfK : I.Pf (proj₂ Γ) K} -> (id {Γ}) ≡ ((pp' {Γ}{K}) ∘ (I.idt ,Σ substp (I.Subp (proj₂ Γ)) (cong (λ z → proj₁ z I.▸p proj₂ z) (mk,= (sym [id]C) (sym [id]F))) (I.idp I.,p PfK)))
-        help {Γ} {K} {PfK} = mk,sp= (sym idl)
+        --help : ∀{Γ}{K}{PfK : I.Pf (proj₂ Γ) K} -> (id {Γ}) ≡ ((pp' {Γ}{K}) ∘ (I.idt ,Σ substp (I.Subp (proj₂ Γ)) (cong (λ z → proj₁ z I.▸p proj₂ z) (mk,= (sym [id]C) (sym [id]F))) (I.idp I.,p PfK)))
+        --help {Γ} {K} {PfK} = mk,sp= (sym idl)
 
-        ⟨pp⟩-reflect-cont : ∀{Γ Δ : Con}{K : I.For (proj₁ Δ)}{γt : I.Subt (proj₁ Δ) (proj₁ Γ)}{PfK : I.Pf (proj₂ Δ) K} -> (⟦ (proj₁ Γ) ⟧Cont ∶ (reflect-cont (proj₁ Γ) γt) ⟨ ((pp' {Δ}) ∘ (I.idt ,Σ substp (I.Subp (proj₂ Δ)) (cong (λ z → proj₁ z I.▸p proj₂ z) (mk,= (sym [id]C) (sym [id]F))) (I.idp I.,p PfK)) ) ⟩) ≡ reflect-cont (proj₁ Γ) γt
-        ⟨pp⟩-reflect-cont {Γt ,Σ Γ}{Δ}{K}{γt}{PfK} = trans (cong (λ z → ⟦ Γt ⟧Cont ∶ reflect-cont Γt γt ⟨ z ⟩) (sym (help {Δ}{K}{PfK}))) (⟦ Γt ⟧Cont ∶⟨id⟩) -- substp (λ z -> (⟦ Γt ⟧Cont ∶ reflect-cont {proj₁ Δ}{proj₂ Δ} Γt γt ⟨ z ⟩) ≡ reflect-cont Γt γt) ({! help {Γt ,Σ Γ}{K}{?}  !}) ({! ⟦ Γt ⟧Cont ∶⟨id⟩  !})
+        --⟨pp⟩-reflect-cont : ∀{Γ Δ : Con}{K : I.For (proj₁ Δ)}{γt : I.Subt (proj₁ Δ) (proj₁ Γ)}{PfK : I.Pf (proj₂ Δ) K} -> (⟦ (proj₁ Γ) ⟧Cont ∶ (reflect-cont (proj₁ Γ) γt) ⟨ ((pp' {Δ}) ∘ (I.idt ,Σ substp (I.Subp (proj₂ Δ)) (cong (λ z → proj₁ z I.▸p proj₂ z) (mk,= (sym [id]C) (sym [id]F))) (I.idp I.,p PfK)) ) ⟩) ≡ reflect-cont (proj₁ Γ) γt
+        --⟨pp⟩-reflect-cont {Γt ,Σ Γ}{Δ}{K}{γt}{PfK} = trans (cong (λ z → ⟦ Γt ⟧Cont ∶ reflect-cont Γt γt ⟨ z ⟩) (sym (help {Δ}{K}{PfK}))) (⟦ Γt ⟧Cont ∶⟨id⟩) -- substp (λ z -> (⟦ Γt ⟧Cont ∶ reflect-cont {proj₁ Δ}{proj₂ Δ} Γt γt ⟨ z ⟩) ≡ reflect-cont Γt γt) ({! help {Γt ,Σ Γ}{K}{?}  !}) ({! ⟦ Γt ⟧Cont ∶⟨id⟩  !})
         
         {- TODO : Very much needed, best i have rn
         reflect' : ∀{Γt Δt}{Γ : I.ConPf Γt}{Δ : I.ConPf Δt}{γt : I.Subt Δt Γt}(A : I.For Γt) -> I.Pf Δ (A I.[ γt ]F) -> ∣ ⟦ A ⟧For ∣ (Δt ,Σ Δ) (reflect-cont Γt γt) -- (Δt ,Σ (Γ I.[ γt ]C)) (reflect-cont Γt γt)
@@ -705,7 +745,6 @@ module Completeness where
         --lemma {◆t ,Σ Γp} {A} = refl
         --lemma Γ@{(Γt ▸t) ,Σ Γp} {A} = mk,= {! trans ?   !} refl
 
-        {-
         reify' : ∀{Γt}{Γ : I.ConPf Γt}(A : I.For Γt) -> ∣ ⟦ A ⟧For ∣ (Γt ,Σ Γ) (reflect-cont Γt I.idt) -> I.Pf Γ A
         reify' ⊤ x = I.tt
         reify' {Γt}{Γ} (A ⊃ B) x = 
@@ -719,6 +758,7 @@ module Completeness where
 
         reflect' : ∀{Γt}{Γ : I.ConPf Γt}(A : I.For Γt) -> I.Pf Γ A -> ∣ ⟦ A ⟧For ∣ (Γt ,Σ Γ) (reflect-cont Γt I.idt)
         reflect' A x = {!   !}
+        {-
         -}
         
 
@@ -914,4 +954,4 @@ module Completeness where
     reflect (rel n a ts) x = {! x  !} -- x
 
 -} 
-    -}-}                                                                                                                                                                                             
+    -}-}                                                                                                                                                                                                
