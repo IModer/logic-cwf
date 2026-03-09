@@ -111,11 +111,6 @@ record Model (i j k l m : Level) : Set (lsuc (i ⊔ j ⊔ k ⊔ l ⊔ m)) where
         ∀[]    : ∀{Γt K Δt}{γt : Subt Δt Γt} → (∀' K) [ γt ]F ≡ ∀' (K [ γt ∘t pt ,t qt ]F)
         ∀intro : ∀{Γt}{K}{Γ : Conp Γt} → Pf (Γ [ pt ]C) K → Pf Γ (∀' K)
         ∀elim  : ∀{Γt}{K : For (Γt ▸t)}{Γ : Conp Γt} → Pf Γ (∀' K) → Pf (Γ [ pt ]C) K
-        
-        Eq     : ∀{Γt} → Tm Γt → Tm Γt → For Γt
-        Eq[]   : ∀{Γt Δt}{γt : Subt Δt Γt}{t t' : Tm Γt} → (Eq t t') [ γt ]F ≡ Eq (t [ γt ]t) (t' [ γt ]t)
-        Eqrefl : ∀{Γt}{t : Tm Γt}{Γ : Conp Γt} → Pf Γ (Eq t t)
-        subst' : ∀{Γt}(K : For (Γt ▸t)){t t' : Tm Γt}{Γ : Conp Γt} → Pf Γ (Eq t t') → Pf Γ (K [ idt ,t t ]F) → Pf Γ (K [ idt ,t t' ]F)
 
     ,t∘t : ∀{Γt Δt Θt}{γt : Subt Δt Γt}{δt : Subt Θt Δt}{t : Tm Δt} -> (γt ,t t) ∘t δt ≡ (γt ∘t δt) ,t (t [ δt ]t)
     ,t∘t {Γt} {Δt} {Θt} {γt} {δt} {t} =

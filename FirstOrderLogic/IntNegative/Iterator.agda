@@ -131,7 +131,6 @@ module Ite
     ⟦ K ⊃ L ⟧For = ⟦ K ⟧For M.⊃ ⟦ L ⟧For
     ⟦ K ∧ L ⟧For = ⟦ K ⟧For M.∧ ⟦ L ⟧For
     ⟦ ∀' K ⟧For = M.∀' ⟦ K ⟧For
-    ⟦ Eq t t' ⟧For = M.Eq ⟦ t ⟧Tm ⟦ t' ⟧Tm
     ⟦ rel n a ts ⟧For = M.rel n a ⟦ ts ⟧Tms
 
     ⟦[]F⟧   : ∀{Γt Δt}{K : I.For Γt}{γt : I.Subt Δt Γt} -> ⟦ K I.[ γt ]F ⟧For ≡ ⟦ K ⟧For M.[ ⟦ γt ⟧Subt ]F
@@ -139,7 +138,6 @@ module Ite
     ⟦[]F⟧ {Γt} {Δt} {K ⊃ L} {γt} = trans (cong (λ z → proj₁ z M.⊃ proj₂ z) (mk,= (⟦[]F⟧ {K = K}) (⟦[]F⟧ {K = L}))) (sym M.⊃[])
     ⟦[]F⟧ {Γt} {Δt} {K ∧ L} {γt} = trans (cong (λ z → proj₁ z M.∧ proj₂ z) (mk,= (⟦[]F⟧ {K = K}) (⟦[]F⟧ {K = L}))) (sym M.∧[])
     ⟦[]F⟧ {Γt} {Δt} {∀' K} {γt} = trans (cong M.∀' (⟦[]F⟧ {K = K})) (trans (cong (λ z → M.∀' (⟦ K ⟧For M.[ z M.,t M.qt ]F)) (trans (⟦∘t⟧ {γt = γt}{δt = pt}) (cong (⟦ γt ⟧Subt M.∘t_) (⟦pt⟧ {Δt})))) (sym (M.∀[] {K = ⟦ K ⟧For} {γt = ⟦ γt ⟧Subt})))
-    ⟦[]F⟧ {Γt} {Δt} {Eq t t'} {γt} = trans (cong (λ z → M.Eq (proj₁ z) (proj₂ z)) (mk,= (⟦[]t⟧ {t = t}) (⟦[]t⟧ {t = t'}))) (sym M.Eq[])
     ⟦[]F⟧ {Γt} {Δt} {rel n x ts} {γt} = trans (cong (M.rel n x) (⟦[]ts⟧ {ts = ts})) (sym M.rel[])     
 
     ⟦ ◆p ⟧Conp = M.◆p
@@ -165,15 +163,6 @@ module Ite
         let PfK' = substp (λ z -> M.Pf z ⟦ K ⟧For) (trans (⟦[]C⟧ {Γt}{Γt ▸t}{Γ}{pt}) (cong (λ z → ⟦ Γ ⟧Conp M.[ z ]C) (⟦pt⟧ {Γt}))) ⟦ PfK ⟧Pf in 
         M.∀intro PfK'
     ⟦ ∀elim {Γt}{K}{Γ} PfK ⟧Pf = substp (λ z -> M.Pf z ⟦ K ⟧For) (sym (trans (⟦[]C⟧ {Γ = Γ} {γt = pt}) (cong (⟦ Γ ⟧Conp M.[_]C) (⟦pt⟧ {Γt})))) (M.∀elim ⟦ PfK ⟧Pf)
-    ⟦ ref ⟧Pf = M.Eqrefl
-    ⟦ subst' {Γt} K {t}{t'}{Γ} PfK PfL ⟧Pf = 
-        substp (M.Pf ⟦ Γ ⟧Conp) (trans (cong (λ z → ⟦ K ⟧For M.[ z M.,t ⟦ t' ⟧Tm ]F) (sym (⟦idt⟧ {Γt}))) (sym (⟦[]F⟧ {Γt ▸t}{Γt}{K}{idt ,t t'}))) 
-        (M.subst' ⟦ K ⟧For ⟦ PfK ⟧Pf (substp (M.Pf ⟦ Γ ⟧Conp) (trans (⟦[]F⟧ {K = K}) (cong (λ z → ⟦ K ⟧For M.[ z M.,t ⟦ t ⟧Tm ]F) (⟦idt⟧ {Γt}))) ⟦ PfL ⟧Pf))
-        {-
-        substp (M.Pf ⟦ Γ ⟧Conp) (sym (trans (⟦[]F⟧ {Γt ▸t} {Γt} {K} {idt ,t t'}) (cong (λ z → ⟦ K ⟧For M.[ z M.,t ⟦ t' ⟧Tm ]F) (⟦idt⟧ {Γt})))) 
-        (M.subst' {⟦ Γt ⟧Cont} ⟦ K ⟧For {⟦ t ⟧Tm}{⟦ t' ⟧Tm}{⟦ Γ ⟧Conp} ⟦ PfK ⟧Pf 
-        (substp (M.Pf ⟦ Γ ⟧Conp) (trans (⟦[]F⟧ {Γt ▸t} {Γt} {K} {idt ,t t}) ((cong (λ z → ⟦ K ⟧For M.[ z M.,t ⟦ t ⟧Tm ]F) (⟦idt⟧ {Γt})))) ⟦ PfL ⟧Pf))
-        -}
     ⟦ _[_]p {Γt}{K}{Γp} PfK {Δt} γt ⟧Pf  = substp (λ z -> M.Pf (proj₁ z) (proj₂ z)) (mk,= (sym (⟦[]C⟧ {Γt}{Δt}{Γp}{γt})) (sym (⟦[]F⟧ {Γt}{Δt}{K}{γt}))) (⟦ PfK ⟧Pf M.[ ⟦ γt ⟧Subt ]p)
     ⟦ PfK [ γ ]P ⟧Pf = ⟦ PfK ⟧Pf M.[ ⟦ γ ⟧Subp ]P
     ⟦ qp ⟧Pf = M.qp

@@ -207,6 +207,12 @@ trans refl refl = refl
 cong : ∀{i j}{A : Set i}{B : Set j}(f : A → B){a a' : A} → a ≡ a' → f a ≡ f a'
 cong f refl = refl
 
+cong-bin : ∀{i j k}{A : Set i}{B : Set j}{C : Set k}(R : A -> B -> C){a a' : A}{b b' : B} -> a ≡ a' -> b ≡ b' -> R a b ≡ R a' b'
+cong-bin R refl refl = refl
+
+cong-bin-dep : ∀{i j k}{A : Set i}{B : A -> Prop j}{C : Set k}(R : (a : A) -> B a -> C){a a' : A}{b : B a}{b' : B a'} -> (p : a ≡ a') -> R a b ≡ R a' b'
+cong-bin-dep R refl = refl
+
 _∎ : ∀{ℓ}{A : Set ℓ}(x : A) → x ≡ x
 x ∎ = refl {x = x}
 

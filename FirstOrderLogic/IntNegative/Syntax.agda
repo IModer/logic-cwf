@@ -83,6 +83,9 @@ module FirstOrderLogic.IntNegative.Syntax
         idr {γ = εt} = refl
         idr {γ = γ ,t x} = mk,t= idr [id]
 
+        _↑v : ∀ {Γ Δ} -> Sub Δ Γ -> Sub (Δ ▸t) (Γ ▸t)
+        γ ↑v = (γ ∘ wk id) ,t vz
+
     open V using (vz; vs)
 
     data Tm (Γt : ConTm) : Set
@@ -200,7 +203,6 @@ module FirstOrderLogic.IntNegative.Syntax
         _⊃_  : For Γt → For Γt → For Γt
         _∧_  : For Γt → For Γt → For Γt
         ∀'   : For (Γt ▸t) → For Γt
-        Eq   : Tm Γt → Tm Γt → For Γt
         rel  : (n : ℕ) → relar n → Tms Γt n → For Γt
 
     _[_]F : ∀{Γt Δt} → For Γt → Subt Δt Γt → For Δt
@@ -208,7 +210,6 @@ module FirstOrderLogic.IntNegative.Syntax
     (K ⊃ L) [ γ ]F = K [ γ ]F ⊃ L [ γ ]F
     (K ∧ L) [ γ ]F = K [ γ ]F ∧ L [ γ ]F
     ∀' K [ γ ]F = ∀' (K [ γ ∘t pt ,t qt ]F)
-    Eq t t' [ γ ]F = Eq (t [ γ ]t) (t' [ γ ]t)
     rel n a ts [ γ ]F = rel n a (ts [ γ ]ts)
 
     [∘]F : ∀{Γt}{K : For Γt}{Δt}{γ : Subt Δt Γt}{Θt}{δ : Subt Θt Δt} → K [ γ ∘t δ ]F ≡ K [ γ ]F [ δ ]F
@@ -216,7 +217,6 @@ module FirstOrderLogic.IntNegative.Syntax
     [∘]F {K = K ⊃ L} = cong (λ z → proj₁ z ⊃ proj₂ z) (mk,= [∘]F [∘]F)
     [∘]F {K = K ∧ L} = cong (λ z → proj₁ z ∧ proj₂ z) (mk,= [∘]F [∘]F)
     [∘]F {K = ∀' K}{γ = γ}{δ = δ} = cong ∀' (trans (cong (K [_]F) (cong (_,t var vz) (trans (trans ass (cong (γ ∘t_) (sym (▸tβ₁ {γ = δ ∘t pt})))) (sym ass)))) [∘]F)
-    [∘]F {K = Eq t t'} = cong (λ z → Eq (proj₁ z) (proj₂ z)) (mk,= ([∘]t {t = t}) ([∘]t {t = t'}))
     [∘]F {K = rel n a ts} = cong (rel n a) ([∘]ts {ts = ts})
 
     [id]F : ∀{Γt}{K : For Γt} → K [ idt ]F ≡ K
@@ -224,7 +224,6 @@ module FirstOrderLogic.IntNegative.Syntax
     [id]F {K = K ⊃ L} = cong (λ z → proj₁ z ⊃ proj₂ z) (mk,= ([id]F {K = K}) ([id]F {K = L}))
     [id]F {K = K ∧ L} = cong (λ z → proj₁ z ∧ proj₂ z) (mk,= ([id]F {K = K}) ([id]F {K = L}))
     [id]F {K = ∀' K} = cong ∀' (trans (cong (K [_]F) (cong (_,t var vz) idl)) ([id]F {K = K}))
-    [id]F {K = Eq t t'} = cong (λ z → Eq (proj₁ z) (proj₂ z)) (mk,= ([id]t {t = t}) ([id]t {t = t'}))
     [id]F {K = rel n a ts} = cong (rel n a) ([id]ts {ts = ts})
 
     data ConPf (Γt : ConTm) : Set where
@@ -267,8 +266,6 @@ module FirstOrderLogic.IntNegative.Syntax
 
         ∀elim : ∀{Γ K Γp} → Pf {Γ} Γp (∀' K) → Pf {Γ ▸t} (Γp [ pt ]C) K
 
-        ref  : ∀{Γt}{a}{Γp : ConPf Γt} → Pf Γp (Eq a a)
-        subst' : ∀{Γt}(K : For (Γt ▸t)){t t' : Tm Γt}{Γp} → Pf Γp (Eq t t') → Pf Γp (K [ idt ,t t ]F) → Pf Γp (K [ idt ,t t' ]F)
         _[_]p : ∀{Γt}{K}{Γp : ConPf Γt} → Pf Γp K → ∀{Δt : ConTm} → (γ : Subt Δt Γt) → Pf (Γp [ γ ]C) (K [ γ ]F)
         _[_]P : ∀{Γt}{Γp : ConPf Γt}{K : For Γt} → Pf Γp K → ∀{Γp'} → Subp Γp' Γp → Pf Γp' K
         qp : ∀{Γt}{Γp : ConPf Γt}{K : For Γt} → Pf (Γp ▸p K) K
@@ -361,8 +358,4 @@ module FirstOrderLogic.IntNegative.Syntax
       ; ∀[] = refl
       ; ∀intro = ∀intro
       ; ∀elim = ∀elim
-      ; Eq = Eq
-      ; Eq[] = refl
-      ; Eqrefl = ref
-      ; subst' = subst'
       }  
