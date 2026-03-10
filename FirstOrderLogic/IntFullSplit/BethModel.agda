@@ -50,7 +50,7 @@ module Sh (C : Category) where
             _◁_     : (I : Ob) -> Sieve I -> Prop
             _[_]ᶜ   : ∀ {I J R} -> I ◁ R -> (f : Hom J I) -> J ◁ (R [ f ]ˢ)
             maximal : ∀{I R} -> ∣ R ∣ I idC -> I ◁ R
-            local   : ∀{I R S} -> I ◁ R -> (∀{J} -> (f : Hom J I) -> ∣ R ∣ J f  -> J ◁ (S [ f ]ˢ)) -> I ◁ S 
+            local   : ∀{I R S} -> I ◁ R -> (∀{J} -> (f : Hom J I) -> ∣ R ∣ J f  -> J ◁ (S [ f ]ˢ)) -> I ◁ S
 
     record Sheaf (J : Top) : Set₁ where
         
@@ -69,17 +69,22 @@ module Semantics
     (open Category C)
     (open Sh C)
     (J : Top)
+    (open Top J)
     (D : Ob -> Set)
     (D∶_⟨_⟩ : ∀{I J} -> D I -> Hom J I -> D J)
     (D∶⟨∘⟩  : ∀{I J K}{a : D I}{f : Hom J I}{g : Hom K J} -> D∶ a ⟨ f ∘C g ⟩ ≡ D∶ D∶ a ⟨ f ⟩ ⟨ g ⟩)
     (D∶⟨id⟩ : ∀{I}{a : D I} -> D∶ a ⟨ idC ⟩ ≡ a)
+    -- ? Helyett valami más kéne
+    (Dglue  : ∀{I : Ob}{R : Sieve I} -> I ◁ R -> (∀{J} -> (f : Hom J I) -> ⟨ J , f ⟩⊩ R  -> D J) -> D I)
     (rel  : (n : ℕ) -> relar n -> (I : Ob) -> (D I) ^ n -> Prop)
+    -- ?
+    (relGlue : ∀ (n : ℕ)(a : relar n)(I : Ob)(ts : (D I) ^ n)(R : Sieve I) -> (I ◁ R) -> ({J : Ob} (f : Hom J I) -> ⟨ J , f ⟩⊩ R → rel n a J ((map^ ts (D∶_⟨ f ⟩)))) -> rel n a I ts)
     (⟨rel⟩ : ∀{n i I J ds} -> rel n i I ds -> (f : Hom J I) -> rel n i J (map^ ds (D∶_⟨ f ⟩)))
     (fun  : (n : ℕ) -> funar n -> (I : Ob) -> (D I) ^ n -> (D I))
     (⟨fun⟩ : ∀(n : ℕ)(a : funar n)(I J : Ob)(ds : (D I) ^ n)(f : Hom J I) -> (D∶ (fun n a I ds) ⟨ f ⟩) ≡ (fun n a J (map^ ds (D∶_⟨ f ⟩))) )
     where
 
-    open Top J
+    --open Top J
     record Cont : Set₁ where
         constructor mk
         field
@@ -215,8 +220,10 @@ module Semantics
     rel' : {Γ : Cont} (n : ℕ) -> relar n -> Tms Γ n -> For Γ
     ∣ rel' n a ts ∣ I x = rel n a I (recTms I (∣ ts ∣ I x))
     _∶_⟨_⟩ (rel' n a ts) {I} {J} {i} x f = substp (rel n a J) (trans ⟨recTms⟩ (cong (recTms J) (nat ts))) (⟨rel⟩ {n}{a}{I}{J}{recTms I (∣ ts ∣ I i)} x f)
-    glue (rel' n a ts) {I} {i} {R} I◁R f = {!   !} -- maybe this needs to be a primitive
-    
+    glue (rel' n a ts) {I} {i} {R} I◁R x = 
+        relGlue n a I (recTms {n} I (∣ ts ∣ I i)) R I◁R λ {J} f y -> 
+        substp (rel n a J) (trans (cong (recTms J) (sym (nat ts))) (sym (⟨recTms⟩ {n}{I}{J}{f}{∣ ts ∣ I i}))) (x {J} f y)
+
     record Conp(Γt : Cont) : Set₁ where
         constructor mk
         field
@@ -442,27 +449,46 @@ module Semantics
         L .glue (∣ Pf∃K ∣ Γi) λ {J} f x → 
         with∃ x (λ d Kj → ∣ PfKL ∣ ((Γp ∶ Γi ⟨ f ⟩) ,Σ Kj))
 
+    Eq-sieve : (Γt : Cont) -> (t t' : Tm Γt) -> (I : Ob) -> (Γi : ∣ Γt ∣ I) -> Sieve I
+    Eq-sieve Γt t t' I Γi .Sh.Sieve.R = λ J f -> ∣ t ∣ J (Γt ∶ Γi ⟨ f ⟩) ≡ ∣ t' ∣ J (Γt ∶ Γi ⟨ f ⟩)
+    Eq-sieve Γt t t' I Γi .Sh.Sieve.restr {J} {f} {K} x g = 
+        trans 
+            (trans (sym (nat t)) D∶⟨∘⟩) 
+            (trans (cong (D∶_⟨ g ⟩) (trans (nat t) (trans x (sym (nat t')))))
+            (trans (sym D∶⟨∘⟩) (nat t')))
+
+    Eq-[]ˢ-⟨⟩ : ∀{Γt : Cont}{I J : Ob}{Γi : ∣ Γt ∣ I}{f : Hom J I}{t t' : Tm Γt} ->
+        (Eq-sieve Γt t t' I Γi) [ f ]ˢ ≡  Eq-sieve Γt t t' J (Γt ∶ Γi ⟨ f ⟩)
+    Eq-[]ˢ-⟨⟩ {Γt}{I}{J}{Γi}{f}{t}{t'} = 
+        mkSieveEq {J}
+        (Sh.Sieve.R ((Eq-sieve Γt t t' I Γi) [ f ]ˢ))
+        (Sh.Sieve.R (Eq-sieve Γt t t' J (Γt ∶ Γi ⟨ f ⟩))) 
+        {Sh.Sieve.restr ((Eq-sieve Γt t t' I Γi) [ f ]ˢ)}
+        {Sh.Sieve.restr (Eq-sieve Γt t t' J (Γt ∶ Γi ⟨ f ⟩))}
+        (funext (λ K → funext (λ g → 
+        cong-bin (_≡_) (cong (∣ t ∣ K) (Γt ∶⟨∘⟩)) (cong (∣ t' ∣ K) (Γt ∶⟨∘⟩)))))
+    
     Eq : {Γt : Cont} -> Tm Γt -> Tm Γt -> For Γt
-    ∣ Eq t t' ∣ I Γi = ∣ t ∣ I Γi ≡ ∣ t' ∣ I Γi
-    _∶_⟨_⟩ (Eq {Γt} t t') x f = trans (sym (nat t)) (trans (cong (D∶_⟨ f ⟩) x) (nat t'))
-    glue (Eq {Γt} t t') {I} {i} {R} I◁R x = 
-        trans (cong (∣ t ∣ I) (sym (Γt ∶⟨id⟩))) 
-        (trans ((x idC {!  !})) 
-        (cong (∣ t' ∣ I) (Γt ∶⟨id⟩)))
+    ∣ Eq {Γt} t t' ∣ I Γi = I ◁ (Eq-sieve Γt t t' I Γi) 
+    _∶_⟨_⟩ (Eq {Γt} t t') {I} {J} {i} x f = substp (J ◁_) (Eq-[]ˢ-⟨⟩ {Γt}{I}{J}{i}{f}{t}{t'}) (x [ f ]ᶜ)
+    glue (Eq {Γt} t t') {I} {i} {R} I◁R x = local I◁R λ {J} f y → substp (J ◁_) (sym (Eq-[]ˢ-⟨⟩ {Γt}{I}{J}{i}{f}{t}{t'})) (x f y)
 
     Eq[] : {Γt Δt : Cont} {γt : Subt Δt Γt} {t t' : Tm Γt} ->
       (Eq t t' [ γt ]F) ≡ Eq (t [ γt ]t) (t' [ γt ]t)
-    Eq[] = refl
+    Eq[] = {!   !} -- refl
     
     Eqrefl : {Γt : Cont} {t : Tm Γt} {Γ : Conp Γt} -> Pf Γ (Eq t t)
-    ∣ Eqrefl ∣ = λ x -> refl
+    ∣ Eqrefl ∣ x = maximal refl
 
     subst' : {Γt : Cont} (K : For (Γt ▸t)) {t t' : Tm Γt} {Γ : Conp Γt} ->
       Pf Γ (Eq t t') -> Pf Γ (K [ idt ,t t ]F) -> Pf Γ (K [ idt ,t t' ]F)
-    ∣ subst' K t=t' PfK ∣ {I}{i} x = substp (λ z -> ∣ K ∣ I (i ,Σ z)) (∣ t=t' ∣ x) (∣ PfK ∣ x)
-
-    Kripke : Model funar relar _ _ _ _ _
-    Kripke = record
+    ∣ subst' {Γt} K {t}{t'} t=t' PfK ∣ {I}{i} x = 
+        K .glue (∣ t=t' ∣ x) (λ {J} f y → 
+        substp (λ z -> ∣ K ∣ J ((Γt ∶ i ⟨ f ⟩) ,Σ z)) (trans (nat t) (trans y (sym (nat t')))) 
+        (K ∶ (∣ PfK ∣ x) ⟨ f ⟩))
+        
+    Beth : Model funar relar _ _ _ _ _
+    Beth = record
       { Cont = Cont
       ; Subt = Subt
       ; _∘t_ = _∘t_
@@ -503,8 +529,8 @@ module Semantics
       ; ,[] = refl
       ; fun = fun'
       ; fun[] = refl
-      ; rel = {!   !}
-      ; rel[] = {!   !}
+      ; rel = rel'
+      ; rel[] = refl
       ; Conp = Conp
       ; _[_]C = _[_]C
       ; [id]C = refl
@@ -552,7 +578,131 @@ module Semantics
       ; ∃intro = λ {Γt}{K} -> ∃intro {Γt}{K}
       ; ∃elim = λ {Γt}{K}{Γp}{L} -> ∃elim {Γt}{K}{Γp}{L} 
       ; Eq = Eq
-      ; Eq[] = refl
+      ; Eq[] = {!   !}
       ; Eqrefl = λ {Γt}{t}{Γ} -> Eqrefl {Γt}{t}{Γ}
       ; subst' = subst'
-      }
+      }   
+
+module Completeness where
+        
+    open import FirstOrderLogic.IntNegative.Syntax funar relar as I
+
+    Con : Set
+    Con = Σ ConTm ConPf
+
+    Sub : Con -> Con -> Set
+    Sub (Δt ,Σ Δ) (Γt ,Σ Γ) = Σsp (Subt Δt Γt) (λ γ -> Subp Δ (Γ [ γ ]C))
+
+    id : ∀{Γ} -> Sub Γ Γ
+    id {Γt ,Σ Γ} = I.idt ,Σ substp (Subp Γ) (sym [id]C) I.idp
+    
+    _∘_ : {A B C : Con} → Sub B C → Sub A B → Sub A C
+    _∘_ {Γt ,Σ Γ} {Δt ,Σ Δ} {Θt ,Σ Θ} (γt ,Σ γ) (δt ,Σ δ) = (γt ∘t δt) ,Σ (substp (Subp (Δ [ δt ]C)) (sym [∘]C) (γ I.[ δt ]s) ∘p δ)
+
+    ass' : {A B C D : Con}{f : Sub C D}
+      {g : Sub B C} {h : Sub A B} →
+      ((f ∘ g) ∘ h) ≡ (f ∘ (g ∘ h))
+    ass' = mk,sp= I.ass
+
+    idl' : {A B : Con} {f : Sub A B} → (id ∘ f) ≡ f
+    idl' = mk,sp= idl
+    idr' : {A B : Con} {f : Sub A B} → (f ∘ id) ≡ f
+    idr' = mk,sp= idr
+
+    ◆ : Con
+    ◆ = ◆t ,Σ ◆p
+
+    ε : {Γ : Con} → Sub Γ ◆
+    ε {Γt ,Σ Γp} = εt ,Σ εp
+
+    ◆η : {Γ : Con} (σ : Sub Γ ◆) → σ ≡ ε {Γ}
+    ◆η {Γt ,Σ Γp} (εt ,Σ _) = refl
+
+    _▸t' : Con -> Con
+    (Γt ,Σ Γ) ▸t' = (Γt ▸t) ,Σ (Γ I.[ I.pt ]C)
+
+    qt' : ∀{Γ : Con} -> Tm (proj₁ (Γ ▸t'))
+    qt' {Γt ,Σ Γ} = I.qt {Γt}
+
+    pt' : ∀{Γ : Con} -> Sub (Γ ▸t') Γ
+    pt' {Γt ,Σ Γ} = I.pt ,Σ I.idp
+
+    _,t'_ : ∀{Γ Δ} → Sub Δ Γ → I.Tm (proj₁ Δ) → Sub Δ (Γ ▸t')
+    _,t'_ {Γt ,Σ Γ}{Δt ,Σ Δ} (γt ,Σ γ) t = (γt ,t t) ,Σ substp (Subp Δ) (trans (cong (Γ [_]C) (sym I.▸tβ₁)) [∘]C)  γ
+
+    _▸p'_ : (Γ : Con) -> I.For (proj₁ Γ) -> Con
+    (Γt ,Σ Γ) ▸p' K = Γt ,Σ (Γ ▸p K)
+
+    _,p'_ : ∀{Γ Δ : Con} → (γ : Sub Δ Γ) → ∀{K : For (proj₁ Γ)} → I.Pf (proj₂ Δ) (K [ γ .proj₁ ]F) → Sub Δ (Γ ▸p' K)
+    _,p'_ {Γt ,Σ Γ}{Δt ,Σ Δ} (γt ,Σ γ) PfK = γt ,Σ (γ ,p PfK)
+
+    qp' : ∀{Γ : Con}{K} → I.Pf (proj₂ (Γ ▸p' K)) K
+    qp' = qp
+
+    pp' : ∀{Γ : Con}{K : I.For (proj₁ Γ)} -> Sub (Γ ▸p' K) Γ
+    pp' {Γt ,Σ Γ} {K} = I.idt ,Σ (substp (Subp (Γ ▸p K)) (sym [id]C) pp)
+
+    _↑t : ∀{Γt Δt} -> Subt Δt Γt -> Subt (Δt ▸t) (Γt ▸t)
+    γt ↑t = γt ∘t pt ,t qt
+
+    _↑p : ∀{Γt}{Γ Δ : I.ConPf Γt}{K} -> Subp Δ Γ -> Subp (Δ ▸p K) (Γ ▸p K)
+    γp ↑p = γp ∘p pp ,p qp
+
+    ↑t-pt : ∀{Γt Δt : I.ConTm} -> (γt : Subt Δt Γt) -> pt ∘t (γt ↑t) ≡ γt ∘t pt
+    ↑t-pt γt = ▸tβ₁
+
+    ↑-,t  : ∀{Γt Δt : I.ConTm} -> (γt : Subt Δt Γt) -> (d : I.Tm Δt) -> γt ↑t ∘t (idt ,t d) ≡ γt ,t d
+    ↑-,t εt d = refl
+    ↑-,t {Γt ▸t}{Δt} (γt ,t t) d = 
+        cong-bin (I._,t_) 
+        (trans (cong-bin _,t_ 
+            (trans ass (trans (cong (γt I.∘t_) (trans ▸tβ₁ (sym ▸tβ₁))) (sym ass))) 
+            (trans (sym ([∘]t {t = t}{γ = pt}{δ = idt ,t d})) 
+            (trans (cong (t [_]t) ▸tβ₁) [id]t))) (↑-,t {Γt}{Δt} γt t)) 
+        refl
+    
+    ∘t-pt : ∀{Γt Δt Θt : I.ConTm} -> (γt : Subt Δt Γt) -> (δt : Subt Θt Δt) -> (γt ∘t δt) ∘t pt ≡ (γt ∘t pt) ∘t (δt ∘t pt ,t qt)
+    ∘t-pt εt δt = refl
+    ∘t-pt (γt ,t t) δt = cong-bin _,t_ (∘t-pt γt δt) (trans (sym ([∘]t {t = t}{γ = δt}{δ = pt})) (trans (cong (t [_]t) ((sym ▸tβ₁))) ([∘]t {t = t}{γ = pt}{δ = δt I.∘t I.pt I.,t I.qt})))
+
+    _↑t' : ∀{Γ Δ : Con} -> Sub Δ Γ -> Sub (Δ ▸t') (Γ ▸t')
+    _↑t' {Γ@(Γt ,Σ Γp)}{Δ@(Δt ,Σ Δp)} (γt ,Σ γp) = (γt ↑t) ,Σ substp (Subp (Δp [ pt ]C)) (trans (sym [∘]C) (trans (cong (Γp [_]C) (sym (↑t-pt γt))) [∘]C)) (γp [ I.pt ]s)    
+
+    _[_]t' : ∀{Γ Δ} -> Tm (proj₁ Γ) -> Sub Δ Γ → Tm (proj₁ Δ)
+    t [ (γt ,Σ γp ) ]t' = t [ γt ]t
+
+    ▸t'β₁  : ∀{Γ Δ}{γ : Sub Δ Γ}{t : Tm (proj₁ Δ)} → (pt' ∘ (γ ,t' t)) ≡ γ
+    ▸t'β₁ {Γ} {Δ} {γ} {t} = mk,sp= ▸tβ₁
+
+    ▸t'β₂  : ∀{Γ Δ}{γ : Sub Δ Γ}{t : Tm (proj₁ Δ)} → ((qt' {Γ}) [ γ ,t' t ]t') ≡ t
+    ▸t'β₂ = refl
+
+    ▸t'η   : ∀{Γ Δ}{γ : Sub Δ (Γ ▸t')} -> ((pt' ∘ γ) ,t' ((qt' {Γ}) [ γ ]t')) ≡ γ
+    ▸t'η = mk,sp= ▸tη
+
+    C : Category
+    C = record
+        { Ob = Con
+        ; Hom = Sub
+        ; idC = id
+        ; _∘C_ = λ γ δ -> γ ∘ δ
+        ; assC = λ {Γ}{Δ}{Θ}{Ξ}{γ}{δ}{θ} -> ass' {Γ}{Δ}{Θ}{Ξ}{γ}{δ}{θ}
+        ; idlC = λ {Γ}{Δ}{γ} -> idl' {Γ}{Δ}{γ}
+        ; idrC = λ {Γ}{Δ}{γ} -> idr' {Γ}{Δ}{γ}
+        }
+    
+    reifyTms : ∀{Γt n} -> I.Tm Γt ^ n -> I.Tms Γt n
+    reifyTms {Γt}{zero} * = *
+    reifyTms {Γt}{suc n} (t ,Σ ts) = (reifyTms ts) ,Σ t
+
+    reflectTms : ∀{Γt n} -> I.Tms Γt n -> I.Tm Γt ^ n
+    reflectTms {Γt}{zero} * = *
+    reflectTms {Γt}{suc n} (ts ,Σ t) = t ,Σ reflectTms ts
+
+    ⟨reifyTms⟩ : ∀{n Γt Δt}{ds : Tm Γt ^ n}{γ : I.Subt Δt Γt} -> (reifyTms (map^ ds (_[ γ ]t))) ≡ (reifyTms ds [ γ ]ts)
+    ⟨reifyTms⟩ {zero} {Γt} {Δt} {ds} {γ} = refl
+    ⟨reifyTms⟩ {suc n} {Γt} {Δt} {ds} {γ} = mk,= ⟨reifyTms⟩ refl 
+
+    module B = Semantics
+        C
+        
