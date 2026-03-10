@@ -11,9 +11,9 @@ module PropositionalLogic.IntFull.Iterator
 -- The iterator of PropositionalLogic.IntFull.Model meaning
 -- that for any model M and the inital model I, there is a function I -> M
 
-record Morphism(A B : Model Atom lzero lzero lzero lzero) : Set where
-    module A = Model A
-    module B = Model B
+record Morphism{i j i' j' : Level}(A : Model Atom i j i j)(B : Model Atom i' j' i' j') : Set (i ⊔ j ⊔ i' ⊔ j') where
+    private module A = Model A
+    private module B = Model B
     field
         ⟦_⟧C  : A.Con → B.Con
         ⟦_⟧S  : {Γ Δ : A.Con} → A.Sub Δ Γ → B.Sub ⟦ Δ ⟧C ⟦ Γ ⟧C
@@ -28,10 +28,10 @@ record Morphism(A B : Model Atom lzero lzero lzero lzero) : Set where
         ⟦atom⟧ : {A : Atom} → ⟦ A.atom A ⟧F ≡ B.atom A
 
 module Ite
-    (M : Model Atom lzero lzero lzero lzero) where
+    {i j : Level}(M : Model Atom i j i j) where
 
-    module M = Model M
-    module I = PropositionalLogic.IntFull.Syntax Atom
+    private module M = Model M
+    private module I = PropositionalLogic.IntFull.Syntax Atom
 
     ⟦_⟧C : I.Con → M.Con
     ⟦_⟧S : {Γ Δ : I.Con} → I.Sub Δ Γ → M.Sub ⟦ Δ ⟧C ⟦ Γ ⟧C

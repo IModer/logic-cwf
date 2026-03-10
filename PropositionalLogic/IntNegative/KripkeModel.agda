@@ -75,7 +75,7 @@ module Semantics
     ; ∧elim₂ = λ PfKL Γw → proj₂ (PfKL Γw)
     ; atom = λ x → Psh (∣ x ∣pv) (_pv:_⟨_⟩ x)
     }
-  
+
 module Completeness where
 
   import PropositionalLogic.IntNegative.Syntax Atom as I

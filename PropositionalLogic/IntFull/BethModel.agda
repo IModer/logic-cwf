@@ -122,7 +122,7 @@ module Semantics
   Con = Sheaf J
 
   Sub : Sheaf J -> Sheaf J -> Prop
-  Sub Δ Γ = ∀{i} ->  ∣ Δ ∣ i -> ∣ Γ ∣ i
+  Sub Δ Γ = ∀{i} -> ∣ Δ ∣ i -> ∣ Γ ∣ i
   
   ◆ : Con
   ◆ = 𝟙Sh
@@ -239,3 +239,104 @@ module Semantics
     ; atom = atom
     }
 
+module Completeness where
+
+    import PropositionalLogic.IntFull.Syntax Atom as I
+    -- We open Semantics with the specific W that allows us to show its iso to the Syntax
+
+    P : Preorder
+    P .Preorder.W = I.Con
+    P .Preorder._≥_ = I.Sub
+    P .Preorder.id≥ = I.id
+    P .Preorder._∘≥_ = I._∘_
+
+    open Sh P
+
+    infix 4 _◁_
+    {-# NO_UNIVERSE_CHECK #-}
+    data _◁_ (Γ : I.Con) : Sieve Γ -> Prop where
+        maximal : ∀ {R} -> ⟨ Γ , I.id ⟩⊩ R -> Γ ◁ R
+        ◁-⊥ : ∀ {R} -> I.Pf Γ I.⊥ -> Γ ◁ R
+        ◁-∨ : ∀ {R A B} -> 
+            (∀ {Δ} -> (γ : I.Sub Δ Γ) -> I.Pf Δ A -> Δ ◁ R [ γ ]ˢ) ->
+            (∀ {Δ} -> (γ : I.Sub Δ Γ) -> I.Pf Δ B -> Δ ◁ R [ γ ]ˢ) ->
+            I.Pf Γ (A I.∨ B) -> Γ ◁ R
+
+    _[_]ᶜ : ∀{Γ Δ R} -> Γ ◁ R → (γ : I.Sub Δ Γ) → Δ ◁ R [ γ ]ˢ
+    maximal {R} x [ γ ]ᶜ = maximal (R .restr x γ)
+    ◁-⊥ x [ γ ]ᶜ = ◁-⊥ (x I.[ γ ])
+    ◁-∨ x y z [ γ ]ᶜ = ◁-∨ (λ {Θ} δ l → x (γ I.∘ δ) l) (λ {Θ} δ k → y (γ I.∘ δ) k) (z I.[ γ ])
+
+    local : ∀{Γ R S} -> Γ ◁ R →
+      ({Δ : I.Con} (γ : I.Sub Δ Γ) → ⟨ Δ , γ ⟩⊩ R → Δ ◁ S [ γ ]ˢ) → Γ ◁ S
+    local (maximal x) f = f I.id x
+    local (◁-⊥ x) f = ◁-⊥ x
+    local (◁-∨ f g x) h = 
+        ◁-∨ (λ γ a → local (f γ a) λ δ k -> h (γ I.∘ δ) k)
+            (λ γ b → local (g γ b) λ δ l -> h (γ I.∘ δ) l) 
+            x
+
+    J : Top
+    J .Sh.Top._◁_ = _◁_
+    J .Sh.Top._[_]ᶜ = _[_]ᶜ
+    J .Sh.Top.maximal = maximal
+    J .Sh.Top.local = local
+
+    val : Atom -> Sheaf J
+    ∣ val A ∣ Γ   = Γ ◁ sieve
+        where
+            sieve : Sieve Γ
+            ∣ sieve ∣ Δ γ = I.Pf Δ (I.atom A)
+            restr sieve x k≥j = x I.[ k≥j ]
+    restr (val a) = _[_]ᶜ
+    glue  (val a) = local
+
+    open Semantics P J val
+    import PropositionalLogic.IntFull.Iterator as IT
+    open IT.Ite Atom Beth
+
+    reify   : ∀{Γ} (A : I.For) -> ∣ ⟦ A ⟧F ∣ Γ -> I.Pf Γ A
+    reify-∨    : ∀{Γ} (A B : I.For) -> ∣ ⟦ A I.∨ B ⟧F ∣ Γ -> I.Pf Γ (A I.∨ B)
+    reify-⊥    : ∀{Γ} -> ∣ ⟦ I.⊥ ⟧F ∣ Γ -> I.Pf Γ I.⊥
+    reify-atom : ∀{Γ} (A : Atom) -> ∣ ⟦ I.atom A ⟧F ∣ Γ -> I.Pf Γ (I.atom A)
+    
+    reflect : ∀{Γ} (A : I.For) -> I.Pf Γ A -> ∣ ⟦ A ⟧F ∣ Γ
+
+    reify-∨ A B (maximal (inj₁ x)) = I.∨intro₁ (reify A x)
+    reify-∨ A B (maximal (inj₂ x)) = I.∨intro₂ (reify B x)
+    reify-∨ A B (◁-⊥ x) = I.exfalso x
+    reify-∨ A B (◁-∨ f g x) = I.∨elim (reify-∨ A B (f I.p I.q)) (reify-∨ A B (g I.p I.q)) x
+    
+    reify-⊥ (◁-⊥ x) = I.exfalso x
+    reify-⊥ (◁-∨ f g x) = I.∨elim (reify-⊥ (f I.p I.q)) (reify-⊥ (g I.p I.q)) x
+    
+    reify-atom A (maximal x) = x
+    reify-atom A (◁-⊥ x) = I.exfalso x
+    reify-atom A (◁-∨ f g x) = I.∨elim (reify-atom A (f I.p I.q)) (reify-atom A (g I.p I.q)) x
+
+    reify I.⊤        _         = I.tt
+    reify I.⊥        p         = reify-⊥ p
+    reify (A I.⊃ B)  p         = I.⊃intro (reify B (p I.p (reflect A I.q)))
+    reify (A I.∧ B) (pa ,Σ pb) = I.∧intro (reify A pa) (reify B pb)
+    reify (A I.∨ B)  p         = reify-∨ A B p
+    reify (I.atom a) p         = reify-atom a p
+    
+    reflect I.⊤        _ = *
+    reflect I.⊥        p = ◁-⊥ p
+    reflect (A I.⊃ B)  p = λ γ pa -> reflect B (I.⊃elim p I.[ γ I., (reify A pa) ])
+    reflect (A I.∧ B)  p = (reflect A (I.∧elim₁ p)) ,Σ (reflect B (I.∧elim₂ p))
+    reflect (A I.∨ B) p = ◁-∨ (λ γ x → maximal (inj₁ (reflect A x))) (λ γ x → maximal (inj₂ (reflect B x))) p
+    reflect (I.atom a) p = maximal p
+
+    reflect-Con : ∀{Γ} Δ -> I.Sub Γ Δ -> ∣ ⟦ Δ ⟧C ∣ Γ
+    reflect-Con I.◆       _ =  *
+    reflect-Con (Δ I.▸ x) γ = (reflect-Con Δ (I.p I.∘ γ)) ,Σ (reflect x (I.q I.[ γ ]))
+
+    module M = Model Beth
+    open M
+
+    completeness : ∀{Γ} A -> M.Pf ⟦ Γ ⟧C ⟦ A ⟧F -> I.Pf Γ A
+    completeness {Γ} A p = reify A (p (reflect-Con Γ I.id))
+
+    soundness : ∀{Γ} A -> I.Pf Γ A -> M.Pf ⟦ Γ ⟧C ⟦ A ⟧F
+    soundness A = ⟦_⟧Pf

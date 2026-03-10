@@ -13,27 +13,23 @@ record Category : Set₁ where
         Ob   : Set
         Hom  : Ob -> Ob -> Set
         idC  : ∀{A} -> Hom A A
-        -- A --> B --> C
-        --    f     g
-        -- A --------> C
-        --     g ∘ f
         _∘C_ : ∀{A B C} -> Hom B C -> Hom A B -> Hom A C
         assC : ∀{A B C D}{f : Hom C D}{g : Hom B C}{h : Hom A B} -> (f ∘C g) ∘C h ≡ f ∘C (g ∘C h)
         idlC : ∀{A B}{f : Hom A B} -> idC ∘C f ≡ f
         idrC : ∀{A B}{f : Hom A B} -> f ∘C idC ≡ f
 
-module Kripke
+module Semantics
     (C : Category)
     (open Category C)
-    (D : Set)
-    -- (dzero : D)
-    (rel  : (n : ℕ) → relar n → D ^ n → Ob → Prop)
-    (⟨rel⟩ : ∀{n i ds I J} → rel n i ds I → Hom J I → rel n i ds J)
-    (fun  : (n : ℕ) → funar n → D ^ n → D)
-    -- (⟨fun⟩ : ∀{n i ds I J} → fun n i ds I → Hom J I → fun n i ds J)
+    (D : Ob -> Set)
+    (D∶_⟨_⟩ : ∀{I J} -> D I -> Hom J I -> D J)
+    (D∶⟨∘⟩  : ∀{I J K}{a : D I}{f : Hom J I}{g : Hom K J} -> D∶ a ⟨ f ∘C g ⟩ ≡ D∶ D∶ a ⟨ f ⟩ ⟨ g ⟩)
+    (D∶⟨id⟩ : ∀{I}{a : D I} -> D∶ a ⟨ idC ⟩ ≡ a)
+    (rel  : (n : ℕ) → relar n → (I : Ob) -> (D I) ^ n -> Prop)
+    (⟨rel⟩ : ∀{n i I J ds} → rel n i I ds → (f : Hom J I) → rel n i J (map^ ds (D∶_⟨ f ⟩)))
+    (fun  : (n : ℕ) → funar n → (I : Ob) -> (D I) ^ n → (D I))
+    (⟨fun⟩ : ∀(n : ℕ)(a : funar n)(I J : Ob)(ds : (D I) ^ n)(f : Hom J I) -> (D∶ (fun n a I ds) ⟨ f ⟩) ≡ (fun n a J (map^ ds (D∶_⟨ f ⟩))) )
     where
-
-    --open Category C
 
     record Cont : Set₁ where
         constructor mk
@@ -95,10 +91,10 @@ module Kripke
     _∶_⟨_⟩ (A [ γt ]F) {I} {J} {i} x f = substp (∣ A ∣ J) (nat γt) (A ∶ x ⟨ f ⟩)
 
     DPSh : Cont
-    ∣ DPSh ∣ x     = D
-    DPSh ∶ d ⟨ f ⟩ = d
-    DPSh ∶⟨id⟩     = refl
-    DPSh ∶⟨∘⟩      = refl
+    ∣ DPSh ∣ I     = D I
+    DPSh ∶ d ⟨ f ⟩ = D∶ d ⟨ f ⟩
+    DPSh ∶⟨∘⟩      = D∶⟨∘⟩
+    DPSh ∶⟨id⟩     = D∶⟨id⟩
 
     Tm : Cont -> Set
     Tm Γ = Subt Γ DPSh
@@ -108,10 +104,10 @@ module Kripke
     nat (t [ γt ]t) {I}{J} = trans (nat t) (cong (∣ t ∣ J) (nat γt))
 
     _▸t : Cont → Cont
-    ∣ Γ ▸t ∣ I = ∣ Γ ∣ I × D
-    (Γ ▸t) ∶ (i ,Σ d) ⟨ f ⟩ = (Γ ∶ i ⟨ f ⟩) ,Σ d
-    (Γ ▸t) ∶⟨id⟩ = mk,= (Γ ∶⟨id⟩) refl
-    (Γ ▸t) ∶⟨∘⟩ = mk,= (Γ ∶⟨∘⟩) refl
+    ∣ Γ ▸t ∣ I = ∣ Γ ∣ I × D I
+    (Γ ▸t) ∶ (i ,Σ d) ⟨ f ⟩ = (Γ ∶ i ⟨ f ⟩) ,Σ (D∶ d ⟨ f ⟩)
+    (Γ ▸t) ∶⟨id⟩ = mk,= (Γ ∶⟨id⟩) D∶⟨id⟩
+    (Γ ▸t) ∶⟨∘⟩ = mk,= (Γ ∶⟨∘⟩) D∶⟨∘⟩
 
     _,t_ : {Γ Δ : Cont} → Subt Δ Γ → Tm Δ → Subt Δ (Γ ▸t)
     ∣ γt ,t t ∣ I x = (∣ γt ∣ I x) ,Σ (∣ t ∣ I x)
@@ -126,14 +122,14 @@ module Kripke
     nat qt     = refl
 
     DPShV : ℕ -> Cont
-    ∣ DPShV zero ∣ x    = 𝟙 -- Σsp D (λ d -> (d ≡ dzero)) 
-    ∣ DPShV (suc n) ∣ x = ∣ DPShV n ∣ x × D
+    ∣ DPShV zero ∣ I    = 𝟙
+    ∣ DPShV (suc n) ∣ I = ∣ DPShV n ∣ I × D I
     DPShV zero ∶ d ⟨ f ⟩ = d
-    DPShV (suc n) ∶ dpn ,Σ d ⟨ f ⟩ = ((DPShV n) ∶ dpn ⟨ f ⟩) ,Σ d
+    DPShV (suc n) ∶ dpn ,Σ d ⟨ f ⟩ = ((DPShV n) ∶ dpn ⟨ f ⟩) ,Σ D∶ d ⟨ f ⟩
     DPShV zero ∶⟨id⟩ = refl
-    DPShV (suc n) ∶⟨id⟩ = mk,= (DPShV n ∶⟨id⟩) refl
+    DPShV (suc n) ∶⟨id⟩ = mk,=(DPShV n ∶⟨id⟩) D∶⟨id⟩
     DPShV zero ∶⟨∘⟩ = refl
-    DPShV (suc n) ∶⟨∘⟩ = mk,= (DPShV n ∶⟨∘⟩) refl
+    DPShV (suc n) ∶⟨∘⟩ = mk,= (DPShV n ∶⟨∘⟩) D∶⟨∘⟩
 
     Tms : Cont -> ℕ -> Set
     Tms Γ n = Subt Γ (DPShV n)
@@ -161,42 +157,21 @@ module Kripke
     ∣ π₂ ts ∣ I x = proj₂ (∣ ts ∣ I x)
     nat (π₂ ts) = (cong proj₂ (nat ts))
 
-    recTms : ∀{n} -> (I : Ob) -> ∣ DPShV n ∣ I -> D ^ n
-    recTms {zero } I ts = ts -- *
-    recTms {suc n} I (ts ,Σ d) = d ,Σ recTms I ts -- proj₂ (∣ t ∣ I Γi) ,Σ recTms {Γ}{n} {! proj₁ (∣ t ∣ I Γi)  !} I Γi
+    recTms : ∀{n} -> (I : Ob) -> ∣ DPShV n ∣ I -> (D I) ^ n
+    recTms {zero } I ts = *
+    recTms {suc n} I (ts ,Σ d) = d ,Σ recTms I ts
     
-    ⟨recTms⟩ : ∀{I J : Ob}{n : ℕ}{f : Hom J I}{ts : ∣ DPShV n ∣ I} -> recTms {n} I ts ≡ recTms {n} J (DPShV n ∶ ts ⟨ f ⟩)
-    ⟨recTms⟩ {I} {J} {zero} {f} {ts} = refl
-    ⟨recTms⟩ {I} {J} {suc n} {f} {ts} = mk,= refl ⟨recTms⟩
+    ⟨recTms⟩ : ∀{n I J}{f : Hom J I}{ts : ∣ DPShV n ∣ I} -> map^ (recTms {n} I ts) (D∶_⟨ f ⟩) ≡ recTms J ((DPShV n) ∶ ts ⟨ f ⟩)
+    ⟨recTms⟩ {zero} {I} {J} {f} {ts} = refl
+    ⟨recTms⟩ {suc n} {I} {J} {f} {ts} = mk,= refl ⟨recTms⟩
 
     fun' : {Γ : Cont} (n : ℕ) → funar n → Tms Γ n → Tm Γ
-    ∣ fun' n a ts ∣ I x = fun n a (recTms I (∣ ts ∣ I x))
-    nat (fun' n a ts) {I}{J} = cong (fun n a) (trans ⟨recTms⟩ (cong (recTms J) (nat ts)))
-{-
-    ∣ fun' zero a ts ∣ I x    = fun zero a *
-    nat (fun' zero a ts)      = refl
-    ∣ fun' (suc n) a ts ∣ I x = fun (suc n) a ((proj₂ (∣ ts ∣ I x)) ,Σ recTms I (proj₁ (∣ ts ∣ I x))) 
-    nat (fun' (suc n) a ts) {I}{J}{Γi}{f} = cong (fun (suc n) a) (mk,= (cong proj₂ (nat ts)) (trans ⟨recTms⟩ (cong (recTms J) (cong proj₁ (nat ts)))))
-    
-    fun[] : {Γ : Cont} {n : ℕ} {a : funar n} {ts : Tms Γ n} {Δ : Cont}
-      {γ : Subt Δ Γ} →
-      (fun' n a ts [ γ ]t) ≡ fun' n a (_[_]ts {Γ}{n} ts γ)
-    fun[] = refl
-    --fun[] {Γ} {zero} {a} {ts} {Δ} {γ} = refl
-    --fun[] {Γ} {suc n} {a} {ts} {Δ} {γ} = refl
--}
+    ∣ fun' n a ts ∣ I x = fun n a I (recTms I (∣ ts ∣ I x)) -- fun n a (recTms I (∣ ts ∣ I x))
+    nat (fun' n a ts) {I}{J}{i}{f} = trans (⟨fun⟩ n a I J (recTms I (∣ ts ∣ I i)) f) (cong (fun n a J) (trans (⟨recTms⟩ {n} {I} {J} {f} {∣ ts ∣ I i}) (cong (recTms J) (nat ts)))) -- cong (fun n a) (trans ⟨recTms⟩ (cong (recTms J) (nat ts)))
 
     rel' : {Γ : Cont} (n : ℕ) → relar n → Tms Γ n → For Γ
-    ∣ rel' n a ts ∣ I x = rel n a (recTms I (∣ ts ∣ I x)) I
-    _∶_⟨_⟩ (rel' n a ts) {I} {J} {i} x f = ⟨rel⟩ (substp (λ z -> rel n a z I) (trans ⟨recTms⟩ (cong (recTms J) (nat ts))) x) f
-
-    {-
-    rel[] : {Γ : Cont} {n : ℕ} {a : funar n} {ts : Tms Γ n} {Δ : Cont}
-      {γ : Subt Δ Γ} →
-      (rel' n a ts [ γ ]t) ≡ rel' n a (_[_]ts {Γ}{n} ts γ)
-    rel[] {Γ} {zero} {a} {ts} {Δ} {γ} = refl
-    rel[] {Γ} {suc n} {a} {ts} {Δ} {γ} = refl
-    -}
+    ∣ rel' n a ts ∣ I x = rel n a I (recTms I (∣ ts ∣ I x))
+    _∶_⟨_⟩ (rel' n a ts) {I} {J} {i} x f = substp (rel n a J) (trans ⟨recTms⟩ (cong (recTms J) (nat ts))) (⟨rel⟩ {n}{a}{I}{J}{recTms I (∣ ts ∣ I i)} x f) -- ⟨rel⟩ (substp (λ z -> rel n a z I) (trans ⟨recTms⟩ (cong (recTms J) (nat ts))) x) f
 
     record Conp(Γt : Cont) : Set₁ where
         constructor mk
@@ -260,12 +235,12 @@ module Kripke
     ∣ ⊥ ∣ I x = 𝟘p
     ⊥ ∶ x ⟨ f ⟩ = x
 
+    exfalso : {Γt : Cont} {K : For Γt} {Γ : Conp Γt} → Pf Γ ⊥ → Pf Γ K
+    ∣ exfalso x ∣ Γi = ind𝟘p (∣ x ∣ Γi)
+
     ⊤ : {Γt : Cont} → For Γt
     ∣ ⊤ ∣ I x = 𝟙p
     ⊤ ∶ x ⟨ f ⟩ = *
-
-    exfalso : {Γt : Cont} {K : For Γt} {Γ : Conp Γt} → Pf Γ ⊥ → Pf Γ K
-    ∣ exfalso x ∣ Γi = ind𝟘p (∣ x ∣ Γi)
 
     tt : {Γt : Cont} {Γ : Conp Γt} → Pf Γ ⊤
     ∣ tt ∣ = λ _ → *
@@ -294,7 +269,7 @@ module Kripke
         -- x J (f ∘C g) : ∣ K ∣ J (∣ γt ∣ J (Δt ∶ i ⟨ f ∘C g ⟩)) → ∣ L ∣ J (∣ γt ∣ J (Δt ∶ i ⟨ f ∘C g ⟩))
         -- Kj : ∣ K ∣ J (∣ γt ∣ J (Δt ∶ Δt ∶ i ⟨ f ⟩ ⟨ g ⟩))
         -- Proof
-        (funext (λ I → funext (λ Δi → cong (λ Z -> (J : Ob) (f : Hom J I) → Z J f) 
+        (funext (λ I → funext (λ Δi → cong (λ Z -> (J : Ob) (f : Hom J I) → Z J f)
         (funext (λ J → funext 
         (λ f → cong (λ z → ∣ K ∣ J (proj₁ z) → ∣ L ∣ J (proj₂ z)) 
         (mk,= (nat γt) (nat γt))))))))
@@ -343,25 +318,37 @@ module Kripke
         (∣ PfK∨L ∣ Γi)
 
     ∀' : {Γt : Cont} → For (Γt ▸t) → For Γt
-    ∣ ∀' K ∣ I Γi = ∀(d : D) -> ∣ K ∣ I (Γi ,Σ d)
-    ∀' K ∶ x ⟨ f ⟩ = λ d → K ∶ x d ⟨ f ⟩
+    ∣ ∀' {Γt} K ∣ I Γi = (J : Ob) -> (f : Hom J I) -> (d : D J) -> ∣ K ∣ J ((Γt ∶ Γi ⟨ f ⟩) ,Σ d)
+    _∶_⟨_⟩ (∀' {Γt} K) {I} {J} {i} x f J' g d = substp (λ z -> ∣ K ∣ J' (z ,Σ d)) (Γt ∶⟨∘⟩) (x J' (f ∘C g) d) 
+
+    ∀[] : {Γt : Cont} {K : For (Γt ▸t)} {Δt : Cont} {γt : Subt Δt Γt} →
+      (∀' K [ γt ]F) ≡ ∀' (K [ (γt ∘t pt) ,t qt {Δt} ]F)
+    ∀[] {Γt} {K} {Δt} {γt} = 
+      mkForEq 
+      {Δt}{∣ ∀' K [ γt ]F ∣}{∣ ∀' {Δt} (K [ (γt ∘t pt) ,t (qt {Δt}) ]F) ∣}
+      {λ {I}{J}{Δi} x f J' g d → substp (λ z -> ∣ K ∣ J' (z ,Σ d)) (trans (Γt ∶⟨∘⟩) (cong (Γt ∶_⟨ g ⟩) (nat γt))) (x J' (f ∘C g) d)}
+      {λ {I}{J}{Δi} x f J' g d → substp (λ z -> ∣ K ∣ J' (∣ γt ∣ J' z ,Σ d)) (Δt ∶⟨∘⟩) (x J' (f ∘C g) d)}
+      (funext (λ I → 
+      funext (λ Δi → 
+      cong (λ Z → (J : Ob)(f : Hom J I)(d : D J) -> Z J f d) 
+      (funext λ J → funext (λ f → funext (λ d → cong (λ z → ∣ K ∣ J (z ,Σ d)) (nat γt)))))))  
 
     ∀intro : {Γt : Cont} {K : For (Γt ▸t)} {Γ : Conp Γt} →
       Pf (Γ [ pt ]C) K → Pf Γ (∀' K)
-    ∣ ∀intro PfK ∣ Γi d = ∣ PfK ∣ Γi
+    ∣ ∀intro {Γt}{K}{Γ} PfK ∣ Γi J f d = ∣ PfK ∣ (Γ ∶ Γi ⟨ f ⟩)
 
     ∀elim : {Γt : Cont} {K : For (Γt ▸t)} {Γ : Conp Γt} →
       Pf Γ (∀' K) → Pf (Γ [ pt ]C) K
-    ∣ ∀elim PfK ∣ {I} {Γti ,Σ d} Γi = ∣ PfK ∣ Γi d
+    ∣ ∀elim {Γt}{K}{Γ} PfK ∣ {I} {Γti ,Σ d} Γi = substp (λ z -> ∣ K ∣ I (z ,Σ d)) (Γt ∶⟨id⟩) (∣ PfK ∣ Γi I idC d) -- ∣ PfK ∣ Γi d
 
     ∃' : {Γt : Cont} → For (Γt ▸t) → For Γt
-    ∣ ∃' {Γt} K ∣ I Γi = ∃ D λ d -> ∣ K ∣ I (Γi ,Σ d)
-    ∃' K ∶ d ,∃ x ⟨ f ⟩ = d ,∃ (K ∶ x ⟨ f ⟩)
-
+    ∣ ∃' {Γt} K ∣ I Γi = ∃ (D I) λ d -> ∣ K ∣ I (Γi ,Σ d)
+    ∃' K ∶ d ,∃ x ⟨ f ⟩ = D∶ d ⟨ f ⟩ ,∃ K ∶ x ⟨ f ⟩
+    
     ∃intro : {Γt : Cont} {K : For (Γt ▸t)} (t : Tm Γt) {Γ : Conp Γt} →
       Pf Γ (K [ idt ,t t ]F) → Pf Γ (∃' K)
-
     ∣ ∃intro {Γt}{K} t {Γ} PfK ∣ {I}{i} Γi = (∣ t ∣ I i) ,∃ (∣ PfK ∣ Γi)
+    
     ∃elim : {Γt : Cont} {K : For (Γt ▸t)} {Γp : Conp Γt}{L : For Γt} ->
       Pf Γp (∃' K) → Pf ((Γp [ pt ]C) ▸p (K [ _,t_ {Γt} pt (qt {Γt}) ]F)) (L [ pt ]F) → Pf Γp L
     ∣ ∃elim {Γt}{K}{Γp}{L} Pf∃K PfKL ∣ {I} {i} Γi = 
@@ -370,7 +357,7 @@ module Kripke
 
     Eq : {Γt : Cont} → Tm Γt → Tm Γt → For Γt
     ∣ Eq t t' ∣ I Γi = ∣ t ∣ I Γi ≡ ∣ t' ∣ I Γi
-    _∶_⟨_⟩ (Eq {Γt} t t') x f = trans (sym (nat t)) (trans x (nat t'))
+    _∶_⟨_⟩ (Eq {Γt} t t') x f = trans (sym (nat t)) (trans (cong (D∶_⟨ f ⟩) x) (nat t'))
     
     Eq[] : {Γt Δt : Cont} {γt : Subt Δt Γt} {t t' : Tm Γt} →
       (Eq t t' [ γt ]F) ≡ Eq (t [ γt ]t) (t' [ γt ]t)
@@ -382,12 +369,6 @@ module Kripke
     subst' : {Γt : Cont} (K : For (Γt ▸t)) {t t' : Tm Γt} {Γ : Conp Γt} →
       Pf Γ (Eq t t') → Pf Γ (K [ idt ,t t ]F) → Pf Γ (K [ idt ,t t' ]F)
     ∣ subst' K t=t' PfK ∣ {I}{i} x = substp (λ z → ∣ K ∣ I (i ,Σ z)) (∣ t=t' ∣ x) (∣ PfK ∣ x)
-    
-    ◆p[] : ∀{Γt Δt}{γt : Subt Δt Γt} -> ◆p [ γt ]C ≡ ◆p
-    ◆p[] = refl
-
-    ▸p[] : ∀{Γt Δt}{Γp : Conp Γt}{K : For Γt}{γt : Subt Δt Γt} -> ((Γp ▸p K) [ γt ]C) ≡ ((Γp [ γt ]C) ▸p (K [ γt ]F)) 
-    ▸p[] = refl
 
     Kripke : Model funar relar _ _ _ _ _
     Kripke = record
@@ -449,8 +430,8 @@ module Kripke
       ; _,p_ = _,p_
       ; pp = λ {Γt}{Γ}{K = K} -> pp {K = K} 
       ; qp = λ {Γt}{Γ}{K} -> qp {Γ = Γ}
-      ; ◆p[] = λ {Γt}{Δt}{γt} -> ◆p[] {Γt}{Δt}{γt}
-      ; ▸p[] = λ {Γt}{Δt}{Γp}{K}{γt} -> ▸p[] {Γt}{Δt}{Γp}{K}{γt}
+      ; ◆p[] = refl
+      ; ▸p[] = refl
       ; ⊥ = ⊥
       ; ⊥[] = refl
       ; exfalso = exfalso
@@ -472,7 +453,7 @@ module Kripke
       ; ∨intro₁ = λ {Γt}{K}{L} -> ∨intro₁ {Γt}{K}{L}
       ; ∨intro₂ = λ {Γt}{K}{L} -> ∨intro₂ {Γt}{K}{L}
       ; ∀' = ∀'
-      ; ∀[] = refl
+      ; ∀[] = λ {Γt}{K}{Δt}{γt} → ∀[] {Γt}{K}{Δt}{γt}
       ; ∀intro = λ {Γt}{K}{Γ} -> ∀intro {Γt}{K}{Γ} 
       ; ∀elim = λ {Γt}{K}{Γ} -> ∀elim {Γt}{K}{Γ}
       ; ∃' = ∃'
