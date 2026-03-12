@@ -287,7 +287,6 @@ module FirstOrderLogic.IntFullSplit.Syntax
         _∘p_ : ∀{Γt}{Γp Γp' Γp'' : ConPf Γt} → Subp Γp' Γp → Subp Γp'' Γp' → Subp Γp'' Γp
         pp :  ∀{Γt}{Γp : ConPf Γt}{K} → Subp (Γp ▸p K) Γp
         _,p_ : ∀{Γt}{Γp Γp' : ConPf Γt}{K} → Subp Γp' Γp → Pf Γp' K → Subp Γp' (Γp ▸p K)
-        --_[_]s : ∀{Γt}{Δt}{Γp Γp' : ConPf Γt} → Subp Γp' Γp → (γ : Subt Δt Γt) → Subp (Γp' [ γ ]C) (Γp [ γ ]C)
 
     data Pf where
         exfalso : ∀{Γt}{Γp : ConPf Γt}{K} → Pf Γp ⊥ → Pf Γp K
@@ -350,6 +349,14 @@ module FirstOrderLogic.IntFullSplit.Syntax
         _[_]p : ∀{Γt}{K}{Γp : ConPf Γt} → Pf Γp K → ∀{Δt : ConTm} → (γ : Subt Δt Γt) → Pf (Γp [ γ ]C) (K [ γ ]F)
         _[_]P : ∀{Γt}{Γp : ConPf Γt}{K : For Γt} → Pf Γp K → ∀{Γp'} → Subp Γp' Γp → Pf Γp' K
         qp : ∀{Γt}{Γp : ConPf Γt}{K : For Γt} → Pf (Γp ▸p K) K
+
+
+    _[_]s : ∀{Γt}{Δt}{Γp Γp' : ConPf Γt} → Subp Γp' Γp → (γ : Subt Δt Γt) → Subp (Γp' [ γ ]C) (Γp [ γ ]C)
+    εp [ γ ]s = εp
+    idp [ γ ]s = idp
+    (γ ∘p δ) [ θ ]s = (γ [ θ ]s) ∘p (δ [ θ ]s)
+    pp [ γ ]s = pp
+    (γ ,p PfK) [ δ ]s = (γ [ δ ]s) ,p PfK [ δ ]p
 
     ⊃elim : ∀{Γ K L}{Γp : ConPf Γ} → Pf Γp (K ⊃ L) → Pf (Γp ▸p K) L
     ⊃elim m = (m [ pp ]P) $ qp
