@@ -263,6 +263,18 @@ module FirstOrderLogic.IntFullSplit.Syntax
     [id]F {K = Eq t t'} = cong (λ z → Eq (proj₁ z) (proj₂ z)) (mk,= ([id]t {t = t}) ([id]t {t = t'}))
     [id]F {K = rel n a ts} = cong (rel n a) ([id]ts {ts = ts})
 
+    ∨[] : {Γt : ConTm} {K L : For Γt} {Δt : ConTm} {γt : Subt Δt Γt} →
+      K [ γt ]F ∨ L [ γt ]F ≡ K [ γt ]F ∨ L [ γt ]F
+    ∨[] = refl
+
+    ∃[] : {Γt : ConTm} {K : For (Γt ▸t)} {Δt : ConTm} {γt : Subt Δt Γt} →
+      ∃' K [ γt ]F ≡ ∃' (K [ γt ∘t pt ,t qt ]F)
+    ∃[] = refl
+
+    Eq[] : {Γt Δt : ConTm} {γt : Subt Δt Γt} {t t' : Tm Γt} →
+      Eq t t' [ γt ]F ≡ Eq (t [ γt ]t) (t' [ γt ]t)
+    Eq[] = refl
+
     data ConPf (Γt : ConTm) : Set where
         ◆p   : ConPf Γt
         _▸p_ : ConPf Γt → For Γt → ConPf Γt
@@ -487,7 +499,7 @@ module FirstOrderLogic.IntFullSplit.Syntax
       ; ∧elim₁ = ∧elim₁
       ; ∧elim₂ = ∧elim₂
       ; _∨_ = _∨_
-      ; ∨[] = refl
+      ; ∨[] = ∨[]
       ; ∨elim = ∨elim
       ; ∨intro₁ = ∨intro₁
       ; ∨intro₂ = ∨intro₂

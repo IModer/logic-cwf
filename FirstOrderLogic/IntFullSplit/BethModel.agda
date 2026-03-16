@@ -43,6 +43,24 @@ module Sh (C : Category) where
     ∣ R [ f ]ˢ ∣ K g = ∣ R ∣ K (f ∘C g)
     restr (R [ f ]ˢ) {J} {g} {K} Rk h = substp (∣ R ∣ K) assC (restr R Rk h)
 
+    [∘]ˢ : ∀{I J K : Ob}{f : Hom J I}{g : Hom K J}{s : Sieve I} -> s [ f ∘C g ]ˢ ≡ s [ f ]ˢ [ g ]ˢ  
+    [∘]ˢ {I}{J}{K}{f}{g}{s} = 
+        mkSieveEq
+        (∣ s [ f ∘C g ]ˢ ∣) 
+        (∣ (s [ f ]ˢ) [ g ]ˢ ∣) 
+        {restr (s [ f ∘C g ]ˢ)}
+        {restr ((s [ f ]ˢ) [ g ]ˢ)}
+        (funext (λ L → funext (λ h → cong (∣ s ∣ L) assC)))
+    
+    [id]ˢ : ∀{I : Ob}{s : Sieve I} -> s [ idC ]ˢ ≡ s
+    [id]ˢ {I}{s} = 
+        mkSieveEq
+        (∣ s [ idC ]ˢ ∣) 
+        (∣ s ∣) 
+        {restr (s [ idC ]ˢ)}
+        {restr s}
+        (funext (λ L → funext (λ h → cong (∣ s ∣ L) idlC)))
+    
     record Top : Set₁ where
         infix 4 _◁_
         infixl 9 _[_]ᶜ
@@ -131,6 +149,15 @@ module Semantics
             glue : ∀{I : Ob}{i : ∣ Γ ∣ I}{R : Sieve I} -> I ◁ R -> (∀{J} -> (f : Hom J I) -> ⟨ J , f ⟩⊩ R -> A J (Γ ∶ i ⟨ f ⟩)) -> A I i
     open For public renaming (A to ∣_∣; _⟨_⟩ to _∶_⟨_⟩)
 
+    mkForEq : ∀{Γ : Cont}{A B : ∀(I : Ob) -> ∣ Γ ∣ I -> Prop } ->
+        {sub₁ : ∀{I J : Ob}{i : ∣ Γ ∣ I} -> A I i -> (f : Hom J I) -> A J (Γ ∶ i ⟨ f ⟩)} ->
+        {sub₂ : ∀{I J : Ob}{i : ∣ Γ ∣ I} -> B I i -> (f : Hom J I) -> B J (Γ ∶ i ⟨ f ⟩)} ->
+        {glue₁ : ∀{I : Ob}{i : ∣ Γ ∣ I}{R : Sieve I} -> I ◁ R -> (∀{J} -> (f : Hom J I) -> ⟨ J , f ⟩⊩ R -> A J (Γ ∶ i ⟨ f ⟩)) -> A I i} ->
+        {glue₂ : ∀{I : Ob}{i : ∣ Γ ∣ I}{R : Sieve I} -> I ◁ R -> (∀{J} -> (f : Hom J I) -> ⟨ J , f ⟩⊩ R -> B J (Γ ∶ i ⟨ f ⟩)) -> B I i} ->
+        (A ≡ B) -> 
+        _≡_ {A = For Γ} (mk A sub₁ glue₁)(mk B sub₂ glue₂)
+    mkForEq refl = refl
+
     _[_]F : ∀{Γ Δ} -> For Γ -> Subt Δ Γ -> For Δ
     ∣ A [ γt ]F ∣ I x = ∣ A ∣ I (∣ γt ∣ I x)
     _∶_⟨_⟩ (A [ γt ]F) {I} {J} {i} x f = substp (∣ A ∣ J) (nat γt) (A ∶ x ⟨ f ⟩)
@@ -217,13 +244,6 @@ module Semantics
     ∣ fun' n a ts ∣ I x = fun n a I (recTms I (∣ ts ∣ I x)) -- fun n a (recTms I (∣ ts ∣ I x))
     nat (fun' n a ts) {I}{J}{i}{f} = trans (⟨fun⟩ n a I J (recTms I (∣ ts ∣ I i)) f) (cong (fun n a J) (trans (⟨recTms⟩ {n} {I} {J} {f} {∣ ts ∣ I i}) (cong (recTms J) (nat ts)))) -- cong (fun n a) (trans ⟨recTms⟩ (cong (recTms J) (nat ts)))
 
-    --rel' : {Γ : Cont} (n : ℕ) -> relar n -> Tms Γ n -> For Γ
-    --∣ rel' n a ts ∣ I x = rel n a I (recTms I (∣ ts ∣ I x))
-    --_∶_⟨_⟩ (rel' n a ts) {I} {J} {i} x f = substp (rel n a J) (trans ⟨recTms⟩ (cong (recTms J) (nat ts))) (⟨rel⟩ {n}{a}{I}{J}{recTms I (∣ ts ∣ I i)} x f)
-    --glue (rel' n a ts) {I} {i} {R} I◁R x = 
-    --    relGlue n a I (recTms {n} I (∣ ts ∣ I i)) R I◁R λ {J} f y -> 
-    --    substp (rel n a J) (trans (cong (recTms J) (sym (nat ts))) (sym (⟨recTms⟩ {n}{I}{J}{f}{∣ ts ∣ I i}))) (x {J} f y)
-
     rel-sieve : (Γt : Cont) -> (n : ℕ) -> (relar n) -> (ts : Tms Γt n) -> (I : Ob) -> (∣ Γt ∣ I) -> Sieve I
     rel-sieve Γt n a ts I i .Sh.Sieve.R J f = rel n a J (recTms J (∣ ts ∣ J (Γt ∶ i ⟨ f ⟩)))
     rel-sieve Γt n a ts I i .Sh.Sieve.restr {J} {f} {K} r g = 
@@ -244,6 +264,25 @@ module Semantics
     ∣ rel' {Γt} n a ts ∣ I i = I ◁ (rel-sieve Γt n a ts I i)
     _∶_⟨_⟩ (rel' {Γt} n a ts) {I} {J} {i} x f = substp (J ◁_) (rel-[]ˢ-⟨⟩ {Γt} {I} {J} {i} {f} {n} {a} {ts}) (x [ f ]ᶜ)
     rel' {Γt} n a ts .glue {I} {i} I◁R x = local I◁R (λ {J} f y → substp (J ◁_) (sym (rel-[]ˢ-⟨⟩ {Γt} {I} {J} {i} {f} {n} {a} {ts})) (x f y))
+
+    rel[] : {Γ : Cont} {n : ℕ} {a : relar n} {ts : Tms Γ n} {Δ : Cont} {γ : Subt Δ Γ} →
+        (rel' n a ts [ γ ]F) ≡ rel' n a (_[_]ts {Γ}{n} ts γ)
+    rel[] {Γ}{n}{a}{ts}{Δ}{γ} = 
+        mkForEq 
+        {Δ} 
+        {∣ rel' n a ts [ γ ]F ∣}
+        {∣ rel' n a (_[_]ts {Γ}{n} ts γ) ∣}
+        {(rel' n a ts [ γ ]F) ∶_⟨_⟩}
+        {(rel' n a (_[_]ts {Γ}{n} ts γ)) ∶_⟨_⟩}
+        {glue (rel' n a ts [ γ ]F)}
+        {glue (rel' n a (_[_]ts {Γ}{n} ts γ))}
+        (funext (λ J -> funext (λ x -> cong (J ◁_) 
+        (mkSieveEq 
+        (Sh.Sieve.R (rel-sieve Γ n a ts J (∣ γ ∣ J x))) 
+        (Sh.Sieve.R (rel-sieve Δ n a (_[_]ts {Γ}{n} ts γ) J x)) 
+        {Sh.Sieve.restr (rel-sieve Γ n a ts J (∣ γ ∣ J x))}
+        {Sh.Sieve.restr (rel-sieve Δ n a (_[_]ts {Γ}{n} ts γ) J x)}
+        (funext (λ K -> funext (λ y -> cong (λ z -> rel n a K (recTms K (∣ ts ∣ K z))) (nat γ))))))))
 
     record Conp(Γt : Cont) : Set₁ where
         constructor mk
@@ -312,11 +351,11 @@ module Semantics
     ∣ qp ∣ x = proj₂ x
 
     ⊥ : {Γt : Cont} -> For Γt
-    ∣ ⊥ ∣ I x = I ◁ sieve
+    ∣ ⊥ ∣ I x = I ◁ ⊥sieve
         where
-            sieve : Sieve I
-            sieve .Sh.Sieve.R _ _ = 𝟘p
-            sieve .Sh.Sieve.restr () g
+            ⊥sieve : Sieve I
+            ⊥sieve .Sh.Sieve.R _ _ = 𝟘p
+            ⊥sieve .Sh.Sieve.restr () g
     ⊥ ∶ x ⟨ f ⟩ = x [ f ]ᶜ
     glue ⊥ I◁R f = local I◁R f
 
@@ -340,9 +379,25 @@ module Semantics
         let EQ' = substp (∣ K ∣ K') (trans (sym (Γt ∶⟨∘⟩)) (sym (Γt ∶⟨id⟩))) in
         EQ (x {K'} (f ∘C g) J⊩R K' idC (EQ' (K ∶ Kj ⟨ g ⟩))))
 
+    prop-fun : ∀{i j}{A A' : Prop i}{B B' : Prop j} -> 
+        A ≡ A' -> B ≡ B' -> 
+        (A -> B) ≡ (A' -> B')
+    prop-fun refl refl = refl
+
     ⊃[] : {Γt : Cont} {K L : For Γt} {Δt : Cont} {γt : Subt Δt Γt} ->
       ((K ⊃ L) [ γt ]F) ≡ ((K [ γt ]F) ⊃ (L [ γt ]F))
-    ⊃[] {Γt} {K} {L} {Δt} {γt} = {!   !}
+    ⊃[] {Γt} {K} {L} {Δt} {γt} = 
+        mkForEq 
+        {Δt}
+        {∣ (K ⊃ L) [ γt ]F ∣}
+        {∣ (K [ γt ]F) ⊃ (L [ γt ]F) ∣}
+        {((K ⊃ L) [ γt ]F) ∶_⟨_⟩}
+        {((K [ γt ]F) ⊃ (L [ γt ]F)) ∶_⟨_⟩}
+        {glue ((K ⊃ L) [ γt ]F)}
+        {glue ((K [ γt ]F) ⊃ (L [ γt ]F))}
+        (funext (λ J → funext (λ x → 
+        cong (λ Z -> (K : Ob) (f : Hom K J) -> Z K f) 
+        (funext (λ K' → funext (λ y → prop-fun (cong (∣ K ∣ K') (nat γt)) (cong (∣ L ∣ K') (nat γt))))))))
     
     ⊃intro : {Γt : Cont} {K L : For Γt} {Γ : Conp Γt} ->
       Pf (Γ ▸p K) L -> Pf Γ (K ⊃ L)
@@ -389,6 +444,25 @@ module Semantics
     _∶_⟨_⟩ (_∨_ {Γt} K L) {I} {J} {i} x f = substp (J ◁_) (∨-[]ˢ-⟨⟩ {Γt}{I}{J}{i}{f}{K}{L}) (_[_]ᶜ {I}{J} x f)
     glue (_∨_ {Γt} K L) {I} {i} {R} I◁R x = local {I}{R} I◁R λ {J'} f J'⊩R → substp (J' ◁_) (sym (∨-[]ˢ-⟨⟩ {Γt}{I}{J'}{i}{f}{K}{L})) (x f J'⊩R)
 
+    ∨[] : {Γt : Cont} {K L : For Γt} {Δt : Cont} {γt : Subt Δt Γt} →
+      ((K ∨ L) [ γt ]F) ≡ ((K [ γt ]F) ∨ (L [ γt ]F))
+    ∨[] {Γt} {K}{L} {Δt} {γt} = 
+        mkForEq
+        {Δt} 
+        {∣ (K ∨ L) [ γt ]F ∣}
+        {∣ (K [ γt ]F) ∨ (L [ γt ]F) ∣}
+        {((K ∨ L) [ γt ]F) ∶_⟨_⟩}
+        {((K [ γt ]F) ∨ (L [ γt ]F)) ∶_⟨_⟩}
+        {glue ((K ∨ L) [ γt ]F)}
+        {glue ((K [ γt ]F) ∨ (L [ γt ]F))}
+        (funext (λ J → funext (λ x → cong (J ◁_) 
+        (mkSieveEq 
+        (Sh.Sieve.R (∨-sieve Γt J (∣ γt ∣ J x) K L)) 
+        (Sh.Sieve.R (∨-sieve Δt J x (K [ γt ]F) (L [ γt ]F))) 
+        {Sh.Sieve.restr (∨-sieve Γt J (∣ γt ∣ J x) K L)}
+        {Sh.Sieve.restr (∨-sieve Δt J x (K [ γt ]F) (L [ γt ]F))}
+        (funext (λ K' → funext (λ y → cong-bin _+p_ (cong (∣ K ∣ K') (nat γt)) (cong (∣ L ∣ K') (nat γt)))))))))
+
     ∨intro₁ : {Γt : Cont} {K L : For Γt} {Γ : Conp Γt} ->
       Pf Γ K -> Pf Γ (K ∨ L)
     ∣ ∨intro₁ {Γt} {K} {L} {Γ} PfK ∣ Γi = maximal (inj₁ (K ∶ ∣ PfK ∣ Γi ⟨ idC ⟩))
@@ -417,17 +491,17 @@ module Semantics
 
     ∀[] : {Γt : Cont} {K : For (Γt ▸t)} {Δt : Cont} {γt : Subt Δt Γt} ->
       (∀' K [ γt ]F) ≡ ∀' (K [ (γt ∘t pt) ,t qt {Δt} ]F)
-    ∀[] {Γt} {K} {Δt} {γt} = {!   !}
-    {-
+    ∀[] {Γt} {K} {Δt} {γt} = 
       mkForEq 
       {Δt}{∣ ∀' K [ γt ]F ∣}{∣ ∀' {Δt} (K [ (γt ∘t pt) ,t (qt {Δt}) ]F) ∣}
-      {λ {I}{J}{Δi} x f J' g d -> substp (λ z -> ∣ K ∣ J' (z ,Σ d)) (trans (Γt ∶⟨∘⟩) (cong (Γt ∶_⟨ g ⟩) (nat γt))) (x J' (f ∘C g) d)}
-      {λ {I}{J}{Δi} x f J' g d -> substp (λ z -> ∣ K ∣ J' (∣ γt ∣ J' z ,Σ d)) (Δt ∶⟨∘⟩) (x J' (f ∘C g) d)}
+      {(∀' K [ γt ]F) ∶_⟨_⟩}
+      {(∀' {Δt} (K [ (γt ∘t pt) ,t (qt {Δt}) ]F)) ∶_⟨_⟩}
+      {glue (∀' K [ γt ]F)}
+      {glue (∀' {Δt} (K [ (γt ∘t pt) ,t (qt {Δt}) ]F))}
       (funext (λ I -> 
       funext (λ Δi -> 
       cong (λ Z -> (J : Ob)(f : Hom J I)(d : D J) -> Z J f d) 
       (funext λ J -> funext (λ f -> funext (λ d -> cong (λ z -> ∣ K ∣ J (z ,Σ d)) (nat γt)))))))  
-    -}
 
     ∀intro : {Γt : Cont} {K : For (Γt ▸t)} {Γ : Conp Γt} ->
       Pf (Γ [ pt ]C) K -> Pf Γ (∀' K)
@@ -460,6 +534,25 @@ module Semantics
     _∶_⟨_⟩ (∃' {Γt} K) {I} {J} {i} x f = substp (J ◁_) (∃-[]ˢ-⟨⟩ {Γt} {I} {J} {i} {f} {K}) (x [ f ]ᶜ)
     glue (∃' {Γt} K) {I} {i} {R} I◁R x = local I◁R λ {J} f J⊩R → substp (J ◁_) (sym (∃-[]ˢ-⟨⟩ {Γt} {I} {J} {i} {f} {K})) (x {J} f J⊩R)
     
+    ∃[] : {Γt : Cont} {K : For (Γt ▸t)} {Δt : Cont} {γt : Subt Δt Γt} →
+      (∃' K [ γt ]F) ≡ ∃' (K [ (γt ∘t pt) ,t (qt {Δt}) ]F)
+    ∃[] {Γt} {K} {Δt} {γt} = 
+        mkForEq
+        {Δt} 
+        {∣ ∃' K [ γt ]F ∣}
+        {∣ ∃' {Δt} (K [ (γt ∘t pt) ,t (qt {Δt}) ]F) ∣}
+        {(∃' K [ γt ]F) ∶_⟨_⟩}
+        {(∃' {Δt} (K [ (γt ∘t pt) ,t (qt {Δt}) ]F)) ∶_⟨_⟩}
+        {glue (∃' K [ γt ]F)}
+        {glue (∃' {Δt} (K [ (γt ∘t pt) ,t (qt {Δt}) ]F))}
+        (funext (λ J → funext (λ x → cong (J ◁_) 
+        (mkSieveEq 
+        (Sh.Sieve.R (∃-sieve Γt K J (∣ γt ∣ J x))) 
+        (Sh.Sieve.R (∃-sieve Δt (K [ (γt ∘t pt) ,t (qt {Δt}) ]F) J x)) 
+        {Sh.Sieve.restr (∃-sieve Γt K J (∣ γt ∣ J x))}
+        {Sh.Sieve.restr (∃-sieve Δt (K [ (γt ∘t pt) ,t (qt {Δt}) ]F) J x)}
+        (funext (λ K' → funext (λ y → cong (∃ (D K')) (funext (λ d → cong (λ z -> ∣ K ∣ K' (z ,Σ d)) (nat γt))))))))))
+
     ∃intro : {Γt : Cont} {K : For (Γt ▸t)} (t : Tm Γt) {Γ : Conp Γt} ->
       Pf Γ (K [ idt ,t t ]F) -> Pf Γ (∃' K)
     ∣ ∃intro {Γt}{K} t {Γ} PfK ∣ {I}{i} Γi = maximal ((∣ t ∣ I i) ,∃ substp (λ z -> ∣ K ∣ I (z ,Σ ∣ t ∣ I i)) (sym (Γt ∶⟨id⟩)) (∣ PfK ∣ Γi))
@@ -496,7 +589,22 @@ module Semantics
 
     Eq[] : {Γt Δt : Cont} {γt : Subt Δt Γt} {t t' : Tm Γt} ->
       (Eq t t' [ γt ]F) ≡ Eq (t [ γt ]t) (t' [ γt ]t)
-    Eq[] = {!   !} -- refl
+    Eq[] {Γt}{Δt}{γt}{t}{t'} = 
+        mkForEq {Δt} 
+        {∣ Eq t t' [ γt ]F ∣}
+        {∣ Eq (t [ γt ]t) (t' [ γt ]t) ∣} 
+        {(Eq t t' [ γt ]F) ∶_⟨_⟩} 
+        {(Eq (t [ γt ]t) (t' [ γt ]t)) ∶_⟨_⟩} 
+        {glue (Eq t t' [ γt ]F)} 
+        {glue (Eq (t [ γt ]t) (t' [ γt ]t))} 
+        (funext (λ J → funext (λ x → cong (J ◁_) 
+        (mkSieveEq 
+        {J}
+        (Sh.Sieve.R (Eq-sieve Γt t t' J (∣ γt ∣ J x))) 
+        (Sh.Sieve.R (Eq-sieve Δt (t [ γt ]t) (t' [ γt ]t) J x)) 
+        {Sh.Sieve.restr (Eq-sieve Γt t t' J (∣ γt ∣ J x))}
+        {Sh.Sieve.restr (Eq-sieve Δt (t [ γt ]t) (t' [ γt ]t) J x)}
+        (funext (λ K → funext (λ y → cong-bin _≡_ (cong (∣ t ∣ K) (nat γt)) (cong (∣ t' ∣ K) (nat γt)))))))))
     
     Eqrefl : {Γt : Cont} {t : Tm Γt} {Γ : Conp Γt} -> Pf Γ (Eq t t)
     ∣ Eqrefl ∣ x = maximal refl
@@ -551,7 +659,7 @@ module Semantics
       ; fun = fun'
       ; fun[] = refl
       ; rel = rel'
-      ; rel[] = {!   !}
+      ; rel[] = λ {Γ}{n}{a}{ts}{Δ}{γ} -> rel[] {Γ}{n}{a}{ts}{Δ}{γ}
       ; Conp = Conp
       ; _[_]C = _[_]C
       ; [id]C = refl
@@ -586,7 +694,7 @@ module Semantics
       ; ∧elim₁ = λ {Γt}{K}{L} -> ∧elim₁ {L = L}
       ; ∧elim₂ = λ {Γt}{K}{L} -> ∧elim₂ {K = K} 
       ; _∨_ = _∨_
-      ; ∨[] = {!   !}
+      ; ∨[] = λ {Γt}{K}{L}{Δt}{γt} -> ∨[] {Γt}{K}{L}{Δt}{γt}
       ; ∨elim = λ {Γt}{K}{L}{C} -> ∨elim {Γt}{K}{L}{C}
       ; ∨intro₁ = λ {Γt}{K}{L} -> ∨intro₁ {Γt}{K}{L}
       ; ∨intro₂ = λ {Γt}{K}{L} -> ∨intro₂ {Γt}{K}{L}
@@ -595,11 +703,11 @@ module Semantics
       ; ∀intro = λ {Γt}{K}{Γ} -> ∀intro {Γt}{K}{Γ} 
       ; ∀elim = λ {Γt}{K}{Γ} -> ∀elim {Γt}{K}{Γ}
       ; ∃' = ∃'
-      ; ∃[] = {!   !}
+      ; ∃[] = λ {Γt}{K}{Δt}{γt} -> ∃[] {Γt}{K}{Δt}{γt}
       ; ∃intro = λ {Γt}{K} -> ∃intro {Γt}{K}
       ; ∃elim = λ {Γt}{K}{Γp}{L} -> ∃elim {Γt}{K}{Γp}{L} 
       ; Eq = Eq
-      ; Eq[] = {!   !}
+      ; Eq[] = λ {Γt}{Δt}{γt}{t}{t'} -> Eq[] {Γt}{Δt}{γt}{t}{t'}
       ; Eqrefl = λ {Γt}{t}{Γ} -> Eqrefl {Γt}{t}{Γ}
       ; subst' = subst'
       }   
@@ -727,24 +835,27 @@ module Completeness where
     open Sh C
 
     {-# NO_UNIVERSE_CHECK #-}
-    data _◁_ (Γ : Con) : Sieve Γ → Prop where
-        maximal : ∀ {R} -> ⟨ Γ , id ⟩⊩ R -> Γ ◁ R
-        ◁-⊥ : ∀ {R} -> Pf (proj₂ Γ) ⊥ -> Γ ◁ R
-        ◁-∨ : ∀ {R A B} -> 
+    data _◁_ (Γ : Con)(R : Sieve Γ) : Prop where
+        maximal : ⟨ Γ , id ⟩⊩ R -> Γ ◁ R
+        ◁-⊥ : I.Pf (proj₂ Γ) ⊥ -> Γ ◁ R
+        ◁-∨ : ∀ {A B} -> 
             (∀ {Δ : Con} -> (γ : Sub Δ Γ) -> I.Pf (proj₂ Δ) (A [ proj₁ γ ]F) -> Δ ◁ (R [ γ ]ˢ)) ->
             (∀ {Δ : Con} -> (γ : Sub Δ Γ) -> I.Pf (proj₂ Δ) (B [ proj₁ γ ]F) -> Δ ◁ (R [ γ ]ˢ)) ->
             I.Pf (proj₂ Γ) (A I.∨ B) -> Γ ◁ R
-        ◁-∃ : ∀{R A} -> 
+        ◁-∃ : ∀{A} -> 
             (∀ {Δ} (γ : Sub Δ Γ) -> 
                 (d : I.Tm (proj₁ Δ)) -> 
                 I.Pf (proj₂ Δ) (A [ (proj₁ γ) ,t d ]F) -> 
-                Δ ◁ (R [ γ ]ˢ)) -> 
+                Δ ◁ (R [ γ ]ˢ)) -> -- (Δ ▸t') ◁ (R [ γ ∘ pt' ]ˢ)) -> 
             I.Pf (proj₂ Γ) (I.∃' A) -> 
             Γ ◁ R
-        --◁-Eq : ∀{t t' K} ->
-        --    I.Pf (proj₂ Γ) (I.Eq t t') -> 
-        --    Γ ◁ (K [ id ,t' t ]ˢ) -> 
-        --    Γ ◁ (K [ id ,t' t' ]ˢ)
+        ◁-Eq : ∀{t t' : I.Tm (proj₁ Γ)}{K} -> 
+            I.Pf (proj₂ Γ) (I.Eq t t') -> 
+            I.Pf (proj₂ Γ) (K I.[ I.idt I.,t t ]F) ->
+            (∀ {Δ} (γ : Sub Δ Γ) -> 
+                I.Pf (proj₂ Δ) (K I.[ (proj₁ γ) I.,t (t' I.[ (proj₁ γ) ]t) ]F) ->
+                Δ ◁ (R [ γ ]ˢ)) -> 
+            Γ ◁ R
 
     -- ∃elim : Pf Γ (∃ A) -> ∃ Tm (Pf Γ A)
     -- Pf Γ (∃ A) -> ((d : Tm) -> (Pf Γ A) -> Pf Γ C) -> Pf Γ C
@@ -757,34 +868,43 @@ module Completeness where
     _[_]ᶜ : ∀{Γ Δ R} -> Γ ◁ R → (γ : Sub Δ Γ) → Δ ◁ (R [ γ ]ˢ)
     (_[_]ᶜ {Γ}{Δ}{R} (maximal x) γ) = maximal (substp (Sh.Sieve.R R Δ) (trans idl' (sym (idr' {f = γ}))) (R .Sh.Sieve.restr x γ))
     ◁-⊥ x [ (γt ,Σ γp) ]ᶜ = ◁-⊥ (x I.[ γt ]p I.[ γp ]P)
-    ((◁-∨ x y z) [ γ@(γt ,Σ γp) ]ᶜ) = 
+    (_[_]ᶜ {Γ}{Δ}{R} (◁-∨ x y z) γ@(γt ,Σ γp)) = 
         ◁-∨ 
-        (λ {Θ} δ l → {! x (γ ∘ δ) ?  !}) -- [∘]ˢ is needed 
-        (λ {Θ} δ k → {! y (γ ∘ δ) ?  !}) -- [∘]ˢ is needed  
-        (z I.[ γt ]p I.[ γp ]P) -- ◁-∨ (λ {Θ} δ l → x (γ ∘ δ) l) (λ {Θ} δ k → y (γ ∘ δ) k) (z I.[ γ ]F)
-    ◁-∃ x x₁ [ γ ]ᶜ = {!   !}
-    --◁-Eq x x₁ [ γ ]ᶜ = {!   !}
+        (λ {Θ@(Θt ,Σ Θp)} δ l → substp (Θ ◁_) ([∘]ˢ {f = γ}{g = δ}{s = R}) (x (γ ∘ δ) (substp (I.Pf Θp) (sym [∘]F) l)))
+        (λ {Θ@(Θt ,Σ Θp)} δ k → substp (Θ ◁_) ([∘]ˢ {f = γ}{g = δ}{s = R}) (y (γ ∘ δ) (substp (I.Pf Θp) (sym [∘]F) k)))
+        (z I.[ γt ]p I.[ γp ]P)
+    (_[_]ᶜ {Γ}{Δ}{R} (◁-∃ {A} x Pf∃A) γ@(γt ,Σ γp)) = 
+        ◁-∃ 
+        (λ {Θ@(Θt ,Σ Θp)} δ@(δt ,Σ δp) d l → substp (Θ ◁_) ([∘]ˢ {f = γ}{g = δ}{s = R}) (x (γ ∘ δ) d (substp (I.Pf Θp) (trans (sym [∘]F) (cong (A [_]F) (cong (_,t d) (trans ass (cong (γt I.∘t_) ▸tβ₁))))) l))) 
+        (Pf∃A [ γt ]p [ γp ]P)
+    (_[_]ᶜ {Γ@(Γt ,Σ Γp)}{Δ@(Δt ,Σ Δp)}{R} (◁-Eq {t}{t'}{K} PfEq PfKt x) γ@(γt ,Σ γp)) = 
+        ◁-Eq {Δ}{R [ γ ]ˢ}{t [ γt ]t}{t' [ γt ]t}{K I.[ γt ↑t ]F}
+        (PfEq I.[ γt ]p I.[ γp ]P)
+        (substp (I.Pf _) (trans (sym ([∘]F {γ = I.idt I.,t t}{δ = γt})) (trans (cong (K [_]F) (cong (_,t (t [ γt ]t)) (trans (trans idl (sym idr)) (trans (cong (γt ∘t_) (sym ▸tβ₁)) (sym ass))))) [∘]F)) (PfKt I.[ γt ]p I.[ γp ]P)) 
+        λ {Θ@(Θt ,Σ Θp)} δ@(δt ,Σ δp) l → substp (Θ ◁_) ([∘]ˢ {f = γ}{g = δ}{s = R}) (x (γ ∘ δ) (substp (I.Pf Θp) (trans (sym [∘]F) (cong (K [_]F) (cong-bin _,t_ (trans ass ((cong (γt I.∘t_) ▸tβ₁))) (sym ([∘]t {Γt}{t'}{Δt}{γt}{Θt}{δt}))))) l))
 
     local : ∀{Γ R S} -> Γ ◁ R →
       ({Δ : Con} (γ : Sub Δ Γ) → ⟨ Δ , γ ⟩⊩ R → Δ ◁ (S [ γ ]ˢ)) → Γ ◁ S
-    local (maximal x) x₁ = {!   !}
-    local {Γ}{R}{S} (◁-⊥ x) x₁ = {! Sieve.R S  !}
-    local (◁-∨ x x₂ x₃) x₁ = {!   !}
-    local (◁-∃ x₁ x₂) x = {!   !}
-    --local (◁-Eq x₁ x₂) x = {!   !}
+    local {Γ}{R}{S} (maximal Γ⊩R ) x = substp (Γ ◁_) ([id]ˢ {Γ}{S}) (x id Γ⊩R)
+    local {Γ}{R}{S} (◁-⊥ Pf⊥) x = ◁-⊥ Pf⊥
+    local {Γ}{R}{S} (◁-∨ PfAC PfBC PfAB) x = 
+        ◁-∨ 
+        (λ {Δ} γ a → local (PfAC γ a) (λ {Θ} δ l → substp (Θ ◁_) ([∘]ˢ {f = γ}{g = δ}{s = S}) (x (γ ∘ δ) l))) 
+        (λ {Δ} γ b → local (PfBC γ b) (λ {Θ} δ k → substp (Θ ◁_) ([∘]ˢ {f = γ}{g = δ}{s = S}) (x (γ ∘ δ) k))) 
+        PfAB
+    local {Γ}{R}{S} (◁-∃ PfAC Pf∃A) x = 
+        ◁-∃ 
+        (λ {Δ} γ d a → local (PfAC γ d a) λ {Θ} δ l → substp (Θ ◁_) ([∘]ˢ {f = γ}{g = δ}{s = S}) (x (γ ∘ δ) l)) 
+        Pf∃A
+    local {Γ}{R}{S} (◁-Eq {t}{t'}{K} PfEq PfKt PfKt'C) x = 
+        ◁-Eq PfEq PfKt λ {Δ} γ a → 
+        local (PfKt'C γ a) (λ {Θ} δ l → substp (Θ ◁_) ([∘]ˢ {f = γ}{g = δ}{s = S}) (x (γ ∘ δ) l))
 
     J : Top
     J .Sh.Top._◁_ = _◁_
     J .Sh.Top._[_]ᶜ = _[_]ᶜ
     J .Sh.Top.maximal = maximal
     J .Sh.Top.local = local
-
-    --relGlue : ∀ (n : ℕ) (a : relar n) (Γ@(Γt ,Σ Γp) : Con) (ts : Tm Γt ^ n)
-    --    (R : Sieve Γ) → Γ ◁ R →
-    --    ({Δ@(Δt ,Σ Δp) : Con} (f@(ft ,Σ _) : Sub Δ Γ) → ⟨ Δ , f ⟩⊩ R → Pf Δp (rel n a (reifyTms (map^ ts (_[ ft ]t))))) →
-    --    Pf Γp (rel n a (reifyTms ts))
-    --relGlue zero a Γ * R Γ◁R x = x {Γ} id {!   !}
-    --relGlue (suc n) a Γ (ts ,Σ t) R Γ◁R x = {!   !}
 
     module B = Semantics
         C
@@ -803,6 +923,8 @@ module Completeness where
     open Ite funar relar Beth
 
     mutual
+        {-# TERMINATING #-}
+        
         reflect-cont : ∀{Γt : I.ConTm}{Γ : I.ConPf Γt}(Δt : I.ConTm) -> (γt : I.Subt Γt Δt) -> ∣ ⟦ Δt ⟧Cont ∣ (Γt ,Σ Γ)
         reflect-cont ◆t x = *
         reflect-cont (Δt ▸t) (γ ,t t) = reflect-cont Δt γ ,Σ t
@@ -813,6 +935,22 @@ module Completeness where
         
         reflect-con : ∀{Γ : Con} (Δ : Con) -> Sub Γ Δ -> Σsp (∣ ⟦ proj₁ Δ ⟧Cont ∣ Γ) (∣ ⟦ proj₂ Δ ⟧Conp ∣ Γ)
         reflect-con {Γt ,Σ Γ} (Δt ,Σ Δ) (γt ,Σ γ) = reflect-cont Δt γt ,Σ reflect-conp Δ γt γ
+
+        reflect-TmVar : ∀{Γt Δt Δ}{γt : I.Subt Δt (Γt I.▸t)}{v : V.Tm (Γt I.▸t)} -> ∣ ⟦ var v ⟧Tm ∣ (Δt ,Σ Δ) (reflect-cont (Γt I.▸t) γt) ≡ var v I.[ γt ]t
+        reflect-TmVar {Γt} {Δt} {Δ} {γt ,t t} {V.Tm.vz} = refl
+        reflect-TmVar {Γt ▸t} {Δt} {Δ} {γt ,t t} {V.Tm.vs v} = reflect-TmVar {v = v}
+
+        reflect-Tm : ∀{Γt Δt Δ}{γt : I.Subt Δt Γt}{t : I.Tm Γt} -> 
+            ∣ ⟦ t ⟧Tm ∣ (Δt ,Σ Δ) (reflect-cont Γt γt) ≡ t I.[ γt ]t
+        reflect-Tm {◆t} {Δt} {Δ} {γt} {fun zero a *} = refl
+        reflect-Tm {◆t} {Δt} {Δ} {γt} {fun (suc n) a (ts ,Σ t)} = cong (fun (suc n) a) (mk,= reflect-Tms (reflect-Tm {I.◆t}{Δt}{Δ}{γt}{t}))
+        reflect-Tm {Γt ▸t} {Δt} {Δ} {γt} {Tm.var v} = reflect-TmVar {v = v}
+        reflect-Tm {Γt ▸t} {Δt} {Δ} {γt} {Tm.fun zero a *} = refl
+        reflect-Tm {Γt ▸t} {Δt} {Δ} {γt} {Tm.fun (suc n) a (ts ,Σ t)} = cong (fun (suc n) a) (mk,= reflect-Tms (reflect-Tm {Γt I.▸t}{Δt}{Δ}{γt}{t}))
+
+        reflect-Tms : ∀{n Γt Δt Δ}{γt : I.Subt Δt Γt}{ts : I.Tms Γt n} -> reifyTms (recTms (Δt ,Σ Δ) (∣ ⟦ ts ⟧Tms ∣ (Δt ,Σ Δ) (reflect-cont Γt γt))) ≡ ts I.[ γt ]ts
+        reflect-Tms {zero} {Γt} {Δt} {Δ} {γt} {*} = refl
+        reflect-Tms {suc n} {Γt} {Δt} {Δ} {γt} {(ts ,Σ t)} = mk,= reflect-Tms (reflect-Tm {Γt}{Δt}{Δ}{γt}{t})
 
         ⟨⟩-reflect-cont : ∀{Γt Δt Θt : I.ConTm}{Δ : I.ConPf Δt}{Θ : I.ConPf Θt}{γt : I.Subt Δt Γt}{δ@(δt ,Σ δp) : Sub (Θt ,Σ Θ) (Δt ,Σ Δ)} -> 
             (reflect-cont Γt (γt I.∘t δt)) ≡ ⟦ Γt ⟧Cont ∶ (reflect-cont Γt γt) ⟨ δ ⟩
@@ -840,52 +978,135 @@ module Completeness where
             ∣ ⟦ A ⟧For ∣ (Δ ▸t') (reflect-cont Γt (γt I.∘t I.pt) ,Σ I.qt)
         ⟨pt⟩-reflect-cont {Γt} {Δ} {A} {γt} = sym (⟨d⟩-reflect-cont {Γt}{Δ}{Δ ▸t'}{A}{γt}{pt'}{I.qt})
 
-        -- TODO : Should try reify/reflect with more simpler type
-
         reify   : ∀{Γt Δt}{Δ : I.ConPf Δt}{γt : I.Subt Δt Γt}(A : I.For Γt) -> ∣ ⟦ A ⟧For ∣ (Δt ,Σ Δ) (reflect-cont Γt γt) -> I.Pf Δ (A I.[ γt ]F)        
         reify-⊥ : ∀{Γt Δt}{Δ : I.ConPf Δt}{γt : I.Subt Δt Γt} -> ∣ ⟦ I.⊥ {Γt} ⟧For ∣ (Δt ,Σ Δ) (reflect-cont {Δt}{Δ} Γt γt) -> I.Pf Δ I.⊥        
-        reify-⊥' : ∀{Γt}{Γ : I.ConPf Γt} -> ∣ ⟦ I.⊥ {Γt} ⟧For ∣ (Γt ,Σ Γ) (reflect-cont {Γt}{Γ} Γt I.idt) -> I.Pf Γ I.⊥        
         reify-∨ : ∀{Γt Δt}{Δ : I.ConPf Δt}{γt : I.Subt Δt Γt}(A B : I.For Γt) -> ∣ ⟦ A I.∨ B ⟧For ∣ (Δt ,Σ Δ) (reflect-cont {Δt}{Δ} Γt γt) -> I.Pf Δ ((A I.∨ B) I.[ γt ]F)    
         reify-∃ : ∀{Γt Δt}{Δ : I.ConPf Δt}{γt : I.Subt Δt Γt}(A : I.For (Γt I.▸t)) -> ∣ ⟦ I.∃' A  ⟧For ∣ (Δt ,Σ Δ) (reflect-cont {Δt}{Δ} Γt γt) -> I.Pf Δ ((I.∃' A) I.[ γt ]F)    
-        reify-∃' : ∀{Γt}{Γ : I.ConPf Γt}(A : I.For (Γt I.▸t)) -> ∣ ⟦ I.∃' A  ⟧For ∣ (Γt ,Σ Γ) (reflect-cont {Γt}{Γ} Γt I.idt) -> I.Pf Γ (I.∃' A)    
         reify-Eq  : ∀{Γt Δt}{Δ : I.ConPf Δt}{γt : I.Subt Δt Γt}(t t' : I.Tm Γt) -> ∣ ⟦ I.Eq t t'  ⟧For ∣ (Δt ,Σ Δ) (reflect-cont {Δt}{Δ} Γt γt) -> I.Pf Δ ((I.Eq t t') I.[ γt ]F)    
         reify-rel : ∀{Γt Δt}{Δ : I.ConPf Δt}{γt : I.Subt Δt Γt}(n : ℕ)(a : relar n)(ts : I.Tms Γt n) -> ∣ ⟦ I.rel n a ts  ⟧For ∣ (Δt ,Σ Δ) (reflect-cont {Δt}{Δ} Γt γt) -> I.Pf Δ ((I.rel n a ts) I.[ γt ]F)    
         
-        reify-⊥' (◁-⊥ x) = {!   !}
-        reify-⊥' (◁-∨ x x₁ x₂) = {!   !}
-        reify-⊥' (◁-∃ x x₁) = {!   !}
-
-        reify-∃' A x = {!  x !}
-
-{-
- R ≟    ∃-sieve 
-        C 
-        J 
-        ∣ ⟦ Γt₁ ⟧Cont ∣
-        ∣ ⟦ A ⟧For ∣ (Γt₁ ,Σ Γ₁) (reflect-cont Γt₁ I.idt)
--}
-
-
-        {-
         reify-⊥ (◁-⊥ x) = I.exfalso x
-        reify-⊥ {Γt}{Δt}{Δ}{γt} (◁-∨ {R}{A}{B} f g x) = 
+        reify-⊥ {Γt}{Δt}{Δ}{γt} (◁-∨ {A}{B} f g x) = 
             I.∨elim 
             (reify-⊥ {Γt}{Δt}{Δ I.▸p A}{γt} (f pp' qp')) 
             (reify-⊥ {Γt}{Δt}{Δ I.▸p B}{γt} (g pp' qp')) 
             x
-        reify-⊥ (◁-∃ x₁ x₂) = ?
-        -}
-        reify-⊥ (◁-⊥ x) = {!   !}
-        reify-⊥ (◁-∨ x x₁ x₂) = {!   !}
-        reify-⊥ (◁-∃ x x₁) = {!   !}
+        reify-⊥ {Γt}{Δt}{Δ}{γt} (◁-∃ {A} f x) = I.∃elim x (reify-⊥ {Γt I.▸t}{Δt I.▸t}{Δ I.[ I.pt ]C I.▸p A I.[ I.pt I.,t var V.vz ]F}{γt ↑t} (f (I.pt ,Σ I.pp) (qt' {Δt ,Σ Δ}) I.qp))
+        reify-⊥ {Γt}{Δt}{Δ}{γt} (◁-Eq {t}{t'}{K} PfEq PfKt f) = 
+            let PfKt' = I.subst' K PfEq PfKt in
+            reify-⊥ {Γt}{Δt}{Δ}{γt} (f id (substp (I.Pf Δ) (cong (λ z -> K I.[ I.idt I.,t z ]F) (sym [id]t)) PfKt'))
 
-        reify-∨ {Γt} {Δt} {Δ} {γt} A B x = {! x  !}
+        []ˢ-∨-sieve : ∀ {Γt : I.ConTm}{Δ@(Δt ,Σ Δp) Θ@(Θt ,Σ Θp) : Con}{γt : I.Subt Δt Γt}{δ@(δt ,Σ δp) : Sub Θ Δ}{A B : I.For Γt} ->
+            (∨-sieve ⟦ Γt ⟧Cont Δ (reflect-cont Γt γt) ⟦ A ⟧For ⟦ B ⟧For) [ δ ]ˢ
+            ≡
+            ∨-sieve ⟦ Γt ⟧Cont Θ (reflect-cont Γt (γt I.∘t δt)) ⟦ A ⟧For ⟦ B ⟧For
+        []ˢ-∨-sieve {Γt}{Δ@(Δt ,Σ Δp)}{Θ@(Θt ,Σ Θp)}{γt}{δ@(δt ,Σ δp)}{A}{B} = 
+            mkSieveEq 
+            (Sh.Sieve.R (∨-sieve ⟦ Γt ⟧Cont Δ (reflect-cont Γt γt) ⟦ A ⟧For ⟦ B ⟧For [ δ ]ˢ)) 
+            (Sh.Sieve.R (∨-sieve ⟦ Γt ⟧Cont Θ (reflect-cont Γt (γt I.∘t δt)) ⟦ A ⟧For ⟦ B ⟧For))
+            {λ {J}{f}{K} x g → Sh.Sieve.restr (∨-sieve ⟦ Γt ⟧Cont Δ (reflect-cont Γt γt) ⟦ A ⟧For ⟦ B ⟧For [ δ ]ˢ) {J}{f}{K} x g}
+            {Sh.Sieve.restr (∨-sieve ⟦ Γt ⟧Cont Θ (reflect-cont Γt (γt I.∘t δt)) ⟦ A ⟧For ⟦ B ⟧For)}
+            (funext (λ Ξ → funext (λ θ@(θt ,Σ θp) → 
+                cong-bin (_+p_) 
+                (cong (∣ ⟦ A ⟧For ∣ Ξ) (trans (sym (⟨⟩-reflect-cont {γt = γt}{δ = δ ∘ θ})) (trans (cong (reflect-cont Γt) (sym ass)) (⟨⟩-reflect-cont {γt = γt I.∘t δt}{δ = θ})))) 
+                (cong (∣ ⟦ B ⟧For ∣ Ξ) (trans (sym (⟨⟩-reflect-cont {γt = γt}{δ = δ ∘ θ})) (trans (cong (reflect-cont Γt) (sym ass)) (⟨⟩-reflect-cont {γt = γt I.∘t δt}{δ = θ})))))))
 
-        reify-∃ A x = {!  !}
+        reify-∨ {Γt}{Δt}{Δ}{γt} A B (maximal (inj₁ x)) = I.∨intro₁ (reify A (substp (∣ ⟦ A ⟧For ∣ (Δt ,Σ Δ)) (⟦ Γt ⟧Cont ∶⟨id⟩) x))
+        reify-∨ {Γt}{Δt}{Δ}{γt} A B (maximal (inj₂ x)) = I.∨intro₂ (reify B (substp (∣ ⟦ B ⟧For ∣ (Δt ,Σ Δ)) (⟦ Γt ⟧Cont ∶⟨id⟩) x))
+        reify-∨ {Γt}{Δt}{Δ}{γt} A B (◁-⊥ x) = I.exfalso x
+        reify-∨ {Γt}{Δt}{Δ}{γt} A B (◁-∨ {A'}{B'} f g x) =
+            let f' = f {Δt ,Σ (Δ I.▸p A')} pp' qp' in
+            let g' = g {Δt ,Σ (Δ I.▸p B')} pp' qp' in
+            I.∨elim {Δt}{A'}{B'}{(A I.∨ B) I.[ γt ]F}{Δ}
+            (reify-∨ {Γt}{Δt}{Δ I.▸p A'}{γt} A B
+                (substp ((Δt ,Σ (Δ I.▸p A')) ◁_)
+                (trans ([]ˢ-∨-sieve {Γt}{Δt ,Σ Δ}{Δt ,Σ (Δ I.▸p A')}{γt}{pp'}{A}{B})
+                (cong (λ z -> ∨-sieve ⟦ Γt ⟧Cont (Δt ,Σ (Δ I.▸p A')) (reflect-cont Γt z) ⟦ A ⟧For ⟦ B ⟧For) idr)) f')) 
+            (reify-∨ {Γt} {Δt} {Δ I.▸p B'} {γt} A B 
+                (substp ((Δt ,Σ (Δ I.▸p B')) ◁_) 
+                (trans ([]ˢ-∨-sieve {Γt}{Δt ,Σ Δ}{Δt ,Σ (Δ I.▸p B')}{γt}{pp'}{A}{B}) 
+                (cong (λ z -> ∨-sieve ⟦ Γt ⟧Cont (Δt ,Σ (Δ I.▸p B')) (reflect-cont Γt z) ⟦ A ⟧For ⟦ B ⟧For) idr)) g')) 
+            x
+        reify-∨ {Γt}{Δt}{Δ}{γt} A B (◁-∃ {A'} f x) =
+            I.∃elim x 
+            (substp (I.Pf _) (trans I.∨[] (cong-bin I._∨_ [∘]F [∘]F)) 
+            (reify-∨ {Γt}{Δt I.▸t}{Δ I.[ I.pt ]C I.▸p A' I.[ I.pt I.,t var V.vz ]F}{γt I.∘t I.pt} A B 
+            (substp (λ z -> z) 
+            (cong (((Δt I.▸t) ,Σ (Δ I.[ I.pt ]C I.▸p A' I.[ I.pt I.,t I.qt ]F)) ◁_) ([]ˢ-∨-sieve {Γt}{Δt ,Σ Δ}{(Δt I.▸t) ,Σ (Δ I.[ I.pt ]C I.▸p A' I.[ I.pt I.,t I.qt ]F)}{γt}{I.pt ,Σ I.pp}{A}{B})) 
+            (f {(Δt I.▸t) ,Σ (Δ I.[ I.pt ]C I.▸p A' I.[ I.pt I.,t (qt' {Δt ,Σ Δ}) ]F)} (I.pt ,Σ I.pp) (qt' {Δt ,Σ Δ}) I.qp))))
+        reify-∨ {Γt}{Δt}{Δ}{γt} A B (◁-Eq {t}{t'}{K} PfEq PfKt f) = 
+            let PfKt' = I.subst' K PfEq PfKt in
+            reify-∨ A B (substp ((Δt ,Σ Δ) ◁_) ([id]ˢ {(Δt ,Σ Δ)}) (f id (substp (λ z -> I.Pf Δ (K I.[ I.idt I.,t z ]F) ) (sym [id]t) PfKt')))
 
-        reify-Eq = {!   !}
-        reify-rel = {!   !}
+        mk∃= : ∀{i j}{A : Set i}{B : A -> Prop j}{B' : A -> Prop j} -> B ≡ B' -> ∃ A B ≡ ∃ A B'
+        mk∃= {i}{j}{A}{B}{B'} refl = refl
 
+        []ˢ-∃-sieve : ∀ {Γt : I.ConTm}{Δ@(Δt ,Σ Δp) Θ@(Θt ,Σ Θp) : Con}{γt : I.Subt Δt Γt}{δ@(δt ,Σ δp) : Sub Θ Δ}{A : I.For (Γt I.▸t)} ->
+            (∃-sieve ⟦ Γt ⟧Cont ⟦ A ⟧For Δ (reflect-cont Γt γt)) [ δ ]ˢ
+            ≡
+            ∃-sieve ⟦ Γt ⟧Cont ⟦ A ⟧For Θ (reflect-cont Γt (γt I.∘t δt))
+        []ˢ-∃-sieve {Γt}{Δ@(Δt ,Σ Δp)}{Θ@(Θt ,Σ Θp)}{γt}{δ@(δt ,Σ δp)}{A} = 
+            mkSieveEq 
+            (Sh.Sieve.R ((∃-sieve ⟦ Γt ⟧Cont ⟦ A ⟧For Δ (reflect-cont Γt γt)) [ δ ]ˢ)) 
+            (Sh.Sieve.R (∃-sieve ⟦ Γt ⟧Cont ⟦ A ⟧For Θ (reflect-cont Γt (γt I.∘t δt))))
+            {λ {J}{f}{K} x g → Sh.Sieve.restr ((∃-sieve ⟦ Γt ⟧Cont ⟦ A ⟧For Δ (reflect-cont Γt γt)) [ δ ]ˢ) {J}{f}{K} x g}
+            {Sh.Sieve.restr (∃-sieve ⟦ Γt ⟧Cont ⟦ A ⟧For Θ (reflect-cont Γt (γt I.∘t δt)))}
+            (funext (λ Ξ@(Ξt ,Σ Ξp) → funext (λ θ@(θt ,Σ θp) → 
+                mk∃= (funext (λ t → cong (λ z -> ∣ ⟦ A ⟧For ∣ Ξ (z ,Σ t)) (sym (trans (cong (⟦ Γt ⟧Cont ∶_⟨ θ ⟩) (⟨⟩-reflect-cont {γt = γt}{δ = δ})) (sym (⟦ Γt ⟧Cont ∶⟨∘⟩)))))))))
+
+        reify-∃ {Γt}{Δt}{Δ}{γt} A (maximal (a ,∃ x)) = I.∃intro a (substp (I.Pf Δ) [∘]F (reify A (substp (∣ ⟦ A ⟧For ∣ (Δt ,Σ Δ)) (cong (_,Σ a) (trans (⟦ Γt ⟧Cont ∶⟨id⟩) (cong (reflect-cont Γt) (trans (trans (sym idr) (cong (γt I.∘t_) (sym ▸tβ₁))) (sym ass))))) x)))
+        reify-∃ A (◁-⊥ x) = I.exfalso x
+        reify-∃ {Γt}{Δt}{Δ}{γt} A (◁-∨ {A'}{B'} f g x) = 
+            I.∨elim 
+            (reify-∃ A (substp ((Δt ,Σ (Δ I.▸p A')) ◁_) (trans ([]ˢ-∃-sieve {γt = γt}{δ = pp'}{A = A}) (cong (∃-sieve ⟦ Γt ⟧Cont ⟦ A ⟧For _) (cong (reflect-cont Γt) idr))) (f pp' qp'))) 
+            (reify-∃ A (substp ((Δt ,Σ (Δ I.▸p B')) ◁_) (trans ([]ˢ-∃-sieve {γt = γt}{δ = pp'}{A = A}) (cong (∃-sieve ⟦ Γt ⟧Cont ⟦ A ⟧For _) (cong (reflect-cont Γt) idr))) (g pp' qp'))) 
+            x
+        reify-∃ {Γt}{Δt}{Δ}{γt} A (◁-∃ {A'} f x) = 
+            I.∃elim x 
+            let fx = (f {(Δt I.▸t) ,Σ (Δ I.[ I.pt ]C I.▸p A' I.[ I.pt I.,t (qt' {Δt ,Σ Δ}) ]F)} (I.pt ,Σ I.pp) (qt' {Δt ,Σ Δ}) I.qp) in
+            let fx' = substp (λ z -> z) {! cong (((Δt I.▸t) ,Σ (Δ I.[ I.pt ]C I.▸p A' I.[ I.pt I.,t qt' ]F)) ◁_)   !} fx in
+            let reif = reify-∃ {{!   !}}{{!   !}}{{!   !}}{{!   !}} A fx' in
+            let reif' = substp (λ z → z) {!   !} reif in
+            {!   !}
+        reify-∃ A (◁-Eq x y f) = {!   !}
+
+        equality-reflect : ∀ {Γt Δt : I.ConTm}{Δ : I.ConPf Δt}{γt : I.Subt Δt Γt}{t t' : I.Tm Γt} ->
+            ∣ ⟦ t  ⟧Tm ∣ (Δt ,Σ Δ) (reflect-cont Γt γt) 
+            ≡
+            ∣ ⟦ t' ⟧Tm ∣ (Δt ,Σ Δ) (reflect-cont Γt γt) ->
+            t ≡ t'
+        equality-reflect {Γt} {Δt} {Δ} {γt} {t} {t'} x = {!   !}
+
+        reify-Eq {Γt}{Δt}{Δ}{γt} t t' (maximal x) = {!   !} -- reify (I.Eq t t') (maximal x)
+        reify-Eq t t' (◁-⊥ x) = {!   !}
+        reify-Eq t t' (◁-∨ x x₁ x₂) = {!   !}
+        reify-Eq t t' (◁-∃ x x₁) = {!   !}
+        reify-Eq t t' (◁-Eq x x₁ x₂) = {!   !}
+
+        reify-rel n a ts (◁-⊥ x) = I.exfalso x
+        reify-rel {Γt}{Δt}{Δ}{γt} n a ts (◁-∨ {A'}{B'} f g x) = 
+            I.∨elim 
+            (reify-rel n a ts (substp (((Δt ,Σ Δ) ▸p' A') ◁_) {!   !} (f pp' qp'))) 
+            (reify-rel n a ts (substp (((Δt ,Σ Δ) ▸p' B') ◁_) {!   !} (g pp' qp'))) 
+            x
+        reify-rel {Γt}{Δt}{Δ}{γt} n a ts (◁-∃ {A} f x) = 
+            I.∃elim x 
+            (substp (I.Pf _) (cong (rel n a) ([∘]ts {γ = γt}{δ = I.pt})) 
+            (reify-rel {Γt}{Δt I.▸t}{Δ I.[ I.pt ]C I.▸p A I.[ I.pt I.,t I.qt ]F}{γt I.∘t I.pt} n a ts 
+            (substp (λ z -> z) 
+            {! cong ((Δt I.▸t) ,Σ (Δ I.[ I.pt ]C I.▸p A I.[ I.pt I.,t qt' ]F) ◁_) ?  !} 
+            (f (I.pt ,Σ I.pp) (qt' {Δt ,Σ Δ}) I.qp))))
+        reify-rel {Γt}{Δt}{Δ}{γt} n a ts (◁-Eq {t}{t'}{K} PfEq PfKt f) = 
+            let e = I.subst' K PfEq PfKt in
+            reify-rel n a ts (substp ((Δt ,Σ Δ) ◁_) ([id]ˢ {Δt ,Σ Δ}{rel-sieve ⟦ Γt ⟧Cont n a ⟦ ts ⟧Tms (Δt ,Σ Δ) (reflect-cont Γt γt)}) (f id (substp (I.Pf Δ) (cong (K I.[_]F) (cong (I.idt I.,t_) (sym ([id]t {Δt}{t'})))) e)))
+        reify-rel zero a ts (maximal x) = x
+        reify-rel {Γt} {Δt} {Δ} {γt} (suc n) a (ts ,Σ t) (maximal x) = 
+            substp (I.Pf Δ) (cong (rel (suc n) a) 
+            (mk,= 
+                (trans (cong (λ z → reifyTms (recTms (Δt ,Σ Δ) (∣ ⟦ ts ⟧Tms ∣ (Δt ,Σ Δ) z))) (⟦ Γt ⟧Cont ∶⟨id⟩)) (reflect-Tms {γt = γt}{ts = ts})) 
+                (trans (cong (∣ ⟦ t ⟧Tm ∣ (Δt ,Σ Δ)) (⟦ Γt ⟧Cont ∶⟨id⟩)) (reflect-Tm {γt = γt}{t = t}))))
+            x
+        
         reify {Γt} {Δt} {Δ} {γt} ⊥ x = reify-⊥ {Γt} {Δt} {Δ} {γt} x
         reify ⊤ x = I.tt
         reify {Γt} {Δt} {Δ} {γt} (A ⊃ B) x =
@@ -933,14 +1154,59 @@ module Completeness where
                     (trans (sym [∘]C) (trans (cong (Θp I.[_]C) ▸tβ₁) [id]C)) 
                     (trans (sym [∘]F) (cong (A I.[_]F) eq))) k in
             substp (λ z -> z) (⟨d⟩-reflect-cont {Γt}{Δt ,Σ Δ}{Θ}{A}{γt}{δ}{pa}) (reflect {Γt I.▸t}{Θt}{Θp}{(γt I.∘t δt) I.,t pa} A k')
-        reflect {Γt}{Δt}{Δ}{γt} (∃' A) x = {!   !} 
-            -- Mükszik
+        reflect {Γt}{Δt}{Δ}{γt} (∃' A) x = 
+            ◁-∃ 
+            (λ {Θ@(Θt ,Σ Θp)} δ@(δt ,Σ δp) d PfA → 
+            let PfA' = reflect A (substp (I.Pf Θp) (sym [∘]F) PfA) in
+            let PfA'' = substp (∣ ⟦ A ⟧For ∣ Θ) (trans (cong (_,Σ d) (trans (cong (reflect-cont Γt) (trans ass (cong (γt I.∘t_) ▸tβ₁))) ⟨⟩-reflect-cont)) (cong (λ z -> (⟦ Γt ⟧Cont ∶ reflect-cont Γt γt ⟨ z ⟩) ,Σ d) (sym (idr' {f = δ})))) PfA' in
+            maximal (d ,∃ PfA'')) 
+            x
             --◁-∃ x λ {Θ@(Θt ,Σ Θp)} δ@(δt ,Σ δp) d PfA → 
             --let PfA' = reflect A (substp (I.Pf Θp) (sym [∘]F) PfA) in
             --let PfA'' = substp (∣ ⟦ A ⟧For ∣ Θ) (trans (cong (_,Σ d) (trans {!   !} ⟨⟩-reflect-cont)) (cong (λ z -> (⟦ Γt ⟧Cont ∶ reflect-cont Γt γt ⟨ z ⟩) ,Σ d) (sym (idr' {f = δ})))) PfA' in
             --maximal (d ,∃ PfA'')
-        reflect (Eq t t') x = {!   !} -- ◁-Eq x (maximal {!   !})
-        reflect (rel n a ts) x = {!  !}
+        reflect {Γt}{Δt}{Δ}{γt} (Eq t t') x =
+            ◁-Eq {Δt ,Σ Δ}
+            {Eq-sieve ⟦ Γt ⟧Cont ⟦ t ⟧Tm ⟦ t' ⟧Tm (Δt ,Σ Δ) (reflect-cont Γt γt)}
+            {t  I.[ γt ]t}
+            {t' I.[ γt ]t}
+            {(I.Eq t t') I.[ γt I.∘t I.pt ]F} 
+            x 
+            {!   !}
+            λ {Θ@(Θt ,Σ Θp)} δ@(δt ,Σ δp) l → maximal {!   !} 
+            {-
+            ◁-Eq 
+            {Δt ,Σ Δ}
+            {Eq-sieve ⟦ Γt ⟧Cont ⟦ t ⟧Tm ⟦ t' ⟧Tm (Δt ,Σ Δ) (reflect-cont Γt γt)}
+            {t  I.[ γt ]t}
+            {t' I.[ γt ]t}
+            {(I.Eq t t') I.[ γt I.∘t I.pt ]F} 
+            x
+            (substp (I.Pf Δ) 
+                (trans 
+                (I.Eq[] {γt = γt}{t = t}{t' = t'}) 
+                (trans 
+                    (cong-bin I.Eq 
+                    (trans (cong (t I.[_]t) (trans (trans (sym idr) (cong (γt I.∘t_) (sym ▸tβ₁))) (sym ass))) ([∘]t {t = t}{γ = γt I.∘t I.pt}{δ = I.idt I.,t t I.[ γt ]t})) 
+                    (trans (cong (t' I.[_]t) (trans (trans (sym idr) (cong (γt I.∘t_) (sym ▸tβ₁))) (sym ass))) ([∘]t {t = t'}{γ = γt I.∘t I.pt}{δ = I.idt I.,t t I.[ γt ]t}))) 
+                (sym (I.Eq[] {γt = I.idt I.,t t I.[ γt ]t}{t = t I.[ γt I.∘t I.pt ]t}{t' = t' I.[ γt I.∘t I.pt ]t})))) 
+                x)
+            λ {Θ@(Θt ,Σ Θp)} δ@(δt ,Σ δp) l →  {!   !}
+            -}
+            
+            --let l' = reflect ((I.Eq (t I.[ γt I.∘t I.pt ]t) (t' I.[ γt I.∘t I.pt ]t))) l in
+            --substp (Θ ◁_) {!   !} l'
+            
+            --substp (Θ ◁_) _ (reflect {Γt}{Θt}{Θp}{γt I.∘t δt} (I.Eq t t') (substp (I.Pf Θp) (trans _ (I.Eq[] {γt = γt I.∘t δt}{t = t}{t' = t'})) l))
+        reflect (rel zero a ts) x = maximal x
+        reflect {Γt}{Δt}{Δ}{γt} (rel (suc n) a (ts ,Σ t)) x = maximal (substp (I.Pf Δ)
+            (cong (rel (suc n) a) 
+            let Tm-eq  = sym (reflect-Tm {Γt}{Δt}{Δ}{γt}{t}) in
+            let Tms-eq = sym (reflect-Tms {n}{Γt}{Δt}{Δ}{γt}{ts}) in
+            (mk,= 
+                (trans Tms-eq (cong (λ z -> reifyTms (recTms (Δt ,Σ Δ) (∣ ⟦ ts ⟧Tms ∣ (Δt ,Σ Δ) z))) (sym (⟦ Γt ⟧Cont ∶⟨id⟩)))) 
+                (trans Tm-eq ((cong (∣ ⟦ t ⟧Tm ∣ (Δt ,Σ Δ)) (sym (⟦ Γt ⟧Cont ∶⟨id⟩)))))))
+            x)
     
     completeness : ∀{Γt}{Γ} -> (A : I.For Γt) -> B.Pf ⟦ Γ ⟧Conp ⟦ A ⟧For -> I.Pf Γ A
     completeness {Γt}{Γ} A p = substp (I.Pf Γ) [id]F (reify {Γt}{Γt}{Γ} A (∣ p ∣ (reflect-conp Γ I.idt (substp (I.Subp Γ) (sym [id]C) I.idp))))
