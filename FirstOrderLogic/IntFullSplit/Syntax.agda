@@ -275,6 +275,10 @@ module FirstOrderLogic.IntFullSplit.Syntax
       Eq t t' [ γt ]F ≡ Eq (t [ γt ]t) (t' [ γt ]t)
     Eq[] = refl
 
+    rel[] : {Γ : ConTm} {n : ℕ} {a : relar n} {ts : Tms Γ n} {Δ : ConTm}
+      {γ : Subt Δ Γ} → (rel n a ts [ γ ]F) ≡ rel n a (ts [ γ ]ts)
+    rel[] = refl
+
     data ConPf (Γt : ConTm) : Set where
         ◆p   : ConPf Γt
         _▸p_ : ConPf Γt → For Γt → ConPf Γt
@@ -464,7 +468,7 @@ module FirstOrderLogic.IntFullSplit.Syntax
       ; fun = fun
       ; fun[] = refl
       ; rel = rel
-      ; rel[] = refl
+      ; rel[] = rel[]
       ; Conp = ConPf
       ; _[_]C = λ γ -> _[_]C γ
       ; [id]C = [id]C
