@@ -253,17 +253,16 @@ module Completeness where
     open Sh P
 
     infix 4 _◁_
-    {-# NO_UNIVERSE_CHECK #-}
-    data _◁_ (Γ : I.Con) : Sieve Γ -> Prop where
-        maximal : ∀ {R} -> ⟨ Γ , I.id ⟩⊩ R -> Γ ◁ R
-        ◁-⊥ : ∀ {R} -> I.Pf Γ I.⊥ -> Γ ◁ R
-        ◁-∨ : ∀ {R A B} -> 
+    data _◁_ (Γ : I.Con)(R : Sieve Γ) : Prop where
+        maximal : ⟨ Γ , I.id ⟩⊩ R -> Γ ◁ R
+        ◁-⊥ : I.Pf Γ I.⊥ -> Γ ◁ R
+        ◁-∨ : ∀ {A B} -> 
             (∀ {Δ} -> (γ : I.Sub Δ Γ) -> I.Pf Δ A -> Δ ◁ R [ γ ]ˢ) ->
             (∀ {Δ} -> (γ : I.Sub Δ Γ) -> I.Pf Δ B -> Δ ◁ R [ γ ]ˢ) ->
             I.Pf Γ (A I.∨ B) -> Γ ◁ R
 
     _[_]ᶜ : ∀{Γ Δ R} -> Γ ◁ R → (γ : I.Sub Δ Γ) → Δ ◁ R [ γ ]ˢ
-    maximal {R} x [ γ ]ᶜ = maximal (R .restr x γ)
+    (_[_]ᶜ {Γ}{Δ}{R} (maximal x) γ) = maximal (R .restr x γ)
     ◁-⊥ x [ γ ]ᶜ = ◁-⊥ (x I.[ γ ])
     ◁-∨ x y z [ γ ]ᶜ = ◁-∨ (λ {Θ} δ l → x (γ I.∘ δ) l) (λ {Θ} δ k → y (γ I.∘ δ) k) (z I.[ γ ])
 
@@ -339,4 +338,4 @@ module Completeness where
     completeness {Γ} A p = reify A (p (reflect-Con Γ I.id))
 
     soundness : ∀{Γ} A -> I.Pf Γ A -> M.Pf ⟦ Γ ⟧C ⟦ A ⟧F
-    soundness A = ⟦_⟧Pf
+    soundness A = ⟦_⟧Pf 
