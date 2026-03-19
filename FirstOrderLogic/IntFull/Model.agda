@@ -190,16 +190,6 @@ record Model (i j k l m : Level) : Set (lsuc (i ⊔ j ⊔ k ⊔ l ⊔ m)) where
   example3F : (P Q : For (◆ ▸t)) -> For ◆
   example3F P Q = ∃' (P ∧ Q) ⊃ (∃' P ∧ ∃' Q)
 
-  -- ∃intro {◆} {P} {◆ ▸p ∃' (P ∧ Q)} {!   !} {!   !}
-  example3P : (P Q : For (◆ ▸t)) -> Pf ◆ (example3F P Q)
-  example3P P Q = ⊃intro 
-    (∃elim 
-        (substp (Pf (◆ ▸p ∃' (P ∧ Q))) ∃[] (qp {◆}{∃' (P ∧ Q)})) 
-        (substp (Pf _) (trans (trans (mk∧= (sym ∃[]) (sym ∃[])) (sym ∧[])) [∘]F) 
-        (∧intro 
-            (∃intro (qt [ pp ]t) ({! qp  !})) 
-            (∃intro (qt [ pp ]t) ({!     !}))) 
-        ))
 
 record DepModel (i j k l m : Level)(M : Model i j k l m) : Set (lsuc (i ⊔ j ⊔ k ⊔ l ⊔ m)) where
     infixl 5 _▸t _▸p_

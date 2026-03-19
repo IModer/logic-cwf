@@ -415,7 +415,7 @@ module FirstOrderLogic.IntFull.Syntax
         ; pp = λ {Γ@(Γt ,Σ Γp)} {K} → (proj₁ (id {Γ})) ,Σ substp (λ x → Subp (Γp ▸p K) x) (sym [id]C) (pp {Γt} {Γp} {K})
         ; qp = λ {Γ@(Γt ,Σ Γp)} {K} → substp (λ x → Pf (Γp ▸p K) x) (sym [id]F) (qp {Γt} {Γp} {K})
         ; ▸pβ₁ = mk,sp= idl
-        ; ▸pη  = mk,sp= idl
+        ; ▸pη  = refl
         ; ⊥ = ⊥
         ; ⊥[] = refl
         ; exfalso = exfalso
@@ -446,7 +446,7 @@ module FirstOrderLogic.IntFull.Syntax
         ; qt      = λ {(Γt ,Σ Γp)} → qt {Γt}
         ; ▸tβ₁    = mk,sp= ▸tβ₁
         ; ▸tβ₂    = refl
-        ; ▸tη     = mk,sp= ▸tη
+        ; ▸tη     = refl -- mk,sp= ▸tη
         ; Tms = λ (Γt ,Σ Γp) → Tms Γt -- Tms
         ; _[_]ts = λ ts (γt ,Σ γp) → ts [ γt ]ts
         ; [∘]ts = [∘]ts
