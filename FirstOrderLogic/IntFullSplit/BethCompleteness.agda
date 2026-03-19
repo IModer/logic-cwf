@@ -102,6 +102,9 @@ module FirstOrderLogic.IntFullSplit.BethCompleteness
     ▸t'η   : ∀{Γ Δ}{γ : Sub Δ (Γ ▸t')} -> ((pt' ∘ γ) ,t' ((qt' {Γ}) [ γ ]t')) ≡ γ
     ▸t'η = mk,sp= ▸tη
 
+    _[_]P' : ∀{Γ Δ A} -> I.Pf (proj₂ Γ) A -> ((γt ,Σ γp) : (Sub Δ Γ)) -> I.Pf (proj₂ Δ) (A I.[ γt ]F)
+    x [ γ@(γt ,Σ γp) ]P' = x I.[ γt ]p I.[ γp ]P
+
     C : Category
     C = record
         { Ob = Con
@@ -129,34 +132,24 @@ module FirstOrderLogic.IntFullSplit.BethCompleteness
 
     {-# NO_UNIVERSE_CHECK #-}
     data _◁_ (Γ : Con)(R : Sieve Γ) : Prop where
-        maximal : ⟨ Γ , id ⟩⊩ R -> Γ ◁ R
-        ◁-⊥ : I.Pf (proj₂ Γ) ⊥ -> Γ ◁ R
+        maximal : (x : ⟨ Γ , id ⟩⊩ R) -> Γ ◁ R
+        ◁-⊥ : (x : I.Pf (proj₂ Γ) ⊥) -> Γ ◁ R
         ◁-∨ : ∀ {A B} -> 
-            (∀ {Δ : Con} -> (γ : Sub Δ Γ) -> I.Pf (proj₂ Δ) (A [ proj₁ γ ]F) -> Δ ◁ (R [ γ ]ˢ)) ->
-            (∀ {Δ : Con} -> (γ : Sub Δ Γ) -> I.Pf (proj₂ Δ) (B [ proj₁ γ ]F) -> Δ ◁ (R [ γ ]ˢ)) ->
-            I.Pf (proj₂ Γ) (A I.∨ B) -> Γ ◁ R
+            (f : (∀ {Δ : Con} -> (γ : Sub Δ Γ) -> I.Pf (proj₂ Δ) (A [ proj₁ γ ]F) -> Δ ◁ (R [ γ ]ˢ))) ->
+            (g : (∀ {Δ : Con} -> (γ : Sub Δ Γ) -> I.Pf (proj₂ Δ) (B [ proj₁ γ ]F) -> Δ ◁ (R [ γ ]ˢ))) ->
+            (x : I.Pf (proj₂ Γ) (A I.∨ B)) ->  Γ ◁ R
         ◁-∃ : ∀{A} -> 
-            (∀ {Δ} (γ : Sub Δ Γ) -> 
+            (f : (∀ {Δ} (γ : Sub Δ Γ) -> 
                 (d : I.Tm (proj₁ Δ)) -> 
                 I.Pf (proj₂ Δ) (A [ (proj₁ γ) ,t d ]F) -> 
-                Δ ◁ (R [ γ ]ˢ)) -> -- (Δ ▸t') ◁ (R [ γ ∘ pt' ]ˢ)) -> 
-            I.Pf (proj₂ Γ) (I.∃' A) -> 
+                Δ ◁ (R [ γ ]ˢ))) ->
+            (x : I.Pf (proj₂ Γ) (I.∃' A)) -> 
             Γ ◁ R
-        ◁-Eq : ∀{t t' : I.Tm (proj₁ Γ)}{K} -> 
-            I.Pf (proj₂ Γ) (I.Eq t t') -> 
-            I.Pf (proj₂ Γ) (K I.[ I.idt I.,t t ]F) ->
-            (∀ {Δ} (γ : Sub Δ Γ) -> 
-                I.Pf (proj₂ Δ) (K I.[ (proj₁ γ) I.,t (t' I.[ (proj₁ γ) ]t) ]F) ->
-                Δ ◁ (R [ γ ]ˢ)) -> 
+        ◁-Eq : ∀{t t' : I.Tm (proj₁ Γ)}{R' : Sieve (Γ ▸t')} ->
+            (x : I.Pf (proj₂ Γ) (I.Eq t t')) ->
+            (f : (∀ {Δ} (γ : Sub Δ Γ) -> Δ ◁ (R [ γ ]ˢ))) ->
+            (eq : R ≡ R' [ id ,t' t' ]ˢ) -> 
             Γ ◁ R
-
-    -- ∃elim : Pf Γ (∃ A) -> ∃ Tm (Pf Γ A)
-    -- Pf Γ (∃ A) -> ((d : Tm) -> (Pf Γ A) -> Pf Γ C) -> Pf Γ C
-    -- Γ ⊢ ∃ A -> (∀ {Δ} (γ : Δ ⊢ˢ Γ) -> (d : Tm Δ) -> Δ ⊢ (A [ idt ,t d ]F) -> Δ ◁ C [ γ ]ˢ) -> Γ ◁ C
-      
-    -- Eq-subst' : {Γt : Cont} (K : For (Γt ▸t)) {t t' : Tm Γt} {Γ : Conp Γt} ->
-    --  Pf Γ (Eq t t') -> Pf Γ (K [ idt ,t t ]F) -> Pf Γ (K [ idt ,t t' ]F) 
-    -- I.Pf (proj₂ Γ) (I.Eq t t') -> I.Pf (proj₂ Γ) (K [ id ,t' t' ]F) -> Γ ◁ K [ id ,t' t' ]ˢ
 
     _[_]ᶜ : ∀{Γ Δ R} -> Γ ◁ R → (γ : Sub Δ Γ) → Δ ◁ (R [ γ ]ˢ)
     (_[_]ᶜ {Γ}{Δ}{R} (maximal x) γ) = maximal (substp (Sh.Sieve.R R Δ) (trans idl' (sym (idr' {f = γ}))) (R .Sh.Sieve.restr x γ))
@@ -171,11 +164,14 @@ module FirstOrderLogic.IntFullSplit.BethCompleteness
         (λ {Θ@(Θt ,Σ Θp)} δ@(δt ,Σ δp) d l → substp (Θ ◁_) ([∘]ˢ {f = γ}{g = δ}{s = R}) (x (γ ∘ δ) d (substp (I.Pf Θp) (trans (sym [∘]F) (cong (A [_]F) (cong (_,t d) (trans ass (cong (γt I.∘t_) ▸tβ₁))))) l))) 
         (Pf∃A [ γt ]p [ γp ]P)
     (_[_]ᶜ {Γ@(Γt ,Σ Γp)}{Δ@(Δt ,Σ Δp)}{R} (◁-Eq {t}{t'}{K} PfEq PfKt x) γ@(γt ,Σ γp)) = 
-        ◁-Eq {Δ}{R [ γ ]ˢ}{t [ γt ]t}{t' [ γt ]t}{K I.[ γt ↑t ]F}
-        (PfEq I.[ γt ]p I.[ γp ]P)
-        (substp (I.Pf _) (trans (sym ([∘]F {γ = I.idt I.,t t}{δ = γt})) (trans (cong (K [_]F) (cong (_,t (t [ γt ]t)) (trans (trans idl (sym idr)) (trans (cong (γt ∘t_) (sym ▸tβ₁)) (sym ass))))) [∘]F)) (PfKt I.[ γt ]p I.[ γp ]P)) 
-        λ {Θ@(Θt ,Σ Θp)} δ@(δt ,Σ δp) l → substp (Θ ◁_) ([∘]ˢ {f = γ}{g = δ}{s = R}) (x (γ ∘ δ) (substp (I.Pf Θp) (trans (sym [∘]F) (cong (K [_]F) (cong-bin _,t_ (trans ass ((cong (γt I.∘t_) ▸tβ₁))) (sym ([∘]t {Γt}{t'}{Δt}{γt}{Θt}{δt}))))) l))
-
+        ◁-Eq {Δ}{R [ γ ]ˢ}{t [ γt ]t}{t' [ γt ]t}{R [ γ ∘ pt' ]ˢ} 
+        (PfEq [ γ ]P') 
+        (λ {Θ@(Θt ,Σ Θp)} δ@(δt ,Σ δp) → substp (Θ ◁_) ([∘]ˢ {f = γ}{g = δ}{s = R}) (PfKt (γ ∘ δ))) 
+        (trans 
+            ((cong (λ z -> R [ z ]ˢ) (mk,sp= {b = γp} {b' = proj₂ ((γ ∘ pt') ∘ (id ,t' (t' I.[ γt ]t)))} 
+                (trans (trans (sym idr) (cong (γt I.∘t_) (sym (▸tβ₁ {γ = I.idt}{t = t' I.[ γt ]t})))) (sym ((ass {γ = γt}{δ = I.pt}{θ = I.idt I.,t (t' I.[ γt ]t)}))))))) 
+            ([∘]ˢ {f = γ ∘ pt'}{g = id ,t' (t' [ γt ]t)}{s = R}))
+    
     local : ∀{Γ R S} -> Γ ◁ R →
       ({Δ : Con} (γ : Sub Δ Γ) → ⟨ Δ , γ ⟩⊩ R → Δ ◁ (S [ γ ]ˢ)) → Γ ◁ S
     local {Γ}{R}{S} (maximal Γ⊩R ) x = substp (Γ ◁_) ([id]ˢ {Γ}{S}) (x id Γ⊩R)
@@ -189,9 +185,11 @@ module FirstOrderLogic.IntFullSplit.BethCompleteness
         ◁-∃ 
         (λ {Δ} γ d a → local (PfAC γ d a) λ {Θ} δ l → substp (Θ ◁_) ([∘]ˢ {f = γ}{g = δ}{s = S}) (x (γ ∘ δ) l)) 
         Pf∃A
-    local {Γ}{R}{S} (◁-Eq {t}{t'}{K} PfEq PfKt PfKt'C) x = 
-        ◁-Eq PfEq PfKt λ {Δ} γ a → 
-        local (PfKt'C γ a) (λ {Θ} δ l → substp (Θ ◁_) ([∘]ˢ {f = γ}{g = δ}{s = S}) (x (γ ∘ δ) l))
+    local {Γ}{R}{S} (◁-Eq {t}{t'}{K} PfEq PfKt eq) x = 
+        ◁-Eq {Γ}{S}{t}{t'}{S [ pt' ]ˢ}
+        PfEq 
+        (λ {Δ} γ → local (PfKt γ) λ {Θ} δ l → substp (Θ ◁_) ([∘]ˢ {f = γ}{g = δ}{s = S}) (x (γ ∘ δ) l)) 
+        (trans (trans (sym [id]ˢ) (cong (λ z -> S [ z ]ˢ) (mk,sp= {b = proj₂ id} {b' = proj₂ (pt' ∘ (id ,t' t'))} (sym (▸tβ₁ {γ = I.idt}{t = t'}))))) ([∘]ˢ {f = pt'}{g = id ,t' t'}{s = S}))
 
     J : Top
     J .Sh.Top._◁_ = _◁_
@@ -271,6 +269,8 @@ module FirstOrderLogic.IntFullSplit.BethCompleteness
             ∣ ⟦ A ⟧For ∣ (Δ ▸t') (reflect-cont Γt (γt I.∘t I.pt) ,Σ I.qt)
         ⟨pt⟩-reflect-cont {Γt} {Δ} {A} {γt} = sym (⟨d⟩-reflect-cont {Γt}{Δ}{Δ ▸t'}{A}{γt}{pt'}{I.qt})
 
+        -- Reify ∨, Eq, Rel with equality for "f"
+
         reify   : ∀{Γt Δt}{Δ : I.ConPf Δt}{γt : I.Subt Δt Γt}(A : I.For Γt) -> ∣ ⟦ A ⟧For ∣ (Δt ,Σ Δ) (reflect-cont Γt γt) -> I.Pf Δ (A I.[ γt ]F)        
         reify-⊥ : ∀{Γt Δt}{Δ : I.ConPf Δt}{γt : I.Subt Δt Γt} -> ∣ ⟦ I.⊥ {Γt} ⟧For ∣ (Δt ,Σ Δ) (reflect-cont {Δt}{Δ} Γt γt) -> I.Pf Δ I.⊥        
         reify-∨ : ∀{Γt Δt}{Δ : I.ConPf Δt}{γt : I.Subt Δt Γt}(A B : I.For Γt) -> ∣ ⟦ A I.∨ B ⟧For ∣ (Δt ,Σ Δ) (reflect-cont {Δt}{Δ} Γt γt) -> I.Pf Δ ((A I.∨ B) I.[ γt ]F)    
@@ -285,9 +285,8 @@ module FirstOrderLogic.IntFullSplit.BethCompleteness
             (reify-⊥ {Γt}{Δt}{Δ I.▸p B}{γt} (g pp' qp')) 
             x
         reify-⊥ {Γt}{Δt}{Δ}{γt} (◁-∃ {A} f x) = I.∃elim x (reify-⊥ {Γt I.▸t}{Δt I.▸t}{Δ I.[ I.pt ]C I.▸p A I.[ I.pt I.,t var V.vz ]F}{γt ↑t} (f (I.pt ,Σ I.pp) (qt' {Δt ,Σ Δ}) I.qp))
-        reify-⊥ {Γt}{Δt}{Δ}{γt} (◁-Eq {t}{t'}{K} PfEq PfKt f) = 
-            let PfKt' = I.subst' K PfEq PfKt in
-            reify-⊥ {Γt}{Δt}{Δ}{γt} (f id (substp (I.Pf Δ) (cong (λ z -> K I.[ I.idt I.,t z ]F) (sym [id]t)) PfKt'))
+        reify-⊥ {Γt}{Δt}{Δ}{γt} (◁-Eq {t}{t'}{R} x f eq) =
+            reify-⊥ {Γt}{Δt}{Δ}{γt} (f id)
 
         []ˢ-∨-sieve : ∀ {Γt : I.ConTm}{Δ@(Δt ,Σ Δp) Θ@(Θt ,Σ Θp) : Con}{γt : I.Subt Δt Γt}{δ@(δt ,Σ δp) : Sub Θ Δ}{A B : I.For Γt} ->
             (∨-sieve ⟦ Γt ⟧Cont Δ (reflect-cont Γt γt) ⟦ A ⟧For ⟦ B ⟧For) [ δ ]ˢ
@@ -324,12 +323,12 @@ module FirstOrderLogic.IntFullSplit.BethCompleteness
             I.∃elim x 
             (substp (I.Pf _) (trans I.∨[] (cong-bin I._∨_ [∘]F [∘]F)) 
             (reify-∨ {Γt}{Δt I.▸t}{Δ I.[ I.pt ]C I.▸p A' I.[ I.pt I.,t var V.vz ]F}{γt I.∘t I.pt} A B 
-            (substp (λ z -> z) 
+            (substp (λ z -> z)
             (cong (((Δt I.▸t) ,Σ (Δ I.[ I.pt ]C I.▸p A' I.[ I.pt I.,t I.qt ]F)) ◁_) ([]ˢ-∨-sieve {Γt}{Δt ,Σ Δ}{(Δt I.▸t) ,Σ (Δ I.[ I.pt ]C I.▸p A' I.[ I.pt I.,t I.qt ]F)}{γt}{I.pt ,Σ I.pp}{A}{B})) 
             (f {(Δt I.▸t) ,Σ (Δ I.[ I.pt ]C I.▸p A' I.[ I.pt I.,t (qt' {Δt ,Σ Δ}) ]F)} (I.pt ,Σ I.pp) (qt' {Δt ,Σ Δ}) I.qp))))
-        reify-∨ {Γt}{Δt}{Δ}{γt} A B (◁-Eq {t}{t'}{K} PfEq PfKt f) = 
-            let PfKt' = I.subst' K PfEq PfKt in
-            reify-∨ A B (substp ((Δt ,Σ Δ) ◁_) ([id]ˢ {(Δt ,Σ Δ)}) (f id (substp (λ z -> I.Pf Δ (K I.[ I.idt I.,t z ]F) ) (sym [id]t) PfKt')))
+        reify-∨ {Γt}{Δt}{Δ}{γt} A B (◁-Eq {t}{t'}{K} x f eq) = 
+            reify-∨ A B 
+            (substp ((Δt ,Σ Δ) ◁_) ([id]ˢ {s = ∨-sieve ⟦ Γt ⟧Cont (Δt ,Σ Δ) (reflect-cont Γt γt) ⟦ A ⟧For ⟦ B ⟧For}) (f id)) 
 
         mk∃= : ∀{i j}{A : Set i}{B : A -> Prop j}{B' : A -> Prop j} -> B ≡ B' -> ∃ A B ≡ ∃ A B'
         mk∃= {i}{j}{A}{B}{B'} refl = refl
@@ -370,9 +369,8 @@ module FirstOrderLogic.IntFullSplit.BethCompleteness
                             (cong I.∃' ([∘]F {γ = γt I.∘t I.pt I.,t I.qt}{δ = I.pt I.∘t I.pt I.,t I.qt})))) 
                     reif in
             reif'
-        reify-∃ {Γt}{Δt}{Δ}{γt} A (◁-Eq {t}{t'}{K} x y f) = 
-            let Kt = substp (λ z -> I.Pf Δ (K I.[ z ]F)) (cong (I.idt I.,t_) (sym ([id]t {t = t'}))) (I.subst' K x y) in
-            reify-∃ A (substp ((Δt ,Σ Δ) ◁_) ([id]ˢ {s = ∃-sieve ⟦ Γt ⟧Cont ⟦ A ⟧For (Δt ,Σ Δ) (reflect-cont Γt γt)}) (f id Kt))
+        reify-∃ {Γt}{Δt}{Δ}{γt} A (◁-Eq {t}{t'}{K} x f eq) = 
+            reify-∃  A (substp ((Δt ,Σ Δ) ◁_) ([id]ˢ {s = ∃-sieve ⟦ Γt ⟧Cont ⟦ A ⟧For (Δt ,Σ Δ) (reflect-cont Γt γt)}) (f id))
 
         []ˢ-Eq-sieve : ∀ {Γt : I.ConTm}{Δ@(Δt ,Σ Δp) Θ@(Θt ,Σ Θp) : Con}{γt : I.Subt Δt Γt}{δ@(δt ,Σ δp) : Sub Θ Δ}{t t' : I.Tm Γt} ->
             (Eq-sieve ⟦ Γt ⟧Cont ⟦ t ⟧Tm ⟦ t' ⟧Tm Δ (reflect-cont Γt γt)) [ δ ]ˢ
@@ -389,7 +387,17 @@ module FirstOrderLogic.IntFullSplit.BethCompleteness
                 (cong ((Subt.α ⟦ t ⟧Tm) Ξ) (trans (trans (sym (⟨⟩-reflect-cont {γt = γt}{δ = δ ∘ θ})) (cong (reflect-cont Γt) (sym ass))) (⟨⟩-reflect-cont {γt = γt I.∘t δt}{δ = θ}))) 
                 (cong (Subt.α ⟦ t' ⟧Tm Ξ) ((trans (trans (sym (⟨⟩-reflect-cont {γt = γt}{δ = δ ∘ θ})) (cong (reflect-cont Γt) (sym ass))) (⟨⟩-reflect-cont {γt = γt I.∘t δt}{δ = θ})))))))
 
-        reify-Eq {Γt}{Δt}{Δ}{γt} t t' (maximal x) = {!   !}
+        reify-Eq {Γt}{Δt}{Δ}{γt} t t' (maximal x) =
+            let eqt = 
+                    (trans 
+                    (cong (I.Eq (t I.[ γt ]t)) 
+                    (trans (sym (reflect-Tm {Δ = Δ}{γt = γt}{t = t})) 
+                    (trans (cong (∣ ⟦ t ⟧Tm ∣ (Δt ,Σ Δ)) (sym (⟦ Γt ⟧Cont ∶⟨id⟩))) 
+                    (trans x 
+                    (trans ((cong (∣ ⟦ t' ⟧Tm ∣ (Δt ,Σ Δ))) (⟦ Γt ⟧Cont ∶⟨id⟩)) 
+                    (reflect-Tm {Δ = Δ}{γt = γt}{t = t'})))))) 
+                    refl) in 
+            substp (I.Pf Δ) eqt (I.ref {a = t I.[ γt ]t})
         reify-Eq t t' (◁-⊥ x) = I.exfalso x
         reify-Eq {Γt}{Δt}{Δ}{γt} t t' (◁-∨ {A}{B} f g x) = 
             let f' = substp (((Δt ,Σ Δ) ▸p' A) ◁_ ) (trans ([]ˢ-Eq-sieve {Γt}{Δt ,Σ Δ}{(Δt ,Σ Δ) ▸p' A}{γt}{pp'}{t}{t'}) (cong (λ z -> Eq-sieve ⟦ Γt ⟧Cont ⟦ t ⟧Tm ⟦ t' ⟧Tm ((Δt ,Σ Δ) ▸p' A) (reflect-cont Γt z)) (idr {γ = γt}))) (f {(Δt ,Σ Δ) ▸p' A} pp' qp') in
@@ -410,9 +418,8 @@ module FirstOrderLogic.IntFullSplit.BethCompleteness
                     (trans (I.Eq[] {γt = γt I.∘t I.pt}{t = t}{t' = t'}) (cong-bin I.Eq ([∘]t {t = t}) ([∘]t {t = t'}))) 
                     reif in
             reif'
-        reify-Eq {Γt}{Δt}{Δ}{γt} t t' (◁-Eq {k}{k'}{K} x y f) = 
-            let Kt = substp (λ z -> I.Pf Δ (K I.[ I.idt I.,t z ]F)) (sym ([id]t {t = k'})) (I.subst' K x y) in
-            reify-Eq t t' (substp ((Δt ,Σ Δ) ◁_) ([id]ˢ {s = Eq-sieve ⟦ Γt ⟧Cont ⟦ t ⟧Tm ⟦ t' ⟧Tm (Δt ,Σ Δ) (reflect-cont Γt γt)}) (f id Kt))
+        reify-Eq {Γt}{Δt}{Δ}{γt} t t' (◁-Eq {k}{k'}{K} x f eq) = 
+            reify-Eq t t' (substp ((Δt ,Σ Δ) ◁_) ([id]ˢ {s = Eq-sieve ⟦ Γt ⟧Cont ⟦ t ⟧Tm ⟦ t' ⟧Tm (Δt ,Σ Δ) (reflect-cont Γt γt)}) (f id))
 
         []ˢ-rel-sieve : ∀ {Γt : I.ConTm}{Δ@(Δt ,Σ Δp) Θ@(Θt ,Σ Θp) : Con}{γt : I.Subt Δt Γt}{δ@(δt ,Σ δp) : Sub Θ Δ}{n : ℕ}{a : relar n}{ts : I.Tms Γt n} ->
             (rel-sieve ⟦ Γt ⟧Cont n a ⟦ ts ⟧Tms Δ (reflect-cont Γt γt)) [ δ ]ˢ
@@ -441,9 +448,8 @@ module FirstOrderLogic.IntFullSplit.BethCompleteness
             let reif = reify-rel {Γt}{Δt I.▸t}{Δ I.[ I.pt ]C I.▸p A I.[ I.pt I.,t I.qt ]F}{γt I.∘t I.pt} n a ts fx' in
             let reif' = substp (λ z -> z) (cong (λ z → I.Pf (Δ I.[ I.pt ]C I.▸p A I.[ I.pt I.,t var V.vz ]F) z) (trans I.rel[] (cong (rel n a) (I.[∘]ts {ts = ts}{γ = γt}{δ = I.pt})))) reif in
             I.∃elim x reif'
-        reify-rel {Γt}{Δt}{Δ}{γt} n a ts (◁-Eq {t}{t'}{K} PfEq PfKt f) = 
-            let e = I.subst' K PfEq PfKt in
-            reify-rel n a ts (substp ((Δt ,Σ Δ) ◁_) ([id]ˢ {Δt ,Σ Δ}{rel-sieve ⟦ Γt ⟧Cont n a ⟦ ts ⟧Tms (Δt ,Σ Δ) (reflect-cont Γt γt)}) (f id (substp (I.Pf Δ) (cong (K I.[_]F) (cong (I.idt I.,t_) (sym ([id]t {Δt}{t'})))) e)))
+        reify-rel {Γt}{Δt}{Δ}{γt} n a ts (◁-Eq {t}{t'}{K} x f eq) = 
+            reify-rel n a ts (substp ((Δt ,Σ Δ) ◁_) ([id]ˢ {s = rel-sieve ⟦ Γt ⟧Cont n a ⟦ ts ⟧Tms (Δt ,Σ Δ) (reflect-cont Γt γt)}) (f id))
         reify-rel zero a ts (maximal x) = x
         reify-rel {Γt} {Δt} {Δ} {γt} (suc n) a (ts ,Σ t) (maximal x) = 
             substp (I.Pf Δ) (cong (rel (suc n) a) 
@@ -451,7 +457,7 @@ module FirstOrderLogic.IntFullSplit.BethCompleteness
                 (trans (cong (λ z → reifyTms (recTms (Δt ,Σ Δ) (∣ ⟦ ts ⟧Tms ∣ (Δt ,Σ Δ) z))) (⟦ Γt ⟧Cont ∶⟨id⟩)) (reflect-Tms {γt = γt}{ts = ts})) 
                 (trans (cong (∣ ⟦ t ⟧Tm ∣ (Δt ,Σ Δ)) (⟦ Γt ⟧Cont ∶⟨id⟩)) (reflect-Tm {γt = γt}{t = t}))))
             x
-        
+
         reify {Γt} {Δt} {Δ} {γt} ⊥ x = reify-⊥ {Γt} {Δt} {Δ} {γt} x
         reify ⊤ x = I.tt
         reify {Γt} {Δt} {Δ} {γt} (A ⊃ B) x =
@@ -469,6 +475,53 @@ module FirstOrderLogic.IntFullSplit.BethCompleteness
         reify (∃' A) x = reify-∃ A x
         reify (Eq t t') x = reify-Eq t t' x
         reify (rel n a ts) x = reify-rel n a ts x
+
+        reflect-Eq-sieve-Tm-eq1 : ∀ {Γt : I.ConTm}{Δ@(Δt ,Σ Δp) Θ@(Θt ,Σ Θp) Ξ : Con}{γt : I.Subt Δt Γt}{δ@(δt ,Σ δp) : Sub Θ Δ}{f@(ft ,Σ fp) : Sub Ξ Θ}{t : I.Tm Γt} -> 
+            Subt.α ⟦ t I.[ γt ]t ⟧Tm Ξ (⟦ Δt ⟧Cont ∶ reflect-cont Δt δt ⟨ f ⟩)
+            ≡
+            Subt.α ⟦ t ⟧Tm Ξ (⟦ Γt ⟧Cont ∶ (reflect-cont Γt γt) ⟨ δ ∘ f ⟩)
+        reflect-Eq-sieve-Tm-eq1  {Γt} {Δ@(Δt ,Σ Δp)} {Θ@(Θt ,Σ Θp)} {Ξ} {γt} {δ@(δt ,Σ δp)} {f@(ft ,Σ fp)} {t} = 
+            trans 
+                (cong (∣ ⟦ t I.[ γt ]t ⟧Tm ∣ Ξ) (sym (⟨⟩-reflect-cont {γt = δt}{δ = f})))
+            (trans 
+                (reflect-Tm {γt = δt I.∘t ft}{t I.[ γt ]t}) 
+            (trans 
+                (sym ([∘]t {t = t}{γ = γt}{δ = δt I.∘t ft}))  
+            (trans 
+                (sym (reflect-Tm {γt = γt I.∘t δt I.∘t ft}{t})) 
+                (cong (∣ ⟦ t ⟧Tm ∣ Ξ) (⟨⟩-reflect-cont {γt = γt}{δ = δ ∘ f})))))
+
+        reflect-Eq-sieve-eq1 : ∀ {Γt : I.ConTm}{Δ@(Δt ,Σ Δp) Θ@(Θt ,Σ Θp) : Con}{γt : I.Subt Δt Γt}{δ@(δt ,Σ δp) : Sub Θ Δ}{t t' : I.Tm Γt} -> 
+            Θ ◁ Eq-sieve ⟦ Δt ⟧Cont ⟦ t I.[ γt ]t ⟧Tm ⟦ t' I.[ γt ]t ⟧Tm Θ (reflect-cont Δt δt)
+            ≡
+            Θ ◁ (Eq-sieve ⟦ Γt ⟧Cont ⟦ t ⟧Tm ⟦ t' ⟧Tm Δ (reflect-cont Γt γt) [ δ ]ˢ)
+        reflect-Eq-sieve-eq1 {Γt} {Δ@(Δt ,Σ Δp)} {Θ@(Θt ,Σ Θp)} {γt} {δ@(δt ,Σ δp)} {t} {t'} = 
+            cong (Θ ◁_) 
+            (mkSieveEq 
+            (Sh.Sieve.R (Eq-sieve ⟦ Δt ⟧Cont ⟦ t I.[ γt ]t ⟧Tm ⟦ t' I.[ γt ]t ⟧Tm Θ (reflect-cont Δt δt))) 
+            (Sh.Sieve.R (Eq-sieve ⟦ Γt ⟧Cont ⟦ t ⟧Tm ⟦ t' ⟧Tm Δ (reflect-cont Γt γt) [ δ ]ˢ)) 
+            {Sh.Sieve.restr (Eq-sieve ⟦ Δt ⟧Cont ⟦ t I.[ γt ]t ⟧Tm ⟦ t' I.[ γt ]t ⟧Tm Θ (reflect-cont Δt δt))} 
+            {λ {J}{f}{K} x g → Sh.Sieve.restr (Eq-sieve ⟦ Γt ⟧Cont ⟦ t ⟧Tm ⟦ t' ⟧Tm Δ (reflect-cont Γt γt) [ δ ]ˢ) {J}{f}{K} x g} 
+            ((funext (λ Ξ@(Ξt ,Σ Ξp) → funext (λ f@(ft ,Σ fp) → 
+            cong-bin (_≡_) 
+                (reflect-Eq-sieve-Tm-eq1 {Γt}{Δ}{Θ}{Ξ}{γt}{δ}{f}{t})
+                (reflect-Eq-sieve-Tm-eq1 {Γt}{Δ}{Θ}{Ξ}{γt}{δ}{f}{t'}) 
+            )))))
+
+        reflect-Eq-sieve-eq2 : ∀ {Γt : I.ConTm}{Δ@(Δt ,Σ Δp) : Con}{γt : I.Subt Δt Γt}{t t' : I.Tm Γt} ->
+            Eq-sieve ⟦ Γt ⟧Cont ⟦ t ⟧Tm ⟦ t' ⟧Tm (Δt ,Σ Δp) (reflect-cont Γt γt)
+            ≡
+            (Eq-sieve ⟦ Γt ⟧Cont ⟦ t ⟧Tm ⟦ t' ⟧Tm ((Δt ,Σ Δp) ▸t') (reflect-cont Γt (γt I.∘t I.pt)) [ id ,t' (t' I.[ γt ]t) ]ˢ)
+        reflect-Eq-sieve-eq2 {Γt} {Δ@(Δt ,Σ Δp)} {γt} {t} {t'} = 
+            (mkSieveEq 
+            (Sh.Sieve.R (Eq-sieve ⟦ Γt ⟧Cont ⟦ t ⟧Tm ⟦ t' ⟧Tm (Δt ,Σ Δp) (reflect-cont Γt γt))) 
+            (Sh.Sieve.R (Eq-sieve ⟦ Γt ⟧Cont ⟦ t ⟧Tm ⟦ t' ⟧Tm ((Δt ,Σ Δp) ▸t') (reflect-cont Γt (γt I.∘t I.pt)) [ id ,t' (t' I.[ γt ]t) ]ˢ)) 
+            {(Sh.Sieve.restr (Eq-sieve ⟦ Γt ⟧Cont ⟦ t ⟧Tm ⟦ t' ⟧Tm (Δt ,Σ Δp) (reflect-cont Γt γt)))}
+            {λ {J}{f}{K} x g → Sh.Sieve.restr (Eq-sieve ⟦ Γt ⟧Cont ⟦ t ⟧Tm ⟦ t' ⟧Tm ((Δt ,Σ Δp) ▸t') (reflect-cont Γt (γt I.∘t I.pt)) [ id ,t' (t' I.[ γt ]t) ]ˢ) {J}{f}{K} x g}
+            (funext (λ Ξ@(Ξt ,Σ Ξp) → funext (λ f@(ft ,Σ fp) → 
+            cong-bin (_≡_) 
+            (cong (Subt.α ⟦ t ⟧Tm Ξ) (trans (cong (λ z -> ⟦ Γt ⟧Cont ∶ (reflect-cont Γt z) ⟨ f ⟩) (trans (trans (sym (idr {γ = γt})) (cong (γt I.∘t_) (sym ▸tβ₁))) (sym (ass {γ = γt}{δ = I.pt})))) (trans ((cong (⟦ Γt ⟧Cont ∶_⟨ f ⟩) (⟨⟩-reflect-cont {γt = γt I.∘t I.pt}{δ = id ,t' (t' I.[ γt ]t)}))) (sym (⟦ Γt ⟧Cont ∶⟨∘⟩))))) 
+            (cong (Subt.α ⟦ t' ⟧Tm Ξ) ((trans (cong (λ z -> ⟦ Γt ⟧Cont ∶ (reflect-cont Γt z) ⟨ f ⟩) (trans (trans (sym (idr {γ = γt})) (cong (γt I.∘t_) (sym ▸tβ₁))) (sym (ass {γ = γt}{δ = I.pt})))) (trans ((cong (⟦ Γt ⟧Cont ∶_⟨ f ⟩) (⟨⟩-reflect-cont {γt = γt I.∘t I.pt}{δ = id ,t' (t' I.[ γt ]t)}))) (sym (⟦ Γt ⟧Cont ∶⟨∘⟩))))))))))
 
         reflect : ∀{Γt Δt}{Δ : I.ConPf Δt}{γt : I.Subt Δt Γt}(A : I.For Γt) -> I.Pf Δ (A I.[ γt ]F) -> ∣ ⟦ A ⟧For ∣ (Δt ,Σ Δ) (reflect-cont Γt γt)
         reflect ⊥ x = ◁-⊥ x
@@ -504,53 +557,25 @@ module FirstOrderLogic.IntFullSplit.BethCompleteness
             (λ {Θ@(Θt ,Σ Θp)} δ@(δt ,Σ δp) d PfA → 
             let PfA' = reflect A (substp (I.Pf Θp) (sym [∘]F) PfA) in
             let PfA'' = substp (∣ ⟦ A ⟧For ∣ Θ) (trans (cong (_,Σ d) (trans (cong (reflect-cont Γt) (trans ass (cong (γt I.∘t_) ▸tβ₁))) ⟨⟩-reflect-cont)) (cong (λ z -> (⟦ Γt ⟧Cont ∶ reflect-cont Γt γt ⟨ z ⟩) ,Σ d) (sym (idr' {f = δ})))) PfA' in
-            maximal (d ,∃ PfA'')) 
+            maximal (d ,∃ PfA''))
             x
-        reflect {Γt}{Δt}{Δ}{γt} (Eq t t') x =
-            ◁-Eq {Δt ,Σ Δ}
-            {Eq-sieve ⟦ Γt ⟧Cont ⟦ t ⟧Tm ⟦ t' ⟧Tm (Δt ,Σ Δ) (reflect-cont Γt γt)}
-            {t  I.[ γt ]t}
-            {t' I.[ γt ]t}
-            {(I.Eq t t') I.[ γt I.∘t I.pt ]F} 
-            x
-            {!   !}
-            λ {Θ@(Θt ,Σ Θp)} δ@(δt ,Σ δp) l → maximal {!   !} 
-            {-
-            ◁-Eq 
-            {Δt ,Σ Δ}
-            {Eq-sieve ⟦ Γt ⟧Cont ⟦ t ⟧Tm ⟦ t' ⟧Tm (Δt ,Σ Δ) (reflect-cont Γt γt)}
-            {t  I.[ γt ]t}
-            {t' I.[ γt ]t}
-            {(I.Eq t t') I.[ γt I.∘t I.pt ]F} 
-            x
-            (substp (I.Pf Δ) 
-                (trans 
-                (I.Eq[] {γt = γt}{t = t}{t' = t'}) 
-                (trans 
-                    (cong-bin I.Eq 
-                    (trans (cong (t I.[_]t) (trans (trans (sym idr) (cong (γt I.∘t_) (sym ▸tβ₁))) (sym ass))) ([∘]t {t = t}{γ = γt I.∘t I.pt}{δ = I.idt I.,t t I.[ γt ]t})) 
-                    (trans (cong (t' I.[_]t) (trans (trans (sym idr) (cong (γt I.∘t_) (sym ▸tβ₁))) (sym ass))) ([∘]t {t = t'}{γ = γt I.∘t I.pt}{δ = I.idt I.,t t I.[ γt ]t}))) 
-                (sym (I.Eq[] {γt = I.idt I.,t t I.[ γt ]t}{t = t I.[ γt I.∘t I.pt ]t}{t' = t' I.[ γt I.∘t I.pt ]t})))) 
-                x)
-            λ {Θ@(Θt ,Σ Θp)} δ@(δt ,Σ δp) l →  {!   !}
-            -}
-            
-            --let l' = reflect ((I.Eq (t I.[ γt I.∘t I.pt ]t) (t' I.[ γt I.∘t I.pt ]t))) l in
-            --substp (Θ ◁_) {!   !} l'
-            
-            --substp (Θ ◁_) _ (reflect {Γt}{Θt}{Θp}{γt I.∘t δt} (I.Eq t t') (substp (I.Pf Θp) (trans _ (I.Eq[] {γt = γt I.∘t δt}{t = t}{t' = t'})) l))
+        reflect {Γt}{Δt}{Δ}{γt} (Eq t t') x = 
+            ◁-Eq {R' = Eq-sieve ⟦ Γt ⟧Cont ⟦ t ⟧Tm ⟦ t' ⟧Tm ((Δt ,Σ Δ) ▸t') (reflect-cont Γt (γt I.∘t I.pt))} x
+            (λ {Θ@(Θt ,Σ Θp)} δ@(δt ,Σ δp) → 
+            let e = (Pf.α ⟦ x ⟧Pf) (reflect-conp Δ δt δp) in 
+            substp (λ z -> z) (reflect-Eq-sieve-eq1 {Γt}{Δt ,Σ Δ}{Θ}{γt}{δ}{t}{t'}) e)
+            ((reflect-Eq-sieve-eq2 {Γt}{Δt ,Σ Δ}{γt}{t}{t'}))
         reflect (rel zero a ts) x = maximal x
-        reflect {Γt}{Δt}{Δ}{γt} (rel (suc n) a (ts ,Σ t)) x = maximal (substp (I.Pf Δ)
-            (cong (rel (suc n) a) 
-            let Tm-eq  = sym (reflect-Tm {Γt}{Δt}{Δ}{γt}{t}) in
-            let Tms-eq = sym (reflect-Tms {n}{Γt}{Δt}{Δ}{γt}{ts}) in
+        reflect {Γt}{Δt}{Δ}{γt} (rel (suc n) a (ts ,Σ t)) x = 
+            maximal (substp (λ z → I.Pf Δ (rel (suc n) a z)) 
             (mk,= 
-                (trans Tms-eq (cong (λ z -> reifyTms (recTms (Δt ,Σ Δ) (∣ ⟦ ts ⟧Tms ∣ (Δt ,Σ Δ) z))) (sym (⟦ Γt ⟧Cont ∶⟨id⟩)))) 
-                (trans Tm-eq ((cong (∣ ⟦ t ⟧Tm ∣ (Δt ,Σ Δ)) (sym (⟦ Γt ⟧Cont ∶⟨id⟩)))))))
-            x)
-    
+                (trans (sym (reflect-Tms {n}{Γt}{Δt}{Δ}{γt}{ts})) (cong (λ z -> reifyTms (recTms (Δt ,Σ Δ) (∣ ⟦ ts ⟧Tms ∣ (Δt ,Σ Δ) z))) (sym (⟦ Γt ⟧Cont ∶⟨id⟩)))) 
+                (trans (sym (reflect-Tm {Γt}{Δt}{Δ}{γt}{t})) ((cong (∣ ⟦ t ⟧Tm ∣ (Δt ,Σ Δ)) (sym (⟦ Γt ⟧Cont ∶⟨id⟩)))))) 
+                x)
+
     completeness : ∀{Γt}{Γ} -> (A : I.For Γt) -> B.Pf ⟦ Γ ⟧Conp ⟦ A ⟧For -> I.Pf Γ A
     completeness {Γt}{Γ} A p = substp (I.Pf Γ) [id]F (reify {Γt}{Γt}{Γ} A (∣ p ∣ (reflect-conp Γ I.idt (substp (I.Subp Γ) (sym [id]C) I.idp))))
     
     soundness : ∀{Γt Γ} -> (A : I.For Γt) -> I.Pf Γ A -> B.Pf ⟦ Γ ⟧Conp ⟦ A ⟧For
-    soundness A = ⟦_⟧Pf
+    soundness A = ⟦_⟧Pf    
+ 
