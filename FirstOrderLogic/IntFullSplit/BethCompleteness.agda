@@ -102,6 +102,10 @@ module FirstOrderLogic.IntFullSplit.BethCompleteness
     ▸t'η   : ∀{Γ Δ}{γ : Sub Δ (Γ ▸t')} -> ((pt' ∘ γ) ,t' ((qt' {Γ}) [ γ ]t')) ≡ γ
     ▸t'η = mk,sp= ▸tη
 
+    ↑'-,t'  : ∀{Γ Δ : Con} -> (γ : Sub Δ Γ) -> (d : I.Tm (proj₁ Δ)) -> (γ ↑t') ∘ (id ,t' d) ≡ (γ ,t' d)
+    ↑'-,t' γ d = mk,sp= (↑-,t (proj₁ γ) d)
+    
+
     _[_]P' : ∀{Γ Δ A} -> I.Pf (proj₂ Γ) A -> ((γt ,Σ γp) : (Sub Δ Γ)) -> I.Pf (proj₂ Δ) (A I.[ γt ]F)
     x [ γ@(γt ,Σ γp) ]P' = x I.[ γt ]p I.[ γp ]P
 
@@ -131,49 +135,123 @@ module FirstOrderLogic.IntFullSplit.BethCompleteness
     open Sh C
 
     {-# NO_UNIVERSE_CHECK #-}
-    data _◁_ (Γ : Con)(R : Sieve Γ) : Prop where
-        maximal : (x : ⟨ Γ , id ⟩⊩ R) -> Γ ◁ R
-        ◁-⊥ : (x : I.Pf (proj₂ Γ) ⊥) -> Γ ◁ R
-        ◁-∨ : ∀ {A B} -> 
-            (f : (∀ {Δ : Con} -> (γ : Sub Δ Γ) -> I.Pf (proj₂ Δ) (A [ proj₁ γ ]F) -> Δ ◁ (R [ γ ]ˢ))) ->
-            (g : (∀ {Δ : Con} -> (γ : Sub Δ Γ) -> I.Pf (proj₂ Δ) (B [ proj₁ γ ]F) -> Δ ◁ (R [ γ ]ˢ))) ->
-            (x : I.Pf (proj₂ Γ) (A I.∨ B)) ->  Γ ◁ R
-        ◁-∃ : ∀{A} -> 
+    data ◁-Skeleton : Set where
+        maximal' : ∀{Γ R} -> (x : ⟨ Γ , id ⟩⊩ R) -> ◁-Skeleton
+        ◁-⊥' : ∀{Γ : Con} ->  (x : I.Pf (proj₂ Γ) ⊥) -> ◁-Skeleton
+        ◁-∨' : ∀ {Γ A B} -> 
+            (f : (∀ {Δ : Con} -> (γ : Sub Δ Γ) -> I.Pf (proj₂ Δ) (A [ proj₁ γ ]F) -> ◁-Skeleton)) ->
+            (g : (∀ {Δ : Con} -> (γ : Sub Δ Γ) -> I.Pf (proj₂ Δ) (B [ proj₁ γ ]F) -> ◁-Skeleton)) ->
+            (x : I.Pf (proj₂ Γ) (A I.∨ B)) -> ◁-Skeleton
+        ◁-∃' : ∀{Γ A} -> 
             (f : (∀ {Δ} (γ : Sub Δ Γ) -> 
                 (d : I.Tm (proj₁ Δ)) -> 
                 I.Pf (proj₂ Δ) (A [ (proj₁ γ) ,t d ]F) -> 
-                Δ ◁ (R [ γ ]ˢ))) ->
+                ◁-Skeleton)) ->
             (x : I.Pf (proj₂ Γ) (I.∃' A)) -> 
-            Γ ◁ R
+            ◁-Skeleton
+        ◁-Eq' : ∀{Γ}{t t' : I.Tm (proj₁ Γ)} ->
+            (x : I.Pf (proj₂ Γ) (I.Eq t t')) ->
+            (f : (∀ {Δ} (γ : Sub Δ Γ) -> ◁-Skeleton)) ->
+            ◁-Skeleton
+
+    {-# NO_UNIVERSE_CHECK #-}
+    data _◁_∶_ (Γ : Con)(R : Sieve Γ) : ◁-Skeleton -> Prop where
+        maximal : (x : ⟨ Γ , id ⟩⊩ R) -> Γ ◁ R ∶ (maximal' {Γ}{R} x)
+        ◁-⊥ : (x : I.Pf (proj₂ Γ) ⊥) -> Γ ◁ R ∶ (◁-⊥' x)
+        ◁-∨ : ∀ {A B} -> 
+            (d : (∀ {Δ : Con} -> (γ : Sub Δ Γ) -> I.Pf (proj₂ Δ) (A [ proj₁ γ ]F) -> ◁-Skeleton)) ->
+            (e : (∀ {Δ : Con} -> (γ : Sub Δ Γ) -> I.Pf (proj₂ Δ) (B [ proj₁ γ ]F) -> ◁-Skeleton)) ->
+            (f : (∀ {Δ : Con} -> (γ : Sub Δ Γ) -> (x : I.Pf (proj₂ Δ) (A [ proj₁ γ ]F)) -> Δ ◁ (R [ γ ]ˢ) ∶ d γ x)) ->
+            (g : (∀ {Δ : Con} -> (γ : Sub Δ Γ) -> (x : I.Pf (proj₂ Δ) (B [ proj₁ γ ]F)) -> Δ ◁ (R [ γ ]ˢ) ∶ e γ x)) ->
+            (x : I.Pf (proj₂ Γ) (A I.∨ B)) ->  Γ ◁ R ∶ ◁-∨' d e x
+        ◁-∃ : ∀{A} -> 
+            (e : (∀ {Δ} (γ : Sub Δ Γ) -> 
+                (d : I.Tm (proj₁ Δ)) -> 
+                I.Pf (proj₂ Δ) (A [ (proj₁ γ) ,t d ]F) -> 
+                ◁-Skeleton)) ->
+            (f : (∀ {Δ} (γ : Sub Δ Γ) -> 
+                (d : I.Tm (proj₁ Δ)) -> 
+                (x : I.Pf (proj₂ Δ) (A [ (proj₁ γ) ,t d ]F)) -> 
+                Δ ◁ (R [ γ ]ˢ) ∶ e γ d x)) ->
+            (x : I.Pf (proj₂ Γ) (I.∃' A)) -> 
+            Γ ◁ R ∶ ◁-∃' e x
         ◁-Eq : ∀{t t' : I.Tm (proj₁ Γ)}{R' : Sieve (Γ ▸t')} ->
             (x : I.Pf (proj₂ Γ) (I.Eq t t')) ->
-            (f : (∀ {Δ} (γ : Sub Δ Γ) -> Δ ◁ (R [ γ ]ˢ))) ->
+            (e : (∀ {Δ} (γ : Sub Δ Γ) -> ◁-Skeleton)) ->
+            (f : (∀ {Δ} (γ : Sub Δ Γ) -> Δ ◁ (R [ γ ]ˢ) ∶ e γ)) ->
             (eq : R ≡ R' [ id ,t' t' ]ˢ) -> 
-            Γ ◁ R
+            Γ ◁ R ∶ ◁-Eq' x e
+    
+    _◁_ : (Γ : Con) -> Sieve Γ -> Prop
+    Γ ◁ R = ∃ ◁-Skeleton (Γ ◁ R ∶_)
 
     _[_]ᶜ : ∀{Γ Δ R} -> Γ ◁ R → (γ : Sub Δ Γ) → Δ ◁ (R [ γ ]ˢ)
-    (_[_]ᶜ {Γ}{Δ}{R} (maximal x) γ) = maximal (substp (Sh.Sieve.R R Δ) (trans idl' (sym (idr' {f = γ}))) (R .Sh.Sieve.restr x γ))
-    ◁-⊥ x [ (γt ,Σ γp) ]ᶜ = ◁-⊥ (x I.[ γt ]p I.[ γp ]P)
-    (_[_]ᶜ {Γ}{Δ}{R} (◁-∨ x y z) γ@(γt ,Σ γp)) = 
+    _[_]ᶜ {Γ} {Δ} {R} (a ,∃ maximal x) γ = 
+        maximal' (substp (Sh.Sieve.R R Δ) (trans idl' (sym (idr' {f = γ}))) (R .Sh.Sieve.restr x γ))
+        ,∃ 
+        maximal (substp (Sh.Sieve.R R Δ) (trans idl' (sym (idr' {f = γ}))) (R .Sh.Sieve.restr x γ))
+    _[_]ᶜ {Γ} {Δ} {R} (a ,∃ ◁-⊥ x) γ = 
+        ◁-⊥' (x [ γ ]P') 
+        ,∃ 
+        ◁-⊥ (x [ γ ]P')
+    _[_]ᶜ {Γ} {Δ} {R} (a ,∃ ◁-∨ d e f g x) γ = 
+        ◁-∨' 
+        (λ {Θ@(Θt ,Σ Θp)} δ y → d (γ ∘ δ) (substp (Pf Θp) (sym ([∘]F {γ = proj₁ γ}{δ = proj₁ δ})) y)) 
+        (λ {Θ@(Θt ,Σ Θp)} δ y → e (γ ∘ δ) (substp (Pf Θp) (sym ([∘]F {γ = proj₁ γ}{δ = proj₁ δ})) y)) 
+        (x [ γ ]P')
+        ,∃
         ◁-∨ 
-        (λ {Θ@(Θt ,Σ Θp)} δ l → substp (Θ ◁_) ([∘]ˢ {f = γ}{g = δ}{s = R}) (x (γ ∘ δ) (substp (I.Pf Θp) (sym [∘]F) l)))
-        (λ {Θ@(Θt ,Σ Θp)} δ k → substp (Θ ◁_) ([∘]ˢ {f = γ}{g = δ}{s = R}) (y (γ ∘ δ) (substp (I.Pf Θp) (sym [∘]F) k)))
-        (z I.[ γt ]p I.[ γp ]P)
-    (_[_]ᶜ {Γ}{Δ}{R} (◁-∃ {A} x Pf∃A) γ@(γt ,Σ γp)) = 
-        ◁-∃ 
-        (λ {Θ@(Θt ,Σ Θp)} δ@(δt ,Σ δp) d l → substp (Θ ◁_) ([∘]ˢ {f = γ}{g = δ}{s = R}) (x (γ ∘ δ) d (substp (I.Pf Θp) (trans (sym [∘]F) (cong (A [_]F) (cong (_,t d) (trans ass (cong (γt I.∘t_) ▸tβ₁))))) l))) 
-        (Pf∃A [ γt ]p [ γp ]P)
-    (_[_]ᶜ {Γ@(Γt ,Σ Γp)}{Δ@(Δt ,Σ Δp)}{R} (◁-Eq {t}{t'}{K} PfEq PfKt x) γ@(γt ,Σ γp)) = 
-        ◁-Eq {Δ}{R [ γ ]ˢ}{t [ γt ]t}{t' [ γt ]t}{R [ γ ∘ pt' ]ˢ} 
-        (PfEq [ γ ]P') 
-        (λ {Θ@(Θt ,Σ Θp)} δ@(δt ,Σ δp) → substp (Θ ◁_) ([∘]ˢ {f = γ}{g = δ}{s = R}) (PfKt (γ ∘ δ))) 
+        (λ {Θ@(Θt ,Σ Θp)} δ y → d (γ ∘ δ) (substp (Pf Θp) (sym ([∘]F {γ = proj₁ γ}{δ = proj₁ δ})) y)) 
+        (λ {Θ@(Θt ,Σ Θp)} δ y → e (γ ∘ δ) (substp (Pf Θp) (sym ([∘]F {γ = proj₁ γ}{δ = proj₁ δ})) y)) 
+        (λ {Θ@(Θt ,Σ Θp)} δ y → substp (Θ ◁_∶ d (γ ∘ δ) (substp (Pf Θp) (sym ([∘]F {γ = proj₁ γ}{δ = proj₁ δ})) y)) ([∘]ˢ {f = γ}{g = δ}{s = R}) (f {Θ} (γ ∘ δ) (substp (Pf Θp) (sym ([∘]F {γ = proj₁ γ}{δ = proj₁ δ})) y))) 
+        (λ {Θ@(Θt ,Σ Θp)} δ y → substp (Θ ◁_∶ e (γ ∘ δ) (substp (Pf Θp) (sym ([∘]F {γ = proj₁ γ}{δ = proj₁ δ})) y)) ([∘]ˢ {f = γ}{g = δ}{s = R}) (g {Θ} (γ ∘ δ) (substp (Pf Θp) (sym ([∘]F {γ = proj₁ γ}{δ = proj₁ δ})) y))) 
+        (x [ γ ]P')
+    _[_]ᶜ {Γ} {Δ} {R} (a ,∃ ◁-∃ {A} e f x) γ@(γt ,Σ γp) = 
+        ◁-∃'  
+        (λ {Θ@(Θt ,Σ Θp)} δ d y → e (γ ∘ δ) d (substp (Pf Θp) (sym (trans (cong (λ z -> A I.[ z I.,t d ]F) (trans (cong (γt ∘t_) (sym (▸tβ₁ {γ = proj₁ δ}))) (sym (ass {γ = γt}{δ = I.pt})))) [∘]F)) y)) 
+        (x [ γ ]P') 
+        ,∃ 
+        ◁-∃  
+        (λ {Θ@(Θt ,Σ Θp)} δ d y → e (γ ∘ δ) d (substp (Pf Θp) (sym (trans (cong (λ z -> A I.[ z I.,t d ]F) (trans (cong (γt ∘t_) (sym (▸tβ₁ {γ = proj₁ δ}))) (sym (ass {γ = γt}{δ = I.pt})))) [∘]F)) y)) 
+        (λ {Θ@(Θt ,Σ Θp)} δ d y → substp (Θ ◁_∶ e (γ ∘ δ) d (substp (Pf Θp) (sym (trans (cong (λ z -> A I.[ z I.,t d ]F) (trans (cong (γt ∘t_) (sym (▸tβ₁ {γ = proj₁ δ}))) (sym (ass {γ = γt}{δ = I.pt})))) [∘]F)) y)) ([∘]ˢ {f = γ}{g = δ}{s = R}) (f (γ ∘ δ) d (substp (Pf Θp) (sym (trans (cong (λ z -> A I.[ z I.,t d ]F) (trans (cong (γt ∘t_) (sym (▸tβ₁ {γ = proj₁ δ}))) (sym (ass {γ = γt}{δ = I.pt})))) [∘]F)) y)))
+        (x [ γ ]P')
+    _[_]ᶜ {Γ} {Δ} {R} (a ,∃ ◁-Eq {t}{t'}{R'} x e f refl) γ = 
+        ◁-Eq' 
+        (x [ γ ]P') 
+        (λ {Θ@(Θt ,Σ Θp)} δ -> e (γ ∘ δ)) 
+        ,∃ 
+        ◁-Eq {Δ}{R [ γ ]ˢ}{t I.[ proj₁ γ ]t}{t' I.[ proj₁ γ ]t}{R' [ γ ↑t' ]ˢ} 
+        (x [ γ ]P') 
+        (λ {Θ@(Θt ,Σ Θp)} δ -> e (γ ∘ δ))
+        (λ {Θ@(Θt ,Σ Θp)} δ -> substp (Θ ◁_∶ e (γ ∘ δ)) ([∘]ˢ {f = γ}{g = δ}{s = R}) (f (γ ∘ δ)))
         (trans 
-            ((cong (λ z -> R [ z ]ˢ) (mk,sp= {b = γp} {b' = proj₂ ((γ ∘ pt') ∘ (id ,t' (t' I.[ γt ]t)))} 
-                (trans (trans (sym idr) (cong (γt I.∘t_) (sym (▸tβ₁ {γ = I.idt}{t = t' I.[ γt ]t})))) (sym ((ass {γ = γt}{δ = I.pt}{θ = I.idt I.,t (t' I.[ γt ]t)}))))))) 
-            ([∘]ˢ {f = γ ∘ pt'}{g = id ,t' (t' [ γt ]t)}{s = R}))
-    
+            (sym ([∘]ˢ {f = id ,t' t'}{g = γ}{s = R'})) 
+        (trans 
+            (cong (R' [_]ˢ) (mk,sp= {b = proj₂ ((id ,t' t') ∘ γ)}{b' = proj₂ ((γ ↑t') ∘ (id ,t' (t' [ proj₁ γ ]t)))} 
+            (trans (cong (I._,t t' I.[ proj₁ γ ]t) idl) 
+            (sym (↑-,t  (proj₁ γ) (t' I.[ proj₁ γ ]t)))))) 
+        ([∘]ˢ {f = γ ↑t'}{g = (id ,t' (t' [ proj₁ γ ]t))}{s = R'}))) 
+
     local : ∀{Γ R S} -> Γ ◁ R →
       ({Δ : Con} (γ : Sub Δ Γ) → ⟨ Δ , γ ⟩⊩ R → Δ ◁ (S [ γ ]ˢ)) → Γ ◁ S
+    local {Γ}{R}{S} (a ,∃ maximal x) z =
+        let z' = substp (Γ ◁_) ([id]ˢ {Γ}{S}) (z id x) in 
+        with∃ z' λ s z → s ,∃ z
+    local (a ,∃ ◁-⊥ x) z = 
+        a ,∃ (◁-⊥ x)
+    local (a ,∃ ◁-∨ d e f g x) z = 
+        {!   !} 
+        ,∃ 
+        ◁-∨ 
+        (λ {Δ} γ a → {! local ? ?  !}) 
+        {!   !} 
+        {! λ {Δ} γ a → ?  !} 
+        {!   !} 
+        x
+    local (a ,∃ ◁-∃ e f x) z = {!   !}
+    local (a ,∃ ◁-Eq x₁ e f eq) z = {!   !}
+{-
+
     local {Γ}{R}{S} (maximal Γ⊩R ) x = substp (Γ ◁_) ([id]ˢ {Γ}{S}) (x id Γ⊩R)
     local {Γ}{R}{S} (◁-⊥ Pf⊥) x = ◁-⊥ Pf⊥
     local {Γ}{R}{S} (◁-∨ PfAC PfBC PfAB) x = 
@@ -578,4 +656,4 @@ module FirstOrderLogic.IntFullSplit.BethCompleteness
     
     soundness : ∀{Γt Γ} -> (A : I.For Γt) -> I.Pf Γ A -> B.Pf ⟦ Γ ⟧Conp ⟦ A ⟧For
     soundness A = ⟦_⟧Pf    
- 
+-}
