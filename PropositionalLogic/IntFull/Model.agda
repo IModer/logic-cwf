@@ -1,5 +1,3 @@
-{-# OPTIONS --prop #-}
-
 open import lib
 
 module 
@@ -78,31 +76,3 @@ record Model (i j k l : Level) : Set (lsuc (i ⊔ j ⊔ k ⊔ l)) where
 
     contrad : ∀{Γ K X} → Pf Γ K → Pf Γ (¬ K) → Pf Γ X
     contrad K ¬K = exfalso (¬K $ K)
-
-    -- TODO move these into some examples module
-
-    prop2 : ∀{Γ A} → Pf Γ (¬ (¬ (¬ A))) → Pf Γ (¬ A)
-    prop2 x = ⊃intro (contrad (⊃intro (contrad db1 db0)) (x [ p ]))
-
-    lemHelperLemma : ∀{Γ A B C} → Pf Γ (((A ∨ B) ⊃ C) ⊃ ((A ⊃ C) ∧ (B ⊃ C)))
-    lemHelperLemma = ⊃intro (∧intro (⊃intro (((q [ p ]) $ ∨intro₁ q))) (⊃intro ((q [ p ]) $ ∨intro₂ q)))
-
-    lemhelp : ∀{Γ A B C} →  Pf Γ ((A ∨ B) ⊃ C) → Pf Γ ((A ⊃ C) ∧ (B ⊃ C))
-    lemhelp Pf1 = ⊃elim lemHelperLemma [ (id , Pf1) ]
-
-    --lemHelperLemma₂ : ∀{Γ A} → Pf Γ (((A ⊃ ⊥) ∧ ((A ⊃ ⊥) ⊃ ⊥)) ⊃ ⊥ )
-    --lemHelperLemma₂ = ⊃intro (∧elim (contrad (q [ p ]) q ))
-
-    --lemhelp₂ : ∀{Γ A} → Pf Γ ((A ⊃ ⊥) ∧ ((A ⊃ ⊥) ⊃ ⊥)) → Pf Γ ⊥
-    --lemhelp₂ Pf1 = ⊃elim lemHelperLemma₂ [ id , Pf1 ]
-
-    doublenegintro : ∀{Γ A} → Pf Γ A → Pf Γ ((A ⊃ ⊥) ⊃ ⊥)
-    doublenegintro PfA = ⊃intro (q $ (PfA [ p ]))
-
-    --contraLemma : ∀{Γ A} → Pf Γ (((A ⊃ ⊥) ∧ (((((A ⊃ ⊥)) ⊃ ⊥) ⊃ ⊥) ⊃ ⊥)) ⊃ ⊥)
-    --contraLemma = ⊃intro (contrad (doublenegintro (∧elim (q [ p ]))) (∧elim q))
-
-    --contrahelp : ∀{Γ A} → Pf Γ ((A ⊃ ⊥) ∧ (((((A ⊃ ⊥)) ⊃ ⊥) ⊃ ⊥) ⊃ ⊥)) → Pf Γ ⊥
-    --contrahelp Pf1 = ⊃elim contraLemma [ id , Pf1 ]
-    
---    leminb : ∀{Γ A} → Pf Γ (((A ⊃ ⊥) ∨ (((((A ⊃ ⊥)) ⊃ ⊥) ⊃ ⊥) ⊃ ⊥)) ⊃ ⊥)

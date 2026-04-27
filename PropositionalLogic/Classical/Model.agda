@@ -1,5 +1,3 @@
-{-# OPTIONS --prop #-}
-
 open import lib
 open import PropositionalLogic.IntFull.Model renaming (Model to ModelI)
 

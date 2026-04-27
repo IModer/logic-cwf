@@ -1,10 +1,7 @@
-{-# OPTIONS --prop #-}
-
 open import lib
 open import PropositionalLogic.IntFull.Model
 
 module PropositionalLogic.IntFull.Syntax
-    --(P : Prop)
     (Atom : Set)
     where
 

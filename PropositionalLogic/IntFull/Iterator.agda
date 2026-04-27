@@ -1,5 +1,3 @@
-{-# OPTIONS --prop #-}
-
 open import lib
 open import PropositionalLogic.IntFull.Model
 open import PropositionalLogic.IntFull.Syntax

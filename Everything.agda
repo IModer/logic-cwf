@@ -34,3 +34,5 @@ import FirstOrderLogic.IntNegative.KripkeModel
 
 -- Double-negation translation between IntFull and Classical
 import FirstOrderLogic.DoubleNegationTranslation
+
+-- Propositional logic
