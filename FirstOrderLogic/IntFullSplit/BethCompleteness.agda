@@ -136,35 +136,35 @@ module FirstOrderLogic.IntFullSplit.BethCompleteness
 
     {-# NO_UNIVERSE_CHECK #-}
     data ◁-Skeleton : Set where
-        maximal' : ∀{Γ R} -> (x : ⟨ Γ , id ⟩⊩ R) -> ◁-Skeleton
-        ◁-⊥' : ∀{Γ : Con} ->  (x : I.Pf (proj₂ Γ) ⊥) -> ◁-Skeleton
-        ◁-∨' : ∀ {Γ A B} -> 
+        maximalS : ∀{Γ R} -> (x : ⟨ Γ , id ⟩⊩ R) -> ◁-Skeleton
+        ◁S-⊥ : ∀{Γ : Con} ->  (x : I.Pf (proj₂ Γ) ⊥) -> ◁-Skeleton
+        ◁S-∨ : ∀ {Γ A B} -> 
             (f : (∀ {Δ : Con} -> (γ : Sub Δ Γ) -> I.Pf (proj₂ Δ) (A [ proj₁ γ ]F) -> ◁-Skeleton)) ->
             (g : (∀ {Δ : Con} -> (γ : Sub Δ Γ) -> I.Pf (proj₂ Δ) (B [ proj₁ γ ]F) -> ◁-Skeleton)) ->
             (x : I.Pf (proj₂ Γ) (A I.∨ B)) -> ◁-Skeleton
-        ◁-∃' : ∀{Γ A} -> 
+        ◁S-∃ : ∀{Γ A} -> 
             (f : (∀ {Δ} (γ : Sub Δ Γ) -> 
                 (d : I.Tm (proj₁ Δ)) -> 
                 I.Pf (proj₂ Δ) (A [ (proj₁ γ) ,t d ]F) -> 
                 ◁-Skeleton)) ->
             (x : I.Pf (proj₂ Γ) (I.∃' A)) -> 
             ◁-Skeleton
-        ◁-Eq' : ∀{Γ}{t t' : I.Tm (proj₁ Γ)} ->
+        ◁S-Eq : ∀{Γ}{t t' : I.Tm (proj₁ Γ)} ->
             (x : I.Pf (proj₂ Γ) (I.Eq t t')) ->
             (f : (∀ {Δ} (γ : Sub Δ Γ) -> ◁-Skeleton)) ->
             ◁-Skeleton
 
     {-# NO_UNIVERSE_CHECK #-}
     data _◁_∶_ (Γ : Con)(R : Sieve Γ) : ◁-Skeleton -> Prop where
-        maximal : (x : ⟨ Γ , id ⟩⊩ R) -> Γ ◁ R ∶ (maximal' {Γ}{R} x)
-        ◁-⊥ : (x : I.Pf (proj₂ Γ) ⊥) -> Γ ◁ R ∶ (◁-⊥' x)
-        ◁-∨ : ∀ {A B} -> 
+        maximal' : (x : ⟨ Γ , id ⟩⊩ R) -> Γ ◁ R ∶ (maximalS {Γ}{R} x)
+        ◁-⊥' : (x : I.Pf (proj₂ Γ) ⊥) -> Γ ◁ R ∶ (◁S-⊥ x)
+        ◁-∨' : ∀ {A B} -> 
             (d : (∀ {Δ : Con} -> (γ : Sub Δ Γ) -> I.Pf (proj₂ Δ) (A [ proj₁ γ ]F) -> ◁-Skeleton)) ->
             (e : (∀ {Δ : Con} -> (γ : Sub Δ Γ) -> I.Pf (proj₂ Δ) (B [ proj₁ γ ]F) -> ◁-Skeleton)) ->
             (f : (∀ {Δ : Con} -> (γ : Sub Δ Γ) -> (x : I.Pf (proj₂ Δ) (A [ proj₁ γ ]F)) -> Δ ◁ (R [ γ ]ˢ) ∶ d γ x)) ->
             (g : (∀ {Δ : Con} -> (γ : Sub Δ Γ) -> (x : I.Pf (proj₂ Δ) (B [ proj₁ γ ]F)) -> Δ ◁ (R [ γ ]ˢ) ∶ e γ x)) ->
-            (x : I.Pf (proj₂ Γ) (A I.∨ B)) ->  Γ ◁ R ∶ ◁-∨' d e x
-        ◁-∃ : ∀{A} -> 
+            (x : I.Pf (proj₂ Γ) (A I.∨ B)) ->  Γ ◁ R ∶ ◁S-∨ d e x
+        ◁-∃' : ∀{A} -> 
             (e : (∀ {Δ} (γ : Sub Δ Γ) -> 
                 (d : I.Tm (proj₁ Δ)) -> 
                 I.Pf (proj₂ Δ) (A [ (proj₁ γ) ,t d ]F) -> 
@@ -174,19 +174,54 @@ module FirstOrderLogic.IntFullSplit.BethCompleteness
                 (x : I.Pf (proj₂ Δ) (A [ (proj₁ γ) ,t d ]F)) -> 
                 Δ ◁ (R [ γ ]ˢ) ∶ e γ d x)) ->
             (x : I.Pf (proj₂ Γ) (I.∃' A)) -> 
-            Γ ◁ R ∶ ◁-∃' e x
-        ◁-Eq : ∀{t t' : I.Tm (proj₁ Γ)}{R' : Sieve (Γ ▸t')} ->
+            Γ ◁ R ∶ ◁S-∃ e x
+        ◁-Eq' : ∀{t t' : I.Tm (proj₁ Γ)}{R' : Sieve (Γ ▸t')} ->
             (x : I.Pf (proj₂ Γ) (I.Eq t t')) ->
             (e : (∀ {Δ} (γ : Sub Δ Γ) -> ◁-Skeleton)) ->
             (f : (∀ {Δ} (γ : Sub Δ Γ) -> Δ ◁ (R [ γ ]ˢ) ∶ e γ)) ->
             (eq : R ≡ R' [ id ,t' t' ]ˢ) -> 
-            Γ ◁ R ∶ ◁-Eq' x e
+            Γ ◁ R ∶ ◁S-Eq x e
     
-    _◁_ : (Γ : Con) -> Sieve Γ -> Prop
-    Γ ◁ R = ∃ ◁-Skeleton (Γ ◁ R ∶_)
+    _◁_ : (Γ : Con) -> Sieve Γ -> Set
+    Γ ◁ R = Σsp ◁-Skeleton (Γ ◁ R ∶_)
+
+    maximal : ∀{Γ R} -> ⟨ Γ , id ⟩⊩ R -> Γ ◁ R
+    maximal x = (maximalS x) ,Σ (maximal' x)
+
+    ◁-∨ : ∀ {Γ R A B} -> 
+        (∀ {Δ : Con} -> (γ : Sub Δ Γ) -> (x : I.Pf (proj₂ Δ) (A [ proj₁ γ ]F)) -> Δ ◁ (R [ γ ]ˢ)) ->
+        (∀ {Δ : Con} -> (γ : Sub Δ Γ) -> (x : I.Pf (proj₂ Δ) (B [ proj₁ γ ]F)) -> Δ ◁ (R [ γ ]ˢ)) ->
+        (x : I.Pf (proj₂ Γ) (A I.∨ B)) ->  Γ ◁ R
+    ◁-∨ f g x = 
+        (◁S-∨ (λ {Δ} γ y → proj₁ (f γ y)) (λ {Δ} γ y → proj₁ (g γ y)) x) 
+        ,Σ
+        ◁-∨' 
+        (λ {Δ} γ y → proj₁ (f γ y)) 
+        (λ {Δ} γ y → proj₁ (g γ y)) 
+        (λ {Δ} γ y → proj₂ (f γ y)) 
+        (λ {Δ} γ y → proj₂ (g γ y))
+        x
+
+
+    ◁-∃ : ∀{Γ R A} -> ((∀ {Δ} (γ : Sub Δ Γ) ->  (d : I.Tm (proj₁ Δ)) ->  (I.Pf (proj₂ Δ) (A [ (proj₁ γ) ,t d ]F)) ->  Δ ◁ (R [ γ ]ˢ))) ->
+        (x : I.Pf (proj₂ Γ) (I.∃' A)) ->  Γ ◁ R
+    ◁-∃ f x = 
+        (◁S-∃ (λ {Δ} γ d y → proj₁ (f γ d y)) x) ,Σ (◁-∃' (λ {Δ} γ d y → proj₁ (f γ d y)) (λ {Δ} γ d y → proj₂ (f γ d y)) x)
+
+    ◁-Eq : ∀{Γ R}{t t' : I.Tm (proj₁ Γ)}{R' : Sieve (Γ ▸t')} ->
+            (x : I.Pf (proj₂ Γ) (I.Eq t t')) ->
+            (f : (∀ {Δ} (γ : Sub Δ Γ) -> Δ ◁ (R [ γ ]ˢ))) ->
+            (eq : R ≡ R' [ id ,t' t' ]ˢ) -> 
+            Γ ◁ R
+    ◁-Eq {Γ}{R}{t}{t'}{R'} x f eq = (◁S-Eq x (λ {Δ} γ → proj₁ (f γ))) ,Σ ◁-Eq' {R' = R'} x (λ {Δ} γ → proj₁ (f γ)) (λ {Δ} γ → proj₂ (f γ)) eq
+
 
     _[_]ᶜ : ∀{Γ Δ R} -> Γ ◁ R → (γ : Sub Δ Γ) → Δ ◁ (R [ γ ]ˢ)
-    _[_]ᶜ {Γ} {Δ} {R} (a ,∃ maximal x) γ = 
+    (proj₃ ,Σ proj₄) [ γ ]ᶜ = {! proj₄  !}
+
+{-
+    _[_]ᶜ {Γ} {Δ} {R} (a ,∃ maximal x) γ = ?
+    
         maximal' (substp (Sh.Sieve.R R Δ) (trans idl' (sym (idr' {f = γ}))) (R .Sh.Sieve.restr x γ))
         ,∃ 
         maximal (substp (Sh.Sieve.R R Δ) (trans idl' (sym (idr' {f = γ}))) (R .Sh.Sieve.restr x γ))
@@ -239,18 +274,23 @@ module FirstOrderLogic.IntFullSplit.BethCompleteness
         with∃ z' λ s z → s ,∃ z
     local (a ,∃ ◁-⊥ x) z = 
         a ,∃ (◁-⊥ x)
-    local (a ,∃ ◁-∨ d e f g x) z = 
-        {!   !} 
+    local {Γ}{R}{S} (a ,∃ ◁-∨ d e f g x) z =
+        let f' Δ γ a = local {Δ}{R [ γ ]ˢ}{S [ γ ]ˢ} (d γ a ,∃ (f {Δ} γ a)) λ {Θ} δ l → (substp (Θ ◁_) ([∘]ˢ {f = γ}{g = δ}{s = S}) (z (γ ∘ δ) l)) in 
+        --let ◁g Δ γ a = e γ a ,∃ (g {Δ} γ a) in
+        --let g' Δ γ a = local {Δ}{R [ γ ]ˢ}{S [ γ ]ˢ} (◁g Δ γ a) λ {Θ} δ l → (substp (Θ ◁_) ([∘]ˢ {f = γ}{g = δ}{s = S}) (z (γ ∘ δ) l)) in  
+        ◁-∨' 
+        (λ {Δ} γ a → {!   !})
+        (λ {Δ} γ a → e γ a)
+        x 
         ,∃ 
         ◁-∨ 
-        (λ {Δ} γ a → {! local ? ?  !}) 
-        {!   !} 
-        {! λ {Δ} γ a → ?  !} 
+        (λ {Δ} γ a → {!   !})
+        (λ {Δ} γ a → e γ a)
+        (λ {Δ} γ a → {!   !}) 
         {!   !} 
         x
     local (a ,∃ ◁-∃ e f x) z = {!   !}
     local (a ,∃ ◁-Eq x₁ e f eq) z = {!   !}
-{-
 
     local {Γ}{R}{S} (maximal Γ⊩R ) x = substp (Γ ◁_) ([id]ˢ {Γ}{S}) (x id Γ⊩R)
     local {Γ}{R}{S} (◁-⊥ Pf⊥) x = ◁-⊥ Pf⊥
@@ -268,11 +308,12 @@ module FirstOrderLogic.IntFullSplit.BethCompleteness
         PfEq 
         (λ {Δ} γ → local (PfKt γ) λ {Θ} δ l → substp (Θ ◁_) ([∘]ˢ {f = γ}{g = δ}{s = S}) (x (γ ∘ δ) l)) 
         (trans (trans (sym [id]ˢ) (cong (λ z -> S [ z ]ˢ) (mk,sp= {b = proj₂ id} {b' = proj₂ (pt' ∘ (id ,t' t'))} (sym (▸tβ₁ {γ = I.idt}{t = t'}))))) ([∘]ˢ {f = pt'}{g = id ,t' t'}{s = S}))
-
+-}
+{-
     J : Top
     J .Sh.Top._◁_ = _◁_
     J .Sh.Top._[_]ᶜ = _[_]ᶜ
-    J .Sh.Top.maximal = maximal
+    J .Sh.Top.maximal x = maximal' x ,∃ maximal x
     J .Sh.Top.local = local
 
     module B = Semantics
@@ -290,9 +331,8 @@ module FirstOrderLogic.IntFullSplit.BethCompleteness
     open B
     open import FirstOrderLogic.IntFullSplit.Iterator
     open Ite funar relar Beth
-
     mutual
-        {-# TERMINATING #-}
+        --{-# TERMINATING #-}
         
         reflect-cont : ∀{Γt : I.ConTm}{Γ : I.ConPf Γt}(Δt : I.ConTm) -> (γt : I.Subt Γt Δt) -> ∣ ⟦ Δt ⟧Cont ∣ (Γt ,Σ Γ)
         reflect-cont ◆t x = *
@@ -650,6 +690,7 @@ module FirstOrderLogic.IntFullSplit.BethCompleteness
                 (trans (sym (reflect-Tms {n}{Γt}{Δt}{Δ}{γt}{ts})) (cong (λ z -> reifyTms (recTms (Δt ,Σ Δ) (∣ ⟦ ts ⟧Tms ∣ (Δt ,Σ Δ) z))) (sym (⟦ Γt ⟧Cont ∶⟨id⟩)))) 
                 (trans (sym (reflect-Tm {Γt}{Δt}{Δ}{γt}{t})) ((cong (∣ ⟦ t ⟧Tm ∣ (Δt ,Σ Δ)) (sym (⟦ Γt ⟧Cont ∶⟨id⟩)))))) 
                 x)
+
 
     completeness : ∀{Γt}{Γ} -> (A : I.For Γt) -> B.Pf ⟦ Γ ⟧Conp ⟦ A ⟧For -> I.Pf Γ A
     completeness {Γt}{Γ} A p = substp (I.Pf Γ) [id]F (reify {Γt}{Γt}{Γ} A (∣ p ∣ (reflect-conp Γ I.idt (substp (I.Subp Γ) (sym [id]C) I.idp))))
