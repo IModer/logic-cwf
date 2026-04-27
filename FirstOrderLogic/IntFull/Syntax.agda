@@ -1,9 +1,7 @@
-{-# OPTIONS --prop #-}
-
 open import FirstOrderLogic.IntFull.Model
 open import lib
 
--- We give the initial model of FOLClassicMinimal
+-- We give the initial model of IntFull
 -- We give it as a normal form, meaning its a inductive
 -- datatype but we can prove it satisfies the equations
 module FirstOrderLogic.IntFull.Syntax
@@ -22,7 +20,6 @@ module FirstOrderLogic.IntFull.Syntax
     -- We give the context in two different parts, a context of Tm-s and a context of Pf variable
     -- Then out context will be Con = Σ ConTm ConPf
     -- Along the way we prove all the ass,id, and β,η laws
-
 
     -- Contexts for terms
     -- ConTm ≅ ℕ
@@ -58,7 +55,6 @@ module FirstOrderLogic.IntFull.Syntax
         [∘] {t = vz} {γ = γ ,t x} = refl
         [∘] {t = vs t} {γ = γ ,t x} = [∘] {t = t}
 
-        -- Pattern match on Subs
         ass : ∀{Γ Δ}{γ : Sub Δ Γ}{Θ}{δ : Sub Θ Δ}{Ξ}{θ : Sub Ξ Θ} → (γ ∘ δ) ∘ θ ≡ γ ∘ (δ ∘ θ)
         ass {γ = εt} = refl
         ass {γ = γ ,t x} = mk,t= ass (sym ([∘] {t = x}))
@@ -94,7 +90,6 @@ module FirstOrderLogic.IntFull.Syntax
     open V using (vz; vs)
 
     -- Because we use Tms in our notion of model we have to define Tms and Tm mutually inductively
-    -- This is one of the "negatives" of using Tms but this is also the case for substitutions in Tm and Tm ^ n
     data Tm (Γt : ConTm) : Set
     Tms : ConTm → ℕ → Set
 
@@ -103,10 +98,6 @@ module FirstOrderLogic.IntFull.Syntax
       fun  : (n : ℕ) → funar n → Tms Γt n → Tm Γt
     Tms Γt zero = 𝟙
     Tms Γt (suc n) = Tms Γt n × Tm Γt
-
-    --data Tm (Γt : ConTm) : Set where
-    --  var  : V.Tm Γt → Tm Γt
-    --  fun  : (n : ℕ) → funar n → Tm Γt ^ n → Tm Γt
 
     data Subt : ConTm → ConTm → Set where
       εt : ∀{Δt} → Subt Δt ◆t
@@ -119,14 +110,6 @@ module FirstOrderLogic.IntFull.Syntax
     _[_]v : ∀{Γt Δt} → V.Tm Γt → Subt Δt Γt → Tm Δt
     vz [ γ ,t t ]v = t
     vs x [ γ ,t t ]v = x [ γ ]v
-
-    -- Substitution on terms and Tm ^ n
-    --_[_]ts : ∀{Γt n} → Tm Γt ^ n → ∀{Δt} → Subt Δt Γt → Tm Δt ^ n
-    --_[_]t  : ∀{Γt} → Tm Γt → ∀{Δt} → Subt Δt Γt → Tm Δt
-    --_[_]ts {n = zero} _ _ = *
-    --_[_]ts {n = suc n} (t ,Σ ts) γ = (t [ γ ]t) ,Σ (ts [ γ ]ts)
-    --var x [ γ ]t = x [ γ ]v
-    --(fun n a ts) [ γ ]t  = fun n a (ts [ γ ]ts)
 
     -- Substitution on terms
     _[_]t  : ∀{Γt} → Tm Γt → ∀{Δt} → Subt Δt Γt → Tm Δt
@@ -314,8 +297,6 @@ module FirstOrderLogic.IntFull.Syntax
             ----------------------------------------------
                         Pf Γp L
 
-        -- ∃intro : ∀{Γt K}{Γp : ConPf Γt} → (∃ (Tm Γt) (λ t → Pf Γp (K [ idt ,t t ]F))) → Pf Γp (∃' K)
-        
         ref  : ∀{Γt}{a}{Γp : ConPf Γt} → Pf Γp (Eq a a)
         subst' : ∀{Γt}(K : For (Γt ▸t)){t t' : Tm Γt}{Γp} → Pf Γp (Eq t t') → Pf Γp (K [ idt ,t t ]F) → Pf Γp (K [ idt ,t t' ]F)
         _[_]P : ∀{Γt}{K}{Γp : ConPf Γt} → Pf Γp K → ∀{Δt : ConTm} → (γ : Subt Δt Γt) → Pf (Γp [ γ ]C) (K [ γ ]F)
@@ -350,26 +331,6 @@ module FirstOrderLogic.IntFull.Syntax
 
     ◆η : {Γ : Con} (σ : Sub Γ ◆) → σ ≡ ε {Γ}
     ◆η {Γt ,Σ Γp} (εt ,Σ _) = refl
-
-    -- We also dont need any of these proofs to prove substitution of Tm ^ n if we use Tms
-    --ts[] : ∀{Γ}{Δ}{n : ℕ}{γ : Sub Δ Γ}{ts : Tm (proj₁ Γ) ^ n} → ts [ proj₁ γ ]ts ≡ ind^ {T = Tm (proj₁ Γ)}{C = Tm (proj₁ Δ) ^_} (λ _ → *) (λ _ t ts' → t [ proj₁ γ ]t ,Σ ts') ts
-    --ts[] {Γ} {Δ} {zero} {γ} {ts} = refl
-    --ts[] {Γ} {Δ} {suc n} {γ} {t ,Σ ts} = cong (t [ proj₁ γ ]t ,Σ_) (ts[] {Γ} {Δ} {n} {γ} {ts})
-
-
-    --funLemma : ∀{Γ}{n : ℕ}{a : funar n}{ts : Tm (proj₁ Γ) ^ n}{Δ}{γ : Sub Δ Γ} →
-    --  fun n a (ts [ proj₁ γ ]ts)
-    --  ≡
-    --  fun n a (ind^ {T = Tm (proj₁ Γ)}{C = Tm (proj₁ Δ) ^_} (λ _ → *) (λ _ t ts' → t [ proj₁ γ ]t ,Σ ts') ts)
-    --funLemma {Γ} {zero} {a} {ts} {Δ} {γt ,Σ γp} = refl
-    --funLemma {Γ} {suc n} {a} {t ,Σ ts} {Δ} {γt ,Σ γp} = cong (λ x → fun (suc n) a x) (mk,= refl (ts[] {Γ} {Δ} {n} {γt ,Σ γp} {ts}))
-
-    --relLemma : ∀{Γ}{n : ℕ}{a : relar n}{ts : Tm (proj₁ Γ) ^ n}{Δ}{γ : Sub Δ Γ} →
-    --  rel n a (ts [ proj₁ γ ]ts)
-    --  ≡
-    --  rel n a (ind^ {T = Tm (proj₁ Γ)} {C = Tm (proj₁ Δ) ^_} (λ _ → *) (λ _ t ts₁ → t [ proj₁ γ ]t ,Σ ts₁) ts)
-    --relLemma {Γ} {zero} {a} {ts} {Δ} {γt ,Σ γp} = refl
-    --relLemma {Γ} {suc n} {a} {t ,Σ ts} {Δ} {γt ,Σ γp} = cong (λ x → rel (suc n) a x) (mk,= refl (ts[] {Γ} {Δ} {n} {γt ,Σ γp} {ts}))
 
     -- We give db indexes in the syntax
 

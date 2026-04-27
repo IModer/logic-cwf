@@ -1,7 +1,7 @@
 open import FirstOrderLogic.Classical.Model
 open import lib
 
--- We give the initial model of FOLClassicMinimal
+-- We give the initial model of Classical
 -- We give it as a normal form, meaning its a inductive
 -- datatype but we can prove it satisfies the equations
 module FirstOrderLogic.Classical.Syntax
