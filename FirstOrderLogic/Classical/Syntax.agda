@@ -1,5 +1,3 @@
-{-# OPTIONS --prop #-}
-
 open import FirstOrderLogic.Classical.Model
 open import lib
 
@@ -58,7 +56,6 @@ module FirstOrderLogic.Classical.Syntax
         [∘] {t = vz} {γ = γ ,t x} = refl
         [∘] {t = vs t} {γ = γ ,t x} = [∘] {t = t}
 
-        -- Pattern match on Subs
         ass : ∀{Γ Δ}{γ : Sub Δ Γ}{Θ}{δ : Sub Θ Δ}{Ξ}{θ : Sub Ξ Θ} → (γ ∘ δ) ∘ θ ≡ γ ∘ (δ ∘ θ)
         ass {γ = εt} = refl
         ass {γ = γ ,t x} = mk,t= ass (sym ([∘] {t = x}))
@@ -94,7 +91,6 @@ module FirstOrderLogic.Classical.Syntax
     open V using (vz; vs)
 
     -- Because we use Tms in our notion of model we have to define Tms and Tm mutually inductively
-    -- This is one of the "negatives" of using Tms but this is also the case for substitutions in Tm and Tm ^ n
     data Tm (Γt : ConTm) : Set
     Tms : ConTm → ℕ → Set
 
@@ -103,10 +99,6 @@ module FirstOrderLogic.Classical.Syntax
       fun  : (n : ℕ) → funar n → Tms Γt n → Tm Γt
     Tms Γt zero = 𝟙
     Tms Γt (suc n) = Tms Γt n × Tm Γt
-
-    --data Tm (Γt : ConTm) : Set where
-    --  var  : V.Tm Γt → Tm Γt
-    --  fun  : (n : ℕ) → funar n → Tm Γt ^ n → Tm Γt
 
     data Subt : ConTm → ConTm → Set where
       εt : ∀{Δt} → Subt Δt ◆t
@@ -119,14 +111,6 @@ module FirstOrderLogic.Classical.Syntax
     _[_]v : ∀{Γt Δt} → V.Tm Γt → Subt Δt Γt → Tm Δt
     vz [ γ ,t t ]v = t
     vs x [ γ ,t t ]v = x [ γ ]v
-
-    -- Substitution on terms and Tm ^ n
-    --_[_]ts : ∀{Γt n} → Tm Γt ^ n → ∀{Δt} → Subt Δt Γt → Tm Δt ^ n
-    --_[_]t  : ∀{Γt} → Tm Γt → ∀{Δt} → Subt Δt Γt → Tm Δt
-    --_[_]ts {n = zero} _ _ = *
-    --_[_]ts {n = suc n} (t ,Σ ts) γ = (t [ γ ]t) ,Σ (ts [ γ ]ts)
-    --var x [ γ ]t = x [ γ ]v
-    --(fun n a ts) [ γ ]t  = fun n a (ts [ γ ]ts)
 
     -- Substitution on terms
     _[_]t  : ∀{Γt} → Tm Γt → ∀{Δt} → Subt Δt Γt → Tm Δt
