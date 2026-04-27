@@ -13,10 +13,9 @@ import FirstOrderLogic.Classical.Syntax
 import FirstOrderLogic.IntFull.Model
 import FirstOrderLogic.IntFull.Iterator
 import FirstOrderLogic.IntFull.Syntax
-import FirstOrderLogic.IntFull.KripkeModel
 
 -- Intuitionistic first-order logic with a split context
 -- In this setting we can define the iterator as a IIT 
-import FirstOrderLogic.IntSplit.Model
-import FirstOrderLogic.IntSplit.Iterator
-import FirstOrderLogic.IntSplit.Syntax
+import FirstOrderLogic.IntFullSplit.Model
+import FirstOrderLogic.IntFullSplit.Iterator
+import FirstOrderLogic.IntFullSplit.Syntax

@@ -481,3 +481,5 @@ record DepModel (i j k l m : Level)(M : Model i j k l m) : Set (lsuc (i ⊔ j �
             {tm tm' : M.Tm Γm}{t : Tm Γ tm}{t' : Tm Γ tm'} ->
             {Am : M.For (Γm M.▸t)}{pfeq : M.Pf Γm (M.Eq tm tm')}{pfa : M.Pf Γm (Am M.[ M.id M.,t tm ]F)} ->
             (A : For (Γ ▸t) Am) -> Pf Γ (Eq t t') (pfeq) -> Pf Γ (A [ id ,t t ]F) pfa -> Pf Γ (A [ id ,t t' ]F) (M.subst' Am pfeq pfa)
+
+        lem : ∀{Γm : M.Con}{Γ : Con Γm}{Am : M.For Γm} -> (A : For Γ Am) -> Pf Γ (A ∨ (A ⊃ ⊥)) (M.lem Am)
