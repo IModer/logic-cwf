@@ -1,5 +1,3 @@
-{-# OPTIONS --prop #-}
-
 open import lib
 open import PropositionalLogic.IntNegative.Model
 open import PropositionalLogic.IntNegative.Syntax
