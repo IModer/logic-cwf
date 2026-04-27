@@ -1,5 +1,3 @@
-{-# OPTIONS --prop #-}
-
 open import lib
 open import FirstOrderLogic.IntNegative.Model
 
@@ -52,10 +50,10 @@ module Semantics
     open Subt public renaming (α to ∣_∣)
     
     mkSubtEq : ∀{Δ Γ} -> {α β : ∀(I : Ob) -> ∣ Δ ∣ I -> ∣ Γ ∣ I} -> 
-      {nat₁ : ∀{I J : Ob}{a : ∣ Δ ∣ I}{f : Hom J I} -> (Γ ∶ (α I a) ⟨ f ⟩) ≡ α J (Δ ∶ a ⟨ f ⟩)} ->
-      {nat₂ : ∀{I J : Ob}{a : ∣ Δ ∣ I}{f : Hom J I} -> (Γ ∶ (β I a) ⟨ f ⟩) ≡ β J (Δ ∶ a ⟨ f ⟩)} ->
-      (α ≡ β) ->
-      _≡_ {A = Subt Δ Γ} (mk α nat₁) (mk β nat₂)
+        {nat₁ : ∀{I J : Ob}{a : ∣ Δ ∣ I}{f : Hom J I} -> (Γ ∶ (α I a) ⟨ f ⟩) ≡ α J (Δ ∶ a ⟨ f ⟩)} ->
+        {nat₂ : ∀{I J : Ob}{a : ∣ Δ ∣ I}{f : Hom J I} -> (Γ ∶ (β I a) ⟨ f ⟩) ≡ β J (Δ ∶ a ⟨ f ⟩)} ->
+        (α ≡ β) ->
+        _≡_ {A = Subt Δ Γ} (mk α nat₁) (mk β nat₂)
     mkSubtEq refl = refl
 
     _∘t_ : {Γ Δ Θ : Cont} → Subt Δ Γ → Subt Θ Δ → Subt Θ Γ
@@ -147,7 +145,7 @@ module Semantics
     nat εs     = refl
 
     ◆sη    : ∀{Γ}(ts : Tms Γ zero) → ts ≡ εs
-    ◆sη ts = mkSubtEq {nat₁ = refl}{nat₂ = refl} (funext (λ I → funext λ x → refl)) -- (λ x → mk,sp= (proj₂ (∣ ts ∣ I x)))))
+    ◆sη ts = mkSubtEq {nat₁ = refl}{nat₂ = refl} (funext (λ I → funext λ x → refl))
 
     _,s_ : ∀{Γ n} → Tms Γ n → Tm Γ → Tms Γ (suc n)
     ∣ ts ,s t ∣ I x = (∣ ts ∣ I x) ,Σ (∣ t ∣ I x)
@@ -170,12 +168,12 @@ module Semantics
     ⟨recTms⟩ {suc n} {I} {J} {f} {ts} = mk,= refl ⟨recTms⟩
 
     fun' : {Γ : Cont} (n : ℕ) → funar n → Tms Γ n → Tm Γ
-    ∣ fun' n a ts ∣ I x = fun n a I (recTms I (∣ ts ∣ I x)) -- fun n a (recTms I (∣ ts ∣ I x))
-    nat (fun' n a ts) {I}{J}{i}{f} = trans (⟨fun⟩ n a I J (recTms I (∣ ts ∣ I i)) f) (cong (fun n a J) (trans (⟨recTms⟩ {n} {I} {J} {f} {∣ ts ∣ I i}) (cong (recTms J) (nat ts)))) -- cong (fun n a) (trans ⟨recTms⟩ (cong (recTms J) (nat ts)))
+    ∣ fun' n a ts ∣ I x = fun n a I (recTms I (∣ ts ∣ I x))
+    nat (fun' n a ts) {I}{J}{i}{f} = trans (⟨fun⟩ n a I J (recTms I (∣ ts ∣ I i)) f) (cong (fun n a J) (trans (⟨recTms⟩ {n} {I} {J} {f} {∣ ts ∣ I i}) (cong (recTms J) (nat ts))))
 
     rel' : {Γ : Cont} (n : ℕ) → relar n → Tms Γ n → For Γ
     ∣ rel' n a ts ∣ I x = rel n a I (recTms I (∣ ts ∣ I x))
-    _∶_⟨_⟩ (rel' n a ts) {I} {J} {i} x f = substp (rel n a J) (trans ⟨recTms⟩ (cong (recTms J) (nat ts))) (⟨rel⟩ {n}{a}{I}{J}{recTms I (∣ ts ∣ I i)} x f) -- ⟨rel⟩ (substp (λ z -> rel n a z I) (trans ⟨recTms⟩ (cong (recTms J) (nat ts))) x) f
+    _∶_⟨_⟩ (rel' n a ts) {I} {J} {i} x f = substp (rel n a J) (trans ⟨recTms⟩ (cong (recTms J) (nat ts))) (⟨rel⟩ {n}{a}{I}{J}{recTms I (∣ ts ∣ I i)} x f)
 
     record Conp(Γt : Cont) : Set₁ where
         constructor mk
@@ -300,14 +298,14 @@ module Semantics
     ∀[] : {Γt : Cont} {K : For (Γt ▸t)} {Δt : Cont} {γt : Subt Δt Γt} →
       (∀' K [ γt ]F) ≡ ∀' (K [ (γt ∘t pt) ,t qt {Δt} ]F)
     ∀[] {Γt} {K} {Δt} {γt} = 
-      mkForEq 
-      {Δt}{∣ ∀' K [ γt ]F ∣}{∣ ∀' {Δt} (K [ (γt ∘t pt) ,t (qt {Δt}) ]F) ∣}
-      {λ {I}{J}{Δi} x f J' g d → substp (λ z -> ∣ K ∣ J' (z ,Σ d)) (trans (Γt ∶⟨∘⟩) (cong (Γt ∶_⟨ g ⟩) (nat γt))) (x J' (f ∘C g) d)}
-      {λ {I}{J}{Δi} x f J' g d → substp (λ z -> ∣ K ∣ J' (∣ γt ∣ J' z ,Σ d)) (Δt ∶⟨∘⟩) (x J' (f ∘C g) d)}
-      (funext (λ I → 
-      funext (λ Δi → 
-      cong (λ Z → (J : Ob)(f : Hom J I)(d : D J) -> Z J f d) 
-      (funext λ J → funext (λ f → funext (λ d → cong (λ z → ∣ K ∣ J (z ,Σ d)) (nat γt)))))))  
+        mkForEq 
+        {Δt}{∣ ∀' K [ γt ]F ∣}{∣ ∀' {Δt} (K [ (γt ∘t pt) ,t (qt {Δt}) ]F) ∣}
+        {λ {I}{J}{Δi} x f J' g d → substp (λ z -> ∣ K ∣ J' (z ,Σ d)) (trans (Γt ∶⟨∘⟩) (cong (Γt ∶_⟨ g ⟩) (nat γt))) (x J' (f ∘C g) d)}
+        {λ {I}{J}{Δi} x f J' g d → substp (λ z -> ∣ K ∣ J' (∣ γt ∣ J' z ,Σ d)) (Δt ∶⟨∘⟩) (x J' (f ∘C g) d)}
+        (funext (λ I → 
+        funext (λ Δi → 
+        cong (λ Z → (J : Ob)(f : Hom J I)(d : D J) -> Z J f d) 
+        (funext λ J → funext (λ f → funext (λ d → cong (λ z → ∣ K ∣ J (z ,Σ d)) (nat γt)))))))  
 
     ∀intro : {Γt : Cont} {K : For (Γt ▸t)} {Γ : Conp Γt} →
       Pf (Γ [ pt ]C) K → Pf Γ (∀' K)
@@ -319,83 +317,83 @@ module Semantics
 
     Kripke : Model funar relar _ _ _ _ _
     Kripke = record
-      { Cont = Cont
-      ; Subt = Subt
-      ; _∘t_ = _∘t_
-      ; idt = idt
-      ; asst = refl
-      ; idlt = refl
-      ; idrt = refl
-      ; ◆t = ◆t
-      ; εt = εt
-      ; ◆tη = λ σ → refl
-      ; For = For
-      ; _[_]F = _[_]F
-      ; [∘]F = refl
-      ; [id]F = refl
-      ; Tm = Tm
-      ; _[_]t = _[_]t
-      ; [∘]t = refl
-      ; [id]t = refl
-      ; _▸t = _▸t
-      ; _,t_ = _,t_
-      ; pt = pt
-      ; qt = λ {Γt} -> qt {Γt}
-      ; ▸tβ₁ = refl
-      ; ▸tβ₂ = refl
-      ; ▸tη = refl
-      ; Tms = Tms
-      ; _[_]ts = λ {Γ}{n} ts {Δ} ->  _[_]ts {Γ}{n} ts {Δ}
-      ; [∘]ts = refl
-      ; [id]ts = refl
-      ; εs = εs
-      ; ◆sη = λ ts → refl
-      ; _,s_ = λ {Γ}{n} -> _,s_ {Γ}{n}
-      ; π₁ = λ {Γ}{n} -> π₁ {Γ}{n}
-      ; π₂ = λ {Γ}{n} -> π₂ {Γ}{n}
-      ; ▸sβ₁ = refl
-      ; ▸sβ₂ = refl
-      ; ▸sη = refl
-      ; ,[] = refl
-      ; fun = fun'
-      ; fun[] = refl
-      ; rel = rel'
-      ; rel[] = refl
-      ; Conp = Conp
-      ; _[_]C = _[_]C
-      ; [id]C = refl
-      ; [∘]C = refl
-      ; Subp = Subp
-      ; _∘p_ = _∘p_
-      ; idp = idp
-      ; ◆p = ◆p
-      ; εp = εp
-      ; Pf = Pf
-      ; _[_]P = _[_]P
-      ; _[_]p = _[_]p
-      ; _▸p_ = _▸p_
-      ; _,p_ = _,p_
-      ; pp = λ {Γt}{Γ}{K = K} -> pp {K = K} 
-      ; qp = λ {Γt}{Γ}{K} -> qp {Γ = Γ}
-      ; ◆p[] = refl
-      ; ▸p[] = refl
-      ; ⊤ = ⊤
-      ; ⊤[] = refl
-      ; tt = tt
-      ; _⊃_ = _⊃_
-      ; ⊃[] = λ {Γt}{K}{L}{Δt}{γt} -> ⊃[] {Γt}{K}{L}{Δt}{γt}
-      ; ⊃intro = λ{Γt}{K}{L}{Γ} -> ⊃intro {Γt}{K}{L}{Γ}
-      ; ⊃elim = λ{Γt}{K}{L}{Γ} -> ⊃elim {Γt}{K}{L}{Γ}
-      ; _∧_ = _∧_
-      ; ∧[] = refl
-      ; ∧intro = ∧intro
-      ; ∧elim₁ = λ {Γt}{K}{L} -> ∧elim₁ {L = L}
-      ; ∧elim₂ = λ {Γt}{K}{L} -> ∧elim₂ {K = K} 
-      ; ∀' = ∀'
-      ; ∀[] = λ {Γt}{K}{Δt}{γt} → ∀[] {Γt}{K}{Δt}{γt}
-      ; ∀intro = λ {Γt}{K}{Γ} -> ∀intro {Γt}{K}{Γ} 
-      ; ∀elim = λ {Γt}{K}{Γ} -> ∀elim {Γt}{K}{Γ}
-      }
+        { Cont = Cont
+        ; Subt = Subt
+        ; _∘t_ = _∘t_
+        ; idt = idt
+        ; asst = refl
+        ; idlt = refl
+        ; idrt = refl
+        ; ◆t = ◆t
+        ; εt = εt
+        ; ◆tη = λ σ → refl
+        ; For = For
+        ; _[_]F = _[_]F
+        ; [∘]F = refl
+        ; [id]F = refl
+        ; Tm = Tm
+        ; _[_]t = _[_]t
+        ; [∘]t = refl
+        ; [id]t = refl
+        ; _▸t = _▸t
+        ; _,t_ = _,t_
+        ; pt = pt
+        ; qt = λ {Γt} -> qt {Γt}
+        ; ▸tβ₁ = refl
+        ; ▸tβ₂ = refl
+        ; ▸tη = refl
+        ; Tms = Tms
+        ; _[_]ts = λ {Γ}{n} ts {Δ} ->  _[_]ts {Γ}{n} ts {Δ}
+        ; [∘]ts = refl
+        ; [id]ts = refl
+        ; εs = εs
+        ; ◆sη = λ ts → refl
+        ; _,s_ = λ {Γ}{n} -> _,s_ {Γ}{n}
+        ; π₁ = λ {Γ}{n} -> π₁ {Γ}{n}
+        ; π₂ = λ {Γ}{n} -> π₂ {Γ}{n}
+        ; ▸sβ₁ = refl
+        ; ▸sβ₂ = refl
+        ; ▸sη = refl
+        ; ,[] = refl
+        ; fun = fun'
+        ; fun[] = refl
+        ; rel = rel'
+        ; rel[] = refl
+        ; Conp = Conp
+        ; _[_]C = _[_]C
+        ; [id]C = refl
+        ; [∘]C = refl
+        ; Subp = Subp
+        ; _∘p_ = _∘p_
+        ; idp = idp
+        ; ◆p = ◆p
+        ; εp = εp
+        ; Pf = Pf
+        ; _[_]P = _[_]P
+        ; _[_]p = _[_]p
+        ; _▸p_ = _▸p_
+        ; _,p_ = _,p_
+        ; pp = λ {Γt}{Γ}{K = K} -> pp {K = K} 
+        ; qp = λ {Γt}{Γ}{K} -> qp {Γ = Γ}
+        ; ◆p[] = refl
+        ; ▸p[] = refl
+        ; ⊤ = ⊤
+        ; ⊤[] = refl
+        ; tt = tt
+        ; _⊃_ = _⊃_
+        ; ⊃[] = λ {Γt}{K}{L}{Δt}{γt} -> ⊃[] {Γt}{K}{L}{Δt}{γt}
+        ; ⊃intro = λ{Γt}{K}{L}{Γ} -> ⊃intro {Γt}{K}{L}{Γ}
+        ; ⊃elim = λ{Γt}{K}{L}{Γ} -> ⊃elim {Γt}{K}{L}{Γ}
+        ; _∧_ = _∧_
+        ; ∧[] = refl
+        ; ∧intro = ∧intro
+        ; ∧elim₁ = λ {Γt}{K}{L} -> ∧elim₁ {L = L}
+        ; ∧elim₂ = λ {Γt}{K}{L} -> ∧elim₂ {K = K} 
+        ; ∀' = ∀'
+        ; ∀[] = λ {Γt}{K}{Δt}{γt} → ∀[] {Γt}{K}{Δt}{γt}
+        ; ∀intro = λ {Γt}{K}{Γ} -> ∀intro {Γt}{K}{Γ} 
+        ; ∀elim = λ {Γt}{K}{Γ} -> ∀elim {Γt}{K}{Γ}
+        }
     
 module Completeness where
     
@@ -414,8 +412,8 @@ module Completeness where
     _∘_ {Γt ,Σ Γ} {Δt ,Σ Δ} {Θt ,Σ Θ} (γt ,Σ γ) (δt ,Σ δ) = (γt ∘t δt) ,Σ (substp (Subp (Δ [ δt ]C)) (sym [∘]C) (γ I.[ δt ]s) ∘p δ)
 
     ass' : {A B C D : Con}{f : Sub C D}
-      {g : Sub B C} {h : Sub A B} →
-      ((f ∘ g) ∘ h) ≡ (f ∘ (g ∘ h))
+        {g : Sub B C} {h : Sub A B} →
+        ((f ∘ g) ∘ h) ≡ (f ∘ (g ∘ h))
     ass' = mk,sp= I.ass
 
     idl' : {A B : Con} {f : Sub A B} → (id ∘ f) ≡ f
@@ -496,14 +494,14 @@ module Completeness where
 
     C : Category
     C = record
-      { Ob = Con
-      ; Hom = Sub
-      ; idC = id
-      ; _∘C_ = λ γ δ -> γ ∘ δ
-      ; assC = λ {Γ}{Δ}{Θ}{Ξ}{γ}{δ}{θ} -> ass' {Γ}{Δ}{Θ}{Ξ}{γ}{δ}{θ}
-      ; idlC = λ {Γ}{Δ}{γ} -> idl' {Γ}{Δ}{γ}
-      ; idrC = λ {Γ}{Δ}{γ} -> idr' {Γ}{Δ}{γ}
-      }
+        { Ob = Con
+        ; Hom = Sub
+        ; idC = id
+        ; _∘C_ = λ γ δ -> γ ∘ δ
+        ; assC = λ {Γ}{Δ}{Θ}{Ξ}{γ}{δ}{θ} -> ass' {Γ}{Δ}{Θ}{Ξ}{γ}{δ}{θ}
+        ; idlC = λ {Γ}{Δ}{γ} -> idl' {Γ}{Δ}{γ}
+        ; idrC = λ {Γ}{Δ}{γ} -> idr' {Γ}{Δ}{γ}
+        }
 
     reifyTms : ∀{Γt n} -> I.Tm Γt ^ n -> I.Tms Γt n
     reifyTms {Γt}{zero} * = *

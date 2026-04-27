@@ -1,11 +1,7 @@
-{-# OPTIONS --prop #-}
-
 open import FirstOrderLogic.IntNegative.Model
 open import lib
 
--- We give the initial model of FOLClassicMinimal
--- We give it as a normal form, meaning its a inductive
--- datatype but we can prove it satisfies the equations
+-- We give the initial model of IntNegative
 module FirstOrderLogic.IntNegative.Syntax
     (funar : ℕ → Set)
     (relar : ℕ → Set)
@@ -20,19 +16,19 @@ module FirstOrderLogic.IntNegative.Syntax
     infixl 6 _$_
 
     data ConTm : Set where
-      ◆t : ConTm
-      _▸t : ConTm → ConTm
+        ◆t : ConTm
+        _▸t : ConTm → ConTm
 
     module V where
     
         data Tm : ConTm → Set where
-          vz : ∀{Γ} → Tm (Γ ▸t)
-          vs : ∀{Γ} → Tm Γ → Tm (Γ ▸t)
+            vz : ∀{Γ} → Tm (Γ ▸t)
+            vs : ∀{Γ} → Tm Γ → Tm (Γ ▸t)
 
         -- Renaming
         data Sub : ConTm → ConTm → Set where
-          εt : ∀{Δt} → Sub Δt ◆t
-          _,t_ : ∀{Γt Δt} → Sub Δt Γt → Tm Δt → Sub Δt (Γt ▸t)
+            εt : ∀{Δt} → Sub Δt ◆t
+            _,t_ : ∀{Γt Δt} → Sub Δt Γt → Tm Δt → Sub Δt (Γt ▸t)
 
         mk,t= : ∀{Γ Δ t t'}{γ γ' : Sub Δ Γ} → γ ≡ γ' → t ≡ t' →  γ ,t t ≡ γ' ,t t'
         mk,t= refl refl = refl
@@ -92,8 +88,8 @@ module FirstOrderLogic.IntNegative.Syntax
     Tms : ConTm → ℕ → Set
 
     data Tm Γt where
-      var  : V.Tm Γt → Tm Γt
-      fun  : (n : ℕ) → funar n → Tms Γt n → Tm Γt
+        var  : V.Tm Γt → Tm Γt
+        fun  : (n : ℕ) → funar n → Tms Γt n → Tm Γt
     Tms Γt zero = 𝟙
     Tms Γt (suc n) = Tms Γt n × Tm Γt
 
@@ -104,8 +100,8 @@ module FirstOrderLogic.IntNegative.Syntax
     π₂ = proj₂
 
     data Subt : ConTm → ConTm → Set where
-      εt : ∀{Δt} → Subt Δt ◆t
-      _,t_ : ∀{Γt Δt} → Subt Δt Γt → Tm Δt → Subt Δt (Γt ▸t)
+        εt : ∀{Δt} → Subt Δt ◆t
+        _,t_ : ∀{Γt Δt} → Subt Δt Γt → Tm Δt → Subt Δt (Γt ▸t)
 
     ◆tη : {Γ : ConTm} (σ : Subt Γ ◆t) → σ ≡ εt
     ◆tη εt = refl
@@ -282,80 +278,80 @@ module FirstOrderLogic.IntNegative.Syntax
 
     I : Model funar relar _ _ _ _ _
     I = record
-      { Cont = ConTm
-      ; Subt = Subt
-      ; _∘t_ = λ γ -> _∘t_ γ
-      ; idt = idt
-      ; asst = ass
-      ; idlt = idl
-      ; idrt = idr
-      ; ◆t = ◆t
-      ; εt = εt
-      ; ◆tη = ◆tη
-      ; For = For
-      ; _[_]F = _[_]F
-      ; [∘]F = [∘]F
-      ; [id]F = [id]F
-      ; Tm = Tm
-      ; _[_]t = _[_]t
-      ; [∘]t = λ {Γ}{t} -> [∘]t {Γ}{t}
-      ; [id]t = [id]t
-      ; _▸t = _▸t
-      ; _,t_ = _,t_
-      ; pt = pt
-      ; qt = qt
-      ; ▸tβ₁ = ▸tβ₁
-      ; ▸tβ₂ = refl
-      ; ▸tη = ▸tη
-      ; Tms = Tms
-      ; _[_]ts = _[_]ts
-      ; [∘]ts = [∘]ts
-      ; [id]ts = [id]ts
-      ; εs = *
-      ; ◆sη = λ ts → refl
-      ; _,s_ = _,Σ_
-      ; π₁ = π₁
-      ; π₂ = π₂
-      ; ▸sβ₁ = refl
-      ; ▸sβ₂ = refl
-      ; ▸sη = refl
-      ; ,[] = refl
-      ; fun = fun
-      ; fun[] = refl
-      ; rel = rel
-      ; rel[] = refl
-      ; Conp = ConPf
-      ; _[_]C = λ γ -> _[_]C γ
-      ; [id]C = [id]C
-      ; [∘]C = [∘]C
-      ; Subp = Subp
-      ; _∘p_ = _∘p_
-      ; idp = idp
-      ; ◆p = ◆p
-      ; εp = εp
-      ; Pf = Pf
-      ; _[_]P = _[_]P
-      ; _[_]p = _[_]p
-      ; _▸p_ = _▸p_
-      ; _,p_ = λ γ -> _,p_ γ
-      ; pp = pp
-      ; qp = qp
-      ; ◆p[] = refl
-      ; ▸p[] = refl
-      ; ⊤ = ⊤
-      ; ⊤[] = refl
-      ; tt = tt
-      ; _⊃_ = _⊃_
-      ; ⊃[] = refl
-      ; ⊃intro = ⊃intro
-      ; ⊃elim = ⊃elim
-      ; _∧_ = _∧_
-      ; ∧[] = refl
-      ; ∧intro = ∧intro
-      ; ∧elim₁ = ∧elim₁
-      ; ∧elim₂ = ∧elim₂
-      ; ∀' = ∀'
-      ; ∀[] = refl
-      ; ∀intro = ∀intro
-      ; ∀elim = ∀elim
-      }  
+        { Cont = ConTm
+        ; Subt = Subt
+        ; _∘t_ = λ γ -> _∘t_ γ
+        ; idt = idt
+        ; asst = ass
+        ; idlt = idl
+        ; idrt = idr
+        ; ◆t = ◆t
+        ; εt = εt
+        ; ◆tη = ◆tη
+        ; For = For
+        ; _[_]F = _[_]F
+        ; [∘]F = [∘]F
+        ; [id]F = [id]F
+        ; Tm = Tm
+        ; _[_]t = _[_]t
+        ; [∘]t = λ {Γ}{t} -> [∘]t {Γ}{t}
+        ; [id]t = [id]t
+        ; _▸t = _▸t
+        ; _,t_ = _,t_
+        ; pt = pt
+        ; qt = qt
+        ; ▸tβ₁ = ▸tβ₁
+        ; ▸tβ₂ = refl
+        ; ▸tη = ▸tη
+        ; Tms = Tms
+        ; _[_]ts = _[_]ts
+        ; [∘]ts = [∘]ts
+        ; [id]ts = [id]ts
+        ; εs = *
+        ; ◆sη = λ ts → refl
+        ; _,s_ = _,Σ_
+        ; π₁ = π₁
+        ; π₂ = π₂
+        ; ▸sβ₁ = refl
+        ; ▸sβ₂ = refl
+        ; ▸sη = refl
+        ; ,[] = refl
+        ; fun = fun
+        ; fun[] = refl
+        ; rel = rel
+        ; rel[] = refl
+        ; Conp = ConPf
+        ; _[_]C = λ γ -> _[_]C γ
+        ; [id]C = [id]C
+        ; [∘]C = [∘]C
+        ; Subp = Subp
+        ; _∘p_ = _∘p_
+        ; idp = idp
+        ; ◆p = ◆p
+        ; εp = εp
+        ; Pf = Pf
+        ; _[_]P = _[_]P
+        ; _[_]p = _[_]p
+        ; _▸p_ = _▸p_
+        ; _,p_ = λ γ -> _,p_ γ
+        ; pp = pp
+        ; qp = qp
+        ; ◆p[] = refl
+        ; ▸p[] = refl
+        ; ⊤ = ⊤
+        ; ⊤[] = refl
+        ; tt = tt
+        ; _⊃_ = _⊃_
+        ; ⊃[] = refl
+        ; ⊃intro = ⊃intro
+        ; ⊃elim = ⊃elim
+        ; _∧_ = _∧_
+        ; ∧[] = refl
+        ; ∧intro = ∧intro
+        ; ∧elim₁ = ∧elim₁
+        ; ∧elim₂ = ∧elim₂
+        ; ∀' = ∀'
+        ; ∀[] = refl
+        ; ∀intro = ∀intro
+        ; ∀elim = ∀elim
+        }

@@ -1,5 +1,3 @@
-{-# OPTIONS --prop #-}
-
 open import lib
 
 module FirstOrderLogic.IntNegative.Model

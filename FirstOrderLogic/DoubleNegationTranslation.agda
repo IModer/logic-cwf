@@ -1,5 +1,3 @@
-{-# OPTIONS --prop #-}
-
 open import lib
 
 module FirstOrderLogic.DoubleNegationTranslation
@@ -11,10 +9,7 @@ module FirstOrderLogic.DoubleNegationTranslation
     open import FirstOrderLogic.IntFull.Syntax funar relar
     import FirstOrderLogic.Classical.Model as C
 
--- We give the translation as a function from the syntax of intuinistic logic to models of classical logic
-
--- Open the syntax of intuinistic logic
-
+-- We give the translation as a model construction from the syntax of intuinistic logic to models of classical logic
     DNT : C.Model funar relar lzero lzero lzero lzero lzero
     DNT = record
         { Con = Con

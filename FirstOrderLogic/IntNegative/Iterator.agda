@@ -1,5 +1,3 @@
-{-# OPTIONS --prop #-}
-
 open import lib
 
 module FirstOrderLogic.IntNegative.Iterator 
@@ -40,7 +38,6 @@ record Morphism{i j k l m i' j' k' l' m' : Level}(A : Model i j k l m)(B : Model
         ⟦,s⟧    : ∀{Γt n}{ts : M.Tms Γt n}{t : M.Tm Γt} -> ⟦ ts M.,s t ⟧Tms ≡ (⟦ ts ⟧Tms N.,s ⟦ t ⟧Tm) 
         ⟦π₁⟧    : ∀{Γt n}{ts : M.Tms Γt (suc n)} -> ⟦ M.π₁ ts ⟧Tms ≡ N.π₁ ⟦ ts ⟧Tms
         ⟦π₂⟧    : ∀{Γt n}{ts : M.Tms Γt (suc n)} -> ⟦ M.π₂ ts ⟧Tm  ≡ N.π₂ ⟦ ts ⟧Tms
-        -- fun rel
 
         ⟦fun⟧ : ∀{Γt n a}{ts : M.Tms Γt n} -> ⟦ M.fun n a ts ⟧Tm  ≡ N.fun n a ⟦ ts ⟧Tms
         ⟦rel⟧ : ∀{Γt n a}{ts : M.Tms Γt n} -> ⟦ M.rel n a ts ⟧For ≡ N.rel n a ⟦ ts ⟧Tms
@@ -169,38 +166,38 @@ module Ite
 
     Ite : Morphism I M
     Ite = record
-      { ⟦_⟧Cont = ⟦_⟧Cont
-      ; ⟦_⟧Subt = ⟦_⟧Subt
-      ; ⟦_⟧For = ⟦_⟧For
-      ; ⟦_⟧Tm = ⟦_⟧Tm
-      ; ⟦_⟧Tms = ⟦_⟧Tms
-      ; ⟦_⟧Conp = ⟦_⟧Conp
-      ; ⟦_⟧Subp = ⟦_⟧Subp
-      ; ⟦_⟧Pf = ⟦_⟧Pf
-      ; ⟦◆t⟧ = refl
-      ; ⟦▸t⟧ = refl
-      ; ⟦idt⟧ = λ {Γt} -> ⟦idt⟧ {Γt}
-      ; ⟦∘t⟧ = λ {Γt}{Δt}{Θt}{γt}{δt} -> ⟦∘t⟧ {Γt}{Δt}{Θt}{γt}{δt}
-      ; ⟦εt⟧ = sym transport-refl
-      ; ⟦[]F⟧ = λ {Γt}{Δt}{K}{γt} -> ⟦[]F⟧ {Γt}{Δt}{K}{γt}
-      ; ⟦[]t⟧ = λ {Γt}{Δt}{t}{γt} -> ⟦[]t⟧ {Γt}{Δt}{t}{γt}
-      ; ⟦,t⟧ = sym transport-refl 
-      ; ⟦pt⟧ = λ {Γt} -> trans (⟦pt⟧ {Γt}) (sym transport-refl)
-      ; ⟦qt⟧ = sym transport-refl
-      ; ⟦[]ts⟧ = λ {Γt}{Δt}{n}{γt} -> ⟦[]ts⟧ {Γt}{Δt}{n}{γt}
-      ; ⟦εs⟧ = refl
-      ; ⟦,s⟧ = refl
-      ; ⟦π₁⟧ = λ {Γt}{n}{ts} -> ⟦π₁⟧ {Γt}{n}{ts}
-      ; ⟦π₂⟧ = λ {Γt}{n}{ts} -> ⟦π₂⟧ {Γt}{n}{ts}
-      ; ⟦fun⟧ = refl
-      ; ⟦rel⟧ = refl
-      ; ⟦◆p⟧ = refl
-      ; ⟦▸p⟧ = refl
-      ; ⟦[]C⟧ = λ {Γt}{Δt}{Γ}{γt} -> ⟦[]C⟧ {Γt}{Δt}{Γ}{γt}
-      ; ⟦⊤⟧ = refl
-      ; ⟦⊃⟧ = refl
-      ; ⟦∧⟧ = refl
-      ; ⟦∀⟧ = cong M.∀' (sym transport-refl)
-      }
+        { ⟦_⟧Cont = ⟦_⟧Cont
+        ; ⟦_⟧Subt = ⟦_⟧Subt
+        ; ⟦_⟧For = ⟦_⟧For
+        ; ⟦_⟧Tm = ⟦_⟧Tm
+        ; ⟦_⟧Tms = ⟦_⟧Tms
+        ; ⟦_⟧Conp = ⟦_⟧Conp
+        ; ⟦_⟧Subp = ⟦_⟧Subp
+        ; ⟦_⟧Pf = ⟦_⟧Pf
+        ; ⟦◆t⟧ = refl
+        ; ⟦▸t⟧ = refl
+        ; ⟦idt⟧ = λ {Γt} -> ⟦idt⟧ {Γt}
+        ; ⟦∘t⟧ = λ {Γt}{Δt}{Θt}{γt}{δt} -> ⟦∘t⟧ {Γt}{Δt}{Θt}{γt}{δt}
+        ; ⟦εt⟧ = sym transport-refl
+        ; ⟦[]F⟧ = λ {Γt}{Δt}{K}{γt} -> ⟦[]F⟧ {Γt}{Δt}{K}{γt}
+        ; ⟦[]t⟧ = λ {Γt}{Δt}{t}{γt} -> ⟦[]t⟧ {Γt}{Δt}{t}{γt}
+        ; ⟦,t⟧ = sym transport-refl 
+        ; ⟦pt⟧ = λ {Γt} -> trans (⟦pt⟧ {Γt}) (sym transport-refl)
+        ; ⟦qt⟧ = sym transport-refl
+        ; ⟦[]ts⟧ = λ {Γt}{Δt}{n}{γt} -> ⟦[]ts⟧ {Γt}{Δt}{n}{γt}
+        ; ⟦εs⟧ = refl
+        ; ⟦,s⟧ = refl
+        ; ⟦π₁⟧ = λ {Γt}{n}{ts} -> ⟦π₁⟧ {Γt}{n}{ts}
+        ; ⟦π₂⟧ = λ {Γt}{n}{ts} -> ⟦π₂⟧ {Γt}{n}{ts}
+        ; ⟦fun⟧ = refl
+        ; ⟦rel⟧ = refl
+        ; ⟦◆p⟧ = refl
+        ; ⟦▸p⟧ = refl
+        ; ⟦[]C⟧ = λ {Γt}{Δt}{Γ}{γt} -> ⟦[]C⟧ {Γt}{Δt}{Γ}{γt}
+        ; ⟦⊤⟧ = refl
+        ; ⟦⊃⟧ = refl
+        ; ⟦∧⟧ = refl
+        ; ⟦∀⟧ = cong M.∀' (sym transport-refl)
+        }
     
       
