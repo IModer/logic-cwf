@@ -1,6 +1,6 @@
 # First order logic formalization in Agda in the CwF style
 
-We present FOL as an algebraic theory (first and second-order). We show some examples working in the second-order version where its convenient to use meta level variables. We use the translation of Kaposi and Xie [^1] to translate the second-order presentation into a first-order one. We also give the double-negation translation [^2] [^3] [^4] in the first-order presentation and show some common models of FOL. We prove completeness for Beth models and Kripke models.
+We present FOL as an algebraic theory (first and second-order). We show some examples working in the second-order version where its convenient to use meta level variables. We use the translation of Kaposi and Xie to translate the second-order presentation into a first-order one [^1]. We also give the double-negation translation in the first-order presentation and show some common models of FOL [^2] [^3]. We prove completeness for Beth models and Kripke models.
 
 ## Outline
 
@@ -52,10 +52,6 @@ sheaf.org : Notes on sheafs
 
 ## Citations and related work
 
-[^1] : Ambrus Kaposi, Szumi Xie, [Second-Order Generalised Algebraic Theories: Signatures and First-Order Semantics](https://drops.dagstuhl.de/storage/00lipics/lipics-vol299-fscd2024/LIPIcs.FSCD.2024.10/LIPIcs.FSCD.2024.10.pdf)
-
-[^2] :  Richard Moot, Christian Retoré, [Classical logic and intuitionistic logic: equivalent formulations in natural deduction](https://hal-lirmm.ccsd.cnrs.fr/lirmm-01281243)
-
-[^3] : Gilda Ferreira, Paulo Oliva, [On Various Negative Translations](https://doi.org/10.48550/arXiv.1101.5442)
-
-[^5] : Pierre Marie Pedrot, [Debunking sheafs](https://www.xn--pdrot-bsa.fr/drafts/sheaftt.pdf)
+[^1]: Ambrus Kaposi, Szumi Xie, [Second-Order Generalised Algebraic Theories: Signatures and First-Order Semantics](https://drops.dagstuhl.de/storage/00lipics/lipics-vol299-fscd2024/LIPIcs.FSCD.2024.10/LIPIcs.FSCD.2024.10.pdf).
+[^2]:  Richard Moot, Christian Retoré, [Classical logic and intuitionistic logic: equivalent formulations in natural deduction](https://hal-lirmm.ccsd.cnrs.fr/lirmm-01281243).
+[^3]: Gilda Ferreira, Paulo Oliva, [On Various Negative Translations](https://doi.org/10.48550/arXiv.1101.5442).

@@ -18,20 +18,20 @@ module FirstOrderLogic.IntFullSplit.Syntax
     -- Contexts for terms
     -- ConTm ≅ ℕ
     data ConTm : Set where
-      ◆t : ConTm
-      _▸t : ConTm → ConTm
+        ◆t : ConTm
+        _▸t : ConTm → ConTm
 
     module V where
     
         --De Bruijn indicies
         data Tm : ConTm → Set where
-          vz : ∀{Γ} → Tm (Γ ▸t)
-          vs : ∀{Γ} → Tm Γ → Tm (Γ ▸t)
+            vz : ∀{Γ} → Tm (Γ ▸t)
+            vs : ∀{Γ} → Tm Γ → Tm (Γ ▸t)
 
         -- Renaming
         data Sub : ConTm → ConTm → Set where
-          εt : ∀{Δt} → Sub Δt ◆t
-          _,t_ : ∀{Γt Δt} → Sub Δt Γt → Tm Δt → Sub Δt (Γt ▸t)
+            εt : ∀{Δt} → Sub Δt ◆t
+            _,t_ : ∀{Γt Δt} → Sub Δt Γt → Tm Δt → Sub Δt (Γt ▸t)
 
         mk,t= : ∀{Γ Δ t t'}{γ γ' : Sub Δ Γ} → γ ≡ γ' → t ≡ t' →  γ ,t t ≡ γ' ,t t'
         mk,t= refl refl = refl
@@ -87,8 +87,8 @@ module FirstOrderLogic.IntFullSplit.Syntax
     Tms : ConTm → ℕ → Set
 
     data Tm Γt where
-      var  : V.Tm Γt → Tm Γt
-      fun  : (n : ℕ) → funar n → Tms Γt n → Tm Γt
+        var  : V.Tm Γt → Tm Γt
+        fun  : (n : ℕ) → funar n → Tms Γt n → Tm Γt
     Tms Γt zero = 𝟙
     Tms Γt (suc n) = Tms Γt n × Tm Γt
 
