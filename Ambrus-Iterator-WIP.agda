@@ -1,4 +1,7 @@
-{-# OPTIONS --prop --rewriting #-}
+-- This is an attempt at writing the iterator for the non-split notion of model, very transport heavy
+-- by Kaposi Ambrus
+
+{-# OPTIONS --rewriting #-}
 
 open import Agda.Primitive
 open import Lib

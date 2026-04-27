@@ -36,3 +36,31 @@ import FirstOrderLogic.IntNegative.KripkeModel
 import FirstOrderLogic.DoubleNegationTranslation
 
 -- Propositional logic
+
+-- Full Intuitionistic
+import PropositionalLogic.IntFull.Model
+import PropositionalLogic.IntFull.Iterator
+import PropositionalLogic.IntFull.Syntax
+
+-- Models and Beth completeness
+import PropositionalLogic.IntFull.TarskiModel
+import PropositionalLogic.IntFull.FamModel
+import PropositionalLogic.IntFull.BoolModel
+import PropositionalLogic.IntFull.KripkeModel
+import PropositionalLogic.IntFull.BethModel
+
+import PropositionalLogic.IntFull.Examples
+
+-- Negative Intuitionistic
+import PropositionalLogic.IntNegative.Model
+import PropositionalLogic.IntNegative.Iterator
+import PropositionalLogic.IntNegative.Syntax
+
+-- Models and Kripke completeness
+import PropositionalLogic.IntNegative.KripkeModel
+
+-- Full Classical
+import PropositionalLogic.Classical.Model
+import PropositionalLogic.Classical.Iterator
+import PropositionalLogic.Classical.Syntax
+import PropositionalLogic.Classical.BoolModel

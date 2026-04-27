@@ -1,19 +1,35 @@
-{-# OPTIONS --prop #-}
-
+open import lib
+open import PropositionalLogic.Classical.Model
 
 module PropositionalLogic.Classical.Syntax
     (Atom : Set)
     where
 
-open import lib
-open import PropositionalLogic.Classical.Model
-open import PropositionalLogic.IntFull.Syntax Atom renaming (IM to IMI) hiding (Pf; Sub)
-open import PropositionalLogic.IntFull.Model renaming (Model to ModelI)
-
-
 -- Initial model or Syntax
+
+infixl 5 _▸_
+infixl 5 _,_
+infixr 5 _⊃_
+infixr 7 _∘_
+infixr 6 _∨_
+infixr 7 _∧_
+
+data For : Set where
+    ⊥ : For
+    ⊤ : For
+    _⊃_     : For → For → For
+    _∧_     : For → For → For
+    _∨_     : For → For → For
+    atom : Atom → For
+
+data Con : Set where
+    ◆ : Con
+    _▸_ : Con → For → Con 
+
+data Pf : Con → For → Prop
 data Sub : Con → Con → Prop
-data Pf : Con → For → Prop where
+
+data Pf where    
     _[_] : ∀{Γ K} → Pf Γ K → ∀{Δ} → (γ : Sub Δ Γ) → Pf Δ K
     q    : ∀{Γ K} → Pf  (Γ ▸ K) K
     exfalso : ∀{Γ K} → Pf Γ ⊥ → Pf Γ K
@@ -29,7 +45,8 @@ data Pf : Con → For → Prop where
     ∨intro₁ : ∀{Γ K L} → Pf Γ K → Pf Γ (K ∨ L) 
     ∨intro₂ : ∀{Γ K L} → Pf Γ L → Pf Γ (K ∨ L)
     ∨elim   : ∀{Γ K L C} → Pf (Γ ▸ K) C → Pf (Γ ▸ L) C → Pf Γ (K ∨ L) → Pf Γ C
-    dne   : {Γ : Con}{A : For} → Pf Γ (((A ⊃ ⊥) ⊃ ⊥) ⊃ A)
+
+    lem : ∀{Γ} -> (A : For) -> Pf Γ (A ∨ (A ⊃ ⊥))
 
 data Sub where
     ε : ∀{Γ} → Sub Γ ◆
@@ -39,8 +56,7 @@ data Sub where
     _∘_ : ∀{Γ Δ Θ} → Sub Δ Γ → Sub Θ Δ → Sub Θ Γ
 
 IM : Model Atom lzero lzero lzero lzero
-IM = record { super =
-    record
+IM = record
     { Con = Con
     ; Sub = Sub
     ; _∘_ = _∘_
@@ -51,7 +67,7 @@ IM = record { super =
     ; Pf = Pf
     ; _[_] = _[_]
     ; _▸_ = _▸_
-    ; _,_ = λ γ x → γ , x
+    ; _,_ = λ γ x → (γ , x)
     ; p = p
     ; q = q
     ; ⊥ = ⊥
@@ -69,5 +85,7 @@ IM = record { super =
     ; ∨intro₁ = ∨intro₁
     ; ∨intro₂ = ∨intro₂
     ; ∨elim = ∨elim
-    ; atom = atom}
-    ; dne = dne }
+    ; atom = atom
+    ; lem = lem
+    }
+ 

@@ -1,4 +1,6 @@
-{-# OPTIONS --without-K --prop --hidden-argument-puns #-}
+-- Completeness of Beth models for propositional logic by Szumi Xie 
+
+{-# OPTIONS --without-K --hidden-argument-puns #-}
 
 module PropositionalBeth (Atom : Set) where
 

@@ -1,3 +1,5 @@
+-- Notes on Sheafs/unfolding Pierre-Marie's definition
+
 Some parts of the presheaf model:
 
 -- Some category

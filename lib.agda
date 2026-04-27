@@ -1,5 +1,3 @@
-{-# OPTIONS --prop #-}
-
 module lib where
 
 open import Agda.Primitive public
@@ -113,7 +111,6 @@ ind+ : ∀{i j k}{A : Set i}{B : Set j}(C : A + B → Set k) →
 ind+ C u v (inj₁ x) = u x
 ind+ C u v (inj₂ y) = v y
 
-
 data ∃ {i}{j}(A : Set i)(B : A → Prop j) : Prop (i ⊔ j) where
   _,∃_ : (a : A) → B a → ∃ A B
 
@@ -143,7 +140,6 @@ if false then a else b = b
 ifₚ_then_else_ : ∀{i}{A : Prop i} → Bool → A → A → A
 ifₚ true then a else b = a
 ifₚ false then a else b = b
-
 
 indBool : ∀{i}{B : Bool → Set i} → B true → B false → ((b : Bool) → B b)
 indBool x x₁ true = x
@@ -181,12 +177,11 @@ eqP (x ≡≡ y) = refl
 eqP (x ∎∎) = refl
 
 postulate
-  transport  : ∀ {i j} {A : Set i}(P : A → Set j){x y : A} → x ≡ y → P x → P y
-  --transportP : ∀ {i j} {A : Prop i}(P : A → Set j){x y : A} -> P x -> P y
+  transport  : ∀ {i j} {A : Set i}(P : A → Set j){x y : A} → x ≡ y → P x → P y  
   transport-refl : ∀ {i j} {A : Set i}{P : A → Set j}{x : A}{px : P x} → transport P refl px ≡ px
   -- {-# REWRITE transport-refl #-}
 
-  -- funext A A' B B' 
+  -- funext A A' B B'
   funext      : ∀{i j}{A : Set i }{B : A → Set j}{f g : (a : A) → B a} → (∀(x : A) → f x   ≡ g x) → f ≡ g
   funextp     : ∀{i j}{A : Prop i}{B : A → Set j}{f g : (a : A) → B a} → (∀(x : A) → f x   ≡ g x) → f ≡ g
   funext-imp  : ∀{i j}{A : Set i }{B : A → Set j}{f g : {a : A} → B a} → (∀{x} ->    f {x} ≡ g {x}) → (λ {x} → f {x}) ≡ (λ {x} → g {x})
@@ -241,47 +236,3 @@ data Squash {ℓ} (A : Set ℓ) : Prop ℓ where
 
 squash-elim : ∀ {ℓ₁ ℓ₂} (A : Set ℓ₁) (P : Prop ℓ₂) → (A → P) → Squash A → P
 squash-elim A P f (squash x) = f x
-
-postulate
-  unsquash :  ∀ {ℓ₁}{A : Set ℓ₁} -> Squash A -> A
-
-module Extra where
-
-  record Preord{i j} : Set (lsuc (i ⊔ j)) where
-    field
-      C : Set i
-      _≥_  : C → C → Prop j
-      id≥  : {c : C} → c ≥ c
-      _∘≥_ : {a c b : C} → b ≥ c → a ≥ b → a ≥ c
-  --open Preord
-
-  record Psh{i j k}(P : Preord {i}{j}) : Set (lsuc (i ⊔ j ⊔ k)) where
-    open Preord P
-    
-    field
-      Γ     : C → Set k
-      _⟨_⟩   : {J I : C} → Γ I → J ≥ I → Γ J
-      ⟨∘≥⟩   : {K J I : C}{γ : Γ I}{f : J ≥ I}{g : K ≥ J} → γ ⟨ f ∘≥ g ⟩ ≡ (γ ⟨ f ⟩) ⟨ g ⟩
-      ⟨id≥⟩  : {I : C}{γ : Γ I} → γ ⟨ id≥ ⟩ ≡ γ
-
-  --record DepPshProp{i j k}(P : Preord {i}{j})(Ps : Psh {i}{j}{k} P) : Set (lsuc (i ⊔ j ⊔ k)) where
-  --  open Preord P
-  --  open Psh Ps
-  --
-  --  field
-  --    A     : (I : C) → Γ I → Prop k
-  --    _⟨_⟩   : {! A I γ  !} -- {J I : C} → A Γ I → J ≥ I → Γ J
-
-  record NatTrans
-    {i j k}
-    (P : Preord {i}{j})
-    (PshΔ : Psh {i}{j}{k} P)
-    (PshΓ : Psh {i}{j}{k} P) : Set (lsuc (i ⊔ j ⊔ k)) where
-    
-    open Preord P
-    open Psh PshΔ renaming (Γ to Δ; _⟨_⟩ to _⟨_⟩Δ)
-    open Psh PshΓ renaming (_⟨_⟩ to _⟨_⟩Γ)
-
-    field
-      γ : {I : C} → Δ I → Γ I
-      comm : {I J : C}{δ : Δ I}{f : J ≥ I} → (γ δ) ⟨ f ⟩Γ ≡ γ (δ ⟨ f ⟩Δ)
