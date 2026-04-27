@@ -1,11 +1,7 @@
-{-# OPTIONS --prop #-}
-
 open import FirstOrderLogic.IntFullSplit.Model
 open import lib
 
--- We give the initial model of FOLClassicMinimal
--- We give it as a normal form, meaning its a inductive
--- datatype but we can prove it satisfies the equations
+-- We give the initial model of InfFullSplit
 module FirstOrderLogic.IntFullSplit.Syntax
     (funar : ℕ → Set)
     (relar : ℕ → Set)
@@ -18,11 +14,6 @@ module FirstOrderLogic.IntFullSplit.Syntax
     infixr 6 _⊃_
     infixr 7 _∧_ _∨_
     infixl 6 _$_
-
-    -- We give the context in two different parts, a context of Tm-s and a context of Pf variable
-    -- Then out context will be Con = Σ ConTm ConPf
-    -- Along the way we prove all the ass,id, and β,η laws
-
 
     -- Contexts for terms
     -- ConTm ≅ ℕ
@@ -58,7 +49,6 @@ module FirstOrderLogic.IntFullSplit.Syntax
         [∘] {t = vz} {γ = γ ,t x} = refl
         [∘] {t = vs t} {γ = γ ,t x} = [∘] {t = t}
 
-        -- Pattern match on Subs
         ass : ∀{Γ Δ}{γ : Sub Δ Γ}{Θ}{δ : Sub Θ Δ}{Ξ}{θ : Sub Ξ Θ} → (γ ∘ δ) ∘ θ ≡ γ ∘ (δ ∘ θ)
         ass {γ = εt} = refl
         ass {γ = γ ,t x} = mk,t= ass (sym ([∘] {t = x}))
@@ -93,8 +83,6 @@ module FirstOrderLogic.IntFullSplit.Syntax
 
     open V using (vz; vs)
 
-    -- Because we use Tms in our notion of model we have to define Tms and Tm mutually inductively
-    -- This is one of the "negatives" of using Tms but this is also the case for substitutions in Tm and Tm ^ n
     data Tm (Γt : ConTm) : Set
     Tms : ConTm → ℕ → Set
 
@@ -109,9 +97,6 @@ module FirstOrderLogic.IntFullSplit.Syntax
     
     π₂     : ∀{Γ n} → Tms Γ (suc n) → Tm Γ
     π₂ = proj₂
-    --data Tm (Γt : ConTm) : Set where
-    --  var  : V.Tm Γt → Tm Γt
-    --  fun  : (n : ℕ) → funar n → Tm Γt ^ n → Tm Γt
 
     data Subt : ConTm → ConTm → Set where
       εt : ∀{Δt} → Subt Δt ◆t
@@ -127,14 +112,6 @@ module FirstOrderLogic.IntFullSplit.Syntax
     _[_]v : ∀{Γt Δt} → V.Tm Γt → Subt Δt Γt → Tm Δt
     vz [ γ ,t t ]v = t
     vs x [ γ ,t t ]v = x [ γ ]v
-
-    -- Substitution on terms and Tm ^ n
-    --_[_]ts : ∀{Γt n} → Tm Γt ^ n → ∀{Δt} → Subt Δt Γt → Tm Δt ^ n
-    --_[_]t  : ∀{Γt} → Tm Γt → ∀{Δt} → Subt Δt Γt → Tm Δt
-    --_[_]ts {n = zero} _ _ = *
-    --_[_]ts {n = suc n} (t ,Σ ts) γ = (t [ γ ]t) ,Σ (ts [ γ ]ts)
-    --var x [ γ ]t = x [ γ ]v
-    --(fun n a ts) [ γ ]t  = fun n a (ts [ γ ]ts)
 
     -- Substitution on terms
     _[_]t  : ∀{Γt} → Tm Γt → ∀{Δt} → Subt Δt Γt → Tm Δt
@@ -321,12 +298,6 @@ module FirstOrderLogic.IntFullSplit.Syntax
             Pf {Γt ▸t} (Γp [ pt ]C) K → 
             -----------------------------
             Pf {Γt} Γp (∀' K)
-        {-
-        un∀ : ∀{Γt}{K Γp} → 
-            Pf Γp (∀' K) → (t : Tm Γt) → 
-            -----------------------------
-                Pf Γp (K [ idt ,t t ]F)
-        -}
 
         ∀elim : ∀{Γ K Γp} → Pf {Γ} Γp (∀' K) → Pf {Γ ▸t} (Γp [ pt ]C) K
     
@@ -336,36 +307,13 @@ module FirstOrderLogic.IntFullSplit.Syntax
             ------------------------------------------
             Pf Γp (∃' K)
 
-        -- ∃intro : ∃ (t : Tm) (Pf (K t))  -> Pf ∃' K
-        -- ∃intro : (t : Tm) -> (Pf (K t)) -> Pf ∃' K
-        -- ∃elim  : Pf ∃' K -> ∃ (t : Tm) (Pf (K t))
-        -- ∃elim  : Pf ∃' K -> (∃ (t : Tm) (Pf (K t)) -> Pf C) -> Pf C
-        -- ∃elim  : Pf ∃' K -> ((t : Tm) -> (Pf (K t)) -> Pf C) -> Pf C
-
-        ∃elim  : ∀{Γt}{K : For (Γt ▸t)}{Γp : ConPf Γt}{L : For Γt} ->
-          Pf Γp (∃' K) -> Pf ((Γp [ pt ]C) ▸p K [ pt ,t qt ]F) (L [ pt ]F) -> Pf Γp L
-        -- ∃elim  : ∀{Γt : ConTm}{K : For (Γt ▸t)}{Γp : ConPf Γt} -> 
-        --    Pf Γp (∃' K) -> {!   !}
-            {-
-            ∀{Γt : ConTm}{K : For (Γt ▸t)}{Γp : ConPf Γt}{Γp' : ConPf (Γt ▸t)}{L : For Γt} → 
-            Pf Γp (∃' K) → Pf (Γp' ▸p (K [ idt ,t qt ]F)) (L ) {-Pf (Γ ▸p K [ idt ,t qt ]F) L-} -> 
-            ------------------------------------------
-            Pf Γp L
-            -} 
-
-          {-
-          ∀{Γt : ConTm}{K : For (Γt ▸t)}{L : For Γt}{Γp : ConPf Γt} → 
-            Pf Γp (∃' K) → Pf {!   !} L → 
-            ---------------------------------------------
-                        Pf Γp L
-          -}
+        ∃elim  : ∀{Γt}{K : For (Γt ▸t)}{Γp : ConPf Γt}{L : For Γt} -> Pf Γp (∃' K) -> Pf ((Γp [ pt ]C) ▸p K [ pt ,t qt ]F) (L [ pt ]F) -> Pf Γp L
         
         ref  : ∀{Γt}{a}{Γp : ConPf Γt} → Pf Γp (Eq a a)
         subst' : ∀{Γt}(K : For (Γt ▸t)){t t' : Tm Γt}{Γp} → Pf Γp (Eq t t') → Pf Γp (K [ idt ,t t ]F) → Pf Γp (K [ idt ,t t' ]F)
         _[_]p : ∀{Γt}{K}{Γp : ConPf Γt} → Pf Γp K → ∀{Δt : ConTm} → (γ : Subt Δt Γt) → Pf (Γp [ γ ]C) (K [ γ ]F)
         _[_]P : ∀{Γt}{Γp : ConPf Γt}{K : For Γt} → Pf Γp K → ∀{Γp'} → Subp Γp' Γp → Pf Γp' K
         qp : ∀{Γt}{Γp : ConPf Γt}{K : For Γt} → Pf (Γp ▸p K) K
-
 
     _[_]s : ∀{Γt}{Δt}{Γp Γp' : ConPf Γt} → Subp Γp' Γp → (γ : Subt Δt Γt) → Subp (Γp' [ γ ]C) (Γp [ γ ]C)
     εp [ γ ]s = εp
@@ -376,13 +324,6 @@ module FirstOrderLogic.IntFullSplit.Syntax
 
     ⊃elim : ∀{Γ K L}{Γp : ConPf Γ} → Pf Γp (K ⊃ L) → Pf (Γp ▸p K) L
     ⊃elim m = (m [ pp ]P) $ qp
-
-    {-
-    ∀elim : ∀{Γ K Γp} → Pf {Γ} Γp (∀' K) → Pf {Γ ▸t} (Γp [ pt ]C) K
-    ∀elim {K = K}{Γp} k = substp (Pf (Γp [ pt ]C))
-        (trans (trans (sym [∘]F) (cong (λ z → K [ z ,t var vz ]F) (trans ass (trans (cong (pt ∘t_) ▸tβ₁) idr)))) [id]F)
-        (un∀ (k [ pt ]p) (var vz))
-    -}
 
     -- ∀x P ∧ ∀x Q -> ∀ x (P ∧ Q)
     example1F : (P Q : For (◆t ▸t)) -> For ◆t
@@ -415,9 +356,9 @@ module FirstOrderLogic.IntFullSplit.Syntax
     -- ∃intro {◆t} {P} {◆p ▸p ∃' (P ∧ Q)} {!   !} {!   !}
     example3P : (P Q : For (◆t ▸t)) -> Pf (◆p) (example3F P Q)
     example3P P Q = ⊃intro (∃elim qp 
-      (∧intro 
-        (∃intro qt (substp (Pf _) [∘]F (∧elim₁ qp))) 
-        (∃intro qt (substp (Pf _) [∘]F (∧elim₂ qp)))))
+        (∧intro 
+            (∃intro qt (substp (Pf _) [∘]F (∧elim₁ qp))) 
+            (∃intro qt (substp (Pf _) [∘]F (∧elim₂ qp)))))
 
     ◆p[] : ∀{Γt Δt}{γt : Subt Δt Γt} -> ◆p [ γt ]C ≡ ◆p
     ◆p[] = refl
@@ -427,96 +368,96 @@ module FirstOrderLogic.IntFullSplit.Syntax
 
     I : Model funar relar _ _ _ _ _
     I = record
-      { Cont = ConTm
-      ; Subt = Subt
-      ; _∘t_ = λ γ -> _∘t_ γ
-      ; idt = idt
-      ; asst = ass
-      ; idlt = idl
-      ; idrt = idr
-      ; ◆t = ◆t
-      ; εt = εt
-      ; ◆tη = ◆tη
-      ; For = For
-      ; _[_]F = _[_]F
-      ; [∘]F = [∘]F
-      ; [id]F = [id]F
-      ; Tm = Tm
-      ; _[_]t = _[_]t
-      ; [∘]t = λ {Γ}{t} -> [∘]t {Γ}{t}
-      ; [id]t = [id]t
-      ; _▸t = _▸t
-      ; _,t_ = _,t_
-      ; pt = pt
-      ; qt = qt
-      ; ▸tβ₁ = ▸tβ₁
-      ; ▸tβ₂ = refl
-      ; ▸tη = ▸tη
-      ; Tms = Tms
-      ; _[_]ts = _[_]ts
-      ; [∘]ts = [∘]ts
-      ; [id]ts = [id]ts
-      ; εs = *
-      ; ◆sη = λ ts → refl
-      ; _,s_ = _,Σ_
-      ; π₁ = π₁
-      ; π₂ = π₂
-      ; ▸sβ₁ = refl
-      ; ▸sβ₂ = refl
-      ; ▸sη = refl
-      ; ,[] = refl
-      ; fun = fun
-      ; fun[] = refl
-      ; rel = rel
-      ; rel[] = rel[]
-      ; Conp = ConPf
-      ; _[_]C = λ γ -> _[_]C γ
-      ; [id]C = [id]C
-      ; [∘]C = [∘]C
-      ; Subp = Subp
-      ; _∘p_ = _∘p_
-      ; idp = idp
-      ; ◆p = ◆p
-      ; εp = εp
-      ; Pf = Pf
-      ; _[_]P = _[_]P
-      ; _[_]p = _[_]p
-      ; _▸p_ = _▸p_
-      ; _,p_ = λ γ -> _,p_ γ
-      ; pp = pp
-      ; qp = qp
-      ; ◆p[] = λ {Γt}{Δt}{γt} -> ◆p[] {Γt}{Δt}{γt}
-      ; ▸p[] = ▸p[]
-      ; ⊥ = ⊥
-      ; ⊥[] = refl
-      ; exfalso = exfalso
-      ; ⊤ = ⊤
-      ; ⊤[] = refl
-      ; tt = tt
-      ; _⊃_ = _⊃_
-      ; ⊃[] = refl
-      ; ⊃intro = ⊃intro
-      ; ⊃elim = ⊃elim
-      ; _∧_ = _∧_
-      ; ∧[] = refl
-      ; ∧intro = ∧intro
-      ; ∧elim₁ = ∧elim₁
-      ; ∧elim₂ = ∧elim₂
-      ; _∨_ = _∨_
-      ; ∨[] = ∨[]
-      ; ∨elim = ∨elim
-      ; ∨intro₁ = ∨intro₁
-      ; ∨intro₂ = ∨intro₂
-      ; ∀' = ∀'
-      ; ∀[] = refl
-      ; ∀intro = ∀intro
-      ; ∀elim = ∀elim
-      ; ∃' = ∃'
-      ; ∃[] = refl
-      ; ∃intro = λ t -> ∃intro t
-      ; ∃elim = ∃elim
-      ; Eq = Eq
-      ; Eq[] = refl
-      ; Eqrefl = ref
-      ; subst' = subst'
-      }  
+        { Cont = ConTm
+        ; Subt = Subt
+        ; _∘t_ = λ γ -> _∘t_ γ
+        ; idt = idt
+        ; asst = ass
+        ; idlt = idl
+        ; idrt = idr
+        ; ◆t = ◆t
+        ; εt = εt
+        ; ◆tη = ◆tη
+        ; For = For
+        ; _[_]F = _[_]F
+        ; [∘]F = [∘]F
+        ; [id]F = [id]F
+        ; Tm = Tm
+        ; _[_]t = _[_]t
+        ; [∘]t = λ {Γ}{t} -> [∘]t {Γ}{t}
+        ; [id]t = [id]t
+        ; _▸t = _▸t
+        ; _,t_ = _,t_
+        ; pt = pt
+        ; qt = qt
+        ; ▸tβ₁ = ▸tβ₁
+        ; ▸tβ₂ = refl
+        ; ▸tη = ▸tη
+        ; Tms = Tms
+        ; _[_]ts = _[_]ts
+        ; [∘]ts = [∘]ts
+        ; [id]ts = [id]ts
+        ; εs = *
+        ; ◆sη = λ ts → refl
+        ; _,s_ = _,Σ_
+        ; π₁ = π₁
+        ; π₂ = π₂
+        ; ▸sβ₁ = refl
+        ; ▸sβ₂ = refl
+        ; ▸sη = refl
+        ; ,[] = refl
+        ; fun = fun
+        ; fun[] = refl
+        ; rel = rel
+        ; rel[] = rel[]
+        ; Conp = ConPf
+        ; _[_]C = λ γ -> _[_]C γ
+        ; [id]C = [id]C
+        ; [∘]C = [∘]C
+        ; Subp = Subp
+        ; _∘p_ = _∘p_
+        ; idp = idp
+        ; ◆p = ◆p
+        ; εp = εp
+        ; Pf = Pf
+        ; _[_]P = _[_]P
+        ; _[_]p = _[_]p
+        ; _▸p_ = _▸p_
+        ; _,p_ = λ γ -> _,p_ γ
+        ; pp = pp
+        ; qp = qp
+        ; ◆p[] = λ {Γt}{Δt}{γt} -> ◆p[] {Γt}{Δt}{γt}
+        ; ▸p[] = ▸p[]
+        ; ⊥ = ⊥
+        ; ⊥[] = refl
+        ; exfalso = exfalso
+        ; ⊤ = ⊤
+        ; ⊤[] = refl
+        ; tt = tt
+        ; _⊃_ = _⊃_
+        ; ⊃[] = refl
+        ; ⊃intro = ⊃intro
+        ; ⊃elim = ⊃elim
+        ; _∧_ = _∧_
+        ; ∧[] = refl
+        ; ∧intro = ∧intro
+        ; ∧elim₁ = ∧elim₁
+        ; ∧elim₂ = ∧elim₂
+        ; _∨_ = _∨_
+        ; ∨[] = ∨[]
+        ; ∨elim = ∨elim
+        ; ∨intro₁ = ∨intro₁
+        ; ∨intro₂ = ∨intro₂
+        ; ∀' = ∀'
+        ; ∀[] = refl
+        ; ∀intro = ∀intro
+        ; ∀elim = ∀elim
+        ; ∃' = ∃'
+        ; ∃[] = refl
+        ; ∃intro = λ t -> ∃intro t
+        ; ∃elim = ∃elim
+        ; Eq = Eq
+        ; Eq[] = refl
+        ; Eqrefl = ref
+        ; subst' = subst'
+        }

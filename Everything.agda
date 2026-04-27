@@ -15,7 +15,12 @@ import FirstOrderLogic.IntFull.Iterator
 import FirstOrderLogic.IntFull.Syntax
 
 -- Intuitionistic first-order logic with a split context
--- In this setting we can define the iterator as a IIT 
+-- In this setting we can define the iterator as a IIT
 import FirstOrderLogic.IntFullSplit.Model
 import FirstOrderLogic.IntFullSplit.Iterator
 import FirstOrderLogic.IntFullSplit.Syntax
+
+-- Models and Beth completeness
+import FirstOrderLogic.IntFullSplit.KripkeModel
+import FirstOrderLogic.IntFullSplit.BethModel
+import FirstOrderLogic.IntFullSplit.BethCompleteness

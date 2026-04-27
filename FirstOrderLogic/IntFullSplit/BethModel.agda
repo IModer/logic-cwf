@@ -1,5 +1,3 @@
-{-# OPTIONS --prop #-}
-
 open import lib
 open import FirstOrderLogic.IntFullSplit.Model
 
@@ -92,17 +90,12 @@ module Semantics
     (D∶_⟨_⟩ : ∀{I J} -> D I -> Hom J I -> D J)
     (D∶⟨∘⟩  : ∀{I J K}{a : D I}{f : Hom J I}{g : Hom K J} -> D∶ a ⟨ f ∘C g ⟩ ≡ D∶ D∶ a ⟨ f ⟩ ⟨ g ⟩)
     (D∶⟨id⟩ : ∀{I}{a : D I} -> D∶ a ⟨ idC ⟩ ≡ a)
-    -- ? Helyett valami más kéne
-    --(Dglue  : ∀{I : Ob}{R : Sieve I} -> I ◁ R -> (∀{J} -> (f : Hom J I) -> ⟨ J , f ⟩⊩ R  -> D J) -> D I)
     (rel  : (n : ℕ) -> relar n -> (I : Ob) -> (D I) ^ n -> Prop)
-    -- ?
-    --(relGlue : ∀ (n : ℕ)(a : relar n)(I : Ob)(ts : (D I) ^ n)(R : Sieve I) -> (I ◁ R) -> ({J : Ob} (f : Hom J I) -> ⟨ J , f ⟩⊩ R → rel n a J ((map^ ts (D∶_⟨ f ⟩)))) -> rel n a I ts)
     (⟨rel⟩ : ∀{n i I J ds} -> rel n i I ds -> (f : Hom J I) -> rel n i J (map^ ds (D∶_⟨ f ⟩)))
     (fun  : (n : ℕ) -> funar n -> (I : Ob) -> (D I) ^ n -> (D I))
-    (⟨fun⟩ : ∀(n : ℕ)(a : funar n)(I J : Ob)(ds : (D I) ^ n)(f : Hom J I) -> (D∶ (fun n a I ds) ⟨ f ⟩) ≡ (fun n a J (map^ ds (D∶_⟨ f ⟩))) )
+    (⟨fun⟩ : ∀(n : ℕ)(a : funar n)(I J : Ob)(ds : (D I) ^ n)(f : Hom J I) -> (D∶ (fun n a I ds) ⟨ f ⟩) ≡ (fun n a J (map^ ds (D∶_⟨ f ⟩))))
     where
 
-    --open Top J
     record Cont : Set₁ where
         constructor mk
         field
@@ -110,7 +103,6 @@ module Semantics
             _⟨_⟩ : ∀{I J} -> A I -> Hom J I -> A J
             ⟨id⟩ : ∀{I}{a : A I} -> a ⟨ idC ⟩ ≡ a
             ⟨∘⟩  : ∀{I J K}{a : A I}{g : Hom K J}{f : Hom J I} -> a ⟨ f ∘C g ⟩ ≡ (a ⟨ f ⟩) ⟨ g ⟩
-            --glue  : ∀{I R} -> I ◁ R -> (∀{J} -> (f : Hom J I) -> ⟨ J , f ⟩⊩ R  -> A J) -> A I
     open Cont public renaming (A to ∣_∣; _⟨_⟩ to _∶_⟨_⟩; ⟨id⟩ to _∶⟨id⟩; ⟨∘⟩ to _∶⟨∘⟩)
 
     record Subt(Δ Γ : Cont) : Set where
@@ -140,9 +132,7 @@ module Semantics
     nat εt = refl
 
     record For(Γ : Cont) : Set₁ where
-
         constructor mk
-
         field
             A    : ∀(I : Ob) -> ∣ Γ ∣ I -> Prop
             _⟨_⟩ : ∀{I J : Ob}{i : ∣ Γ ∣ I} -> A I i -> (f : Hom J I) -> A J (Γ ∶ i ⟨ f ⟩)
@@ -241,7 +231,7 @@ module Semantics
     ⟨recTms⟩ {suc n} {I} {J} {f} {ts} = mk,= refl ⟨recTms⟩
 
     fun' : {Γ : Cont} (n : ℕ) -> funar n -> Tms Γ n -> Tm Γ
-    ∣ fun' n a ts ∣ I x = fun n a I (recTms I (∣ ts ∣ I x)) -- fun n a (recTms I (∣ ts ∣ I x))
+    ∣ fun' n a ts ∣ I x = fun n a I (recTms I (∣ ts ∣ I x))
     nat (fun' n a ts) {I}{J}{i}{f} = trans (⟨fun⟩ n a I J (recTms I (∣ ts ∣ I i)) f) (cong (fun n a J) (trans (⟨recTms⟩ {n} {I} {J} {f} {∣ ts ∣ I i}) (cong (recTms J) (nat ts)))) -- cong (fun n a) (trans ⟨recTms⟩ (cong (recTms J) (nat ts)))
 
     rel-sieve : (Γt : Cont) -> (n : ℕ) -> (relar n) -> (ts : Tms Γt n) -> (I : Ob) -> (∣ Γt ∣ I) -> Sieve I
@@ -492,16 +482,16 @@ module Semantics
     ∀[] : {Γt : Cont} {K : For (Γt ▸t)} {Δt : Cont} {γt : Subt Δt Γt} ->
       (∀' K [ γt ]F) ≡ ∀' (K [ (γt ∘t pt) ,t qt {Δt} ]F)
     ∀[] {Γt} {K} {Δt} {γt} = 
-      mkForEq 
-      {Δt}{∣ ∀' K [ γt ]F ∣}{∣ ∀' {Δt} (K [ (γt ∘t pt) ,t (qt {Δt}) ]F) ∣}
-      {(∀' K [ γt ]F) ∶_⟨_⟩}
-      {(∀' {Δt} (K [ (γt ∘t pt) ,t (qt {Δt}) ]F)) ∶_⟨_⟩}
-      {glue (∀' K [ γt ]F)}
-      {glue (∀' {Δt} (K [ (γt ∘t pt) ,t (qt {Δt}) ]F))}
-      (funext (λ I -> 
-      funext (λ Δi -> 
-      cong (λ Z -> (J : Ob)(f : Hom J I)(d : D J) -> Z J f d) 
-      (funext λ J -> funext (λ f -> funext (λ d -> cong (λ z -> ∣ K ∣ J (z ,Σ d)) (nat γt)))))))  
+        mkForEq 
+        {Δt}{∣ ∀' K [ γt ]F ∣}{∣ ∀' {Δt} (K [ (γt ∘t pt) ,t (qt {Δt}) ]F) ∣}
+        {(∀' K [ γt ]F) ∶_⟨_⟩}
+        {(∀' {Δt} (K [ (γt ∘t pt) ,t (qt {Δt}) ]F)) ∶_⟨_⟩}
+        {glue (∀' K [ γt ]F)}
+        {glue (∀' {Δt} (K [ (γt ∘t pt) ,t (qt {Δt}) ]F))}
+        (funext (λ I -> 
+        funext (λ Δi -> 
+        cong (λ Z -> (J : Ob)(f : Hom J I)(d : D J) -> Z J f d) 
+        (funext λ J -> funext (λ f -> funext (λ d -> cong (λ z -> ∣ K ∣ J (z ,Σ d)) (nat γt)))))))
 
     ∀intro : {Γt : Cont} {K : For (Γt ▸t)} {Γ : Conp Γt} ->
       Pf (Γ [ pt ]C) K -> Pf Γ (∀' K)
@@ -509,7 +499,7 @@ module Semantics
 
     ∀elim : {Γt : Cont} {K : For (Γt ▸t)} {Γ : Conp Γt} ->
       Pf Γ (∀' K) -> Pf (Γ [ pt ]C) K
-    ∣ ∀elim {Γt}{K}{Γ} PfK ∣ {I} {Γti ,Σ d} Γi = substp (λ z -> ∣ K ∣ I (z ,Σ d)) (Γt ∶⟨id⟩) (∣ PfK ∣ Γi I idC d) -- ∣ PfK ∣ Γi d
+    ∣ ∀elim {Γt}{K}{Γ} PfK ∣ {I} {Γti ,Σ d} Γi = substp (λ z -> ∣ K ∣ I (z ,Σ d)) (Γt ∶⟨id⟩) (∣ PfK ∣ Γi I idC d)
 
     ∃-sieve : (Γt : Cont) -> (K : For (Γt ▸t)) -> (I : Ob) -> (Γi : ∣ Γt ∣ I) -> Sieve I
     ∃-sieve Γt K I Γi .Sh.Sieve.R = λ J f → ∃ (D J) λ d -> ∣ K ∣ J ((Γt ∶ Γi ⟨ f ⟩) ,Σ d)
@@ -530,7 +520,7 @@ module Semantics
         (funext (λ d → cong (λ z -> ∣ K ∣ K' (z ,Σ d)) (Γt ∶⟨∘⟩))))))
 
     ∃' : {Γt : Cont} -> For (Γt ▸t) -> For Γt
-    ∣ ∃' {Γt} K ∣ I Γi = I ◁ (∃-sieve Γt K I Γi) --∃ (D I) λ d -> ∣ K ∣ I (Γi ,Σ d)
+    ∣ ∃' {Γt} K ∣ I Γi = I ◁ (∃-sieve Γt K I Γi)
     _∶_⟨_⟩ (∃' {Γt} K) {I} {J} {i} x f = substp (J ◁_) (∃-[]ˢ-⟨⟩ {Γt} {I} {J} {i} {f} {K}) (x [ f ]ᶜ)
     glue (∃' {Γt} K) {I} {i} {R} I◁R x = local I◁R λ {J} f J⊩R → substp (J ◁_) (sym (∃-[]ˢ-⟨⟩ {Γt} {I} {J} {i} {f} {K})) (x {J} f J⊩R)
     
@@ -618,96 +608,96 @@ module Semantics
         
     Beth : Model funar relar _ _ _ _ _
     Beth = record
-      { Cont = Cont
-      ; Subt = Subt
-      ; _∘t_ = _∘t_
-      ; idt = idt
-      ; asst = refl
-      ; idlt = refl
-      ; idrt = refl
-      ; ◆t = ◆t
-      ; εt = εt
-      ; ◆tη = λ σ -> refl
-      ; For = For
-      ; _[_]F = _[_]F
-      ; [∘]F = refl
-      ; [id]F = refl
-      ; Tm = Tm
-      ; _[_]t = _[_]t
-      ; [∘]t = refl
-      ; [id]t = refl
-      ; _▸t = _▸t
-      ; _,t_ = _,t_
-      ; pt = pt
-      ; qt = λ {Γt} -> qt {Γt}
-      ; ▸tβ₁ = refl
-      ; ▸tβ₂ = refl
-      ; ▸tη = refl
-      ; Tms = Tms
-      ; _[_]ts = λ {Γ}{n} ts {Δ} ->  _[_]ts {Γ}{n} ts {Δ}
-      ; [∘]ts = refl
-      ; [id]ts = refl
-      ; εs = εs
-      ; ◆sη = λ ts -> refl
-      ; _,s_ = λ {Γ}{n} -> _,s_ {Γ}{n}
-      ; π₁ = λ {Γ}{n} -> π₁ {Γ}{n}
-      ; π₂ = λ {Γ}{n} -> π₂ {Γ}{n}
-      ; ▸sβ₁ = refl
-      ; ▸sβ₂ = refl
-      ; ▸sη = refl
-      ; ,[] = refl
-      ; fun = fun'
-      ; fun[] = refl
-      ; rel = rel'
-      ; rel[] = λ {Γ}{n}{a}{ts}{Δ}{γ} -> rel[] {Γ}{n}{a}{ts}{Δ}{γ}
-      ; Conp = Conp
-      ; _[_]C = _[_]C
-      ; [id]C = refl
-      ; [∘]C = refl
-      ; Subp = Subp
-      ; _∘p_ = _∘p_
-      ; idp = idp
-      ; ◆p = ◆p
-      ; εp = εp
-      ; Pf = Pf
-      ; _[_]P = _[_]P
-      ; _[_]p = _[_]p
-      ; _▸p_ = _▸p_
-      ; _,p_ = _,p_
-      ; pp = λ {Γt}{Γ}{K = K} -> pp {K = K} 
-      ; qp = λ {Γt}{Γ}{K} -> qp {Γ = Γ}
-      ; ◆p[] = refl
-      ; ▸p[] = refl
-      ; ⊥ = ⊥
-      ; ⊥[] = refl
-      ; exfalso = exfalso
-      ; ⊤ = ⊤
-      ; ⊤[] = refl
-      ; tt = tt
-      ; _⊃_ = _⊃_
-      ; ⊃[] = λ {Γt}{K}{L}{Δt}{γt} -> ⊃[] {Γt}{K}{L}{Δt}{γt}
-      ; ⊃intro = λ{Γt}{K}{L}{Γ} -> ⊃intro {Γt}{K}{L}{Γ}
-      ; ⊃elim = λ{Γt}{K}{L}{Γ} -> ⊃elim {Γt}{K}{L}{Γ}
-      ; _∧_ = _∧_
-      ; ∧[] = refl
-      ; ∧intro = ∧intro
-      ; ∧elim₁ = λ {Γt}{K}{L} -> ∧elim₁ {L = L}
-      ; ∧elim₂ = λ {Γt}{K}{L} -> ∧elim₂ {K = K} 
-      ; _∨_ = _∨_
-      ; ∨[] = λ {Γt}{K}{L}{Δt}{γt} -> ∨[] {Γt}{K}{L}{Δt}{γt}
-      ; ∨elim = λ {Γt}{K}{L}{C} -> ∨elim {Γt}{K}{L}{C}
-      ; ∨intro₁ = λ {Γt}{K}{L} -> ∨intro₁ {Γt}{K}{L}
-      ; ∨intro₂ = λ {Γt}{K}{L} -> ∨intro₂ {Γt}{K}{L}
-      ; ∀' = ∀'
-      ; ∀[] = λ {Γt}{K}{Δt}{γt} -> ∀[] {Γt}{K}{Δt}{γt}
-      ; ∀intro = λ {Γt}{K}{Γ} -> ∀intro {Γt}{K}{Γ} 
-      ; ∀elim = λ {Γt}{K}{Γ} -> ∀elim {Γt}{K}{Γ}
-      ; ∃' = ∃'
-      ; ∃[] = λ {Γt}{K}{Δt}{γt} -> ∃[] {Γt}{K}{Δt}{γt}
-      ; ∃intro = λ {Γt}{K} -> ∃intro {Γt}{K}
-      ; ∃elim = λ {Γt}{K}{Γp}{L} -> ∃elim {Γt}{K}{Γp}{L} 
-      ; Eq = Eq
-      ; Eq[] = λ {Γt}{Δt}{γt}{t}{t'} -> Eq[] {Γt}{Δt}{γt}{t}{t'}
-      ; Eqrefl = λ {Γt}{t}{Γ} -> Eqrefl {Γt}{t}{Γ}
-      ; subst' = subst'
-      }
+        { Cont = Cont
+        ; Subt = Subt
+        ; _∘t_ = _∘t_
+        ; idt = idt
+        ; asst = refl
+        ; idlt = refl
+        ; idrt = refl
+        ; ◆t = ◆t
+        ; εt = εt
+        ; ◆tη = λ σ -> refl
+        ; For = For
+        ; _[_]F = _[_]F
+        ; [∘]F = refl
+        ; [id]F = refl
+        ; Tm = Tm
+        ; _[_]t = _[_]t
+        ; [∘]t = refl
+        ; [id]t = refl
+        ; _▸t = _▸t
+        ; _,t_ = _,t_
+        ; pt = pt
+        ; qt = λ {Γt} -> qt {Γt}
+        ; ▸tβ₁ = refl
+        ; ▸tβ₂ = refl
+        ; ▸tη = refl
+        ; Tms = Tms
+        ; _[_]ts = λ {Γ}{n} ts {Δ} ->  _[_]ts {Γ}{n} ts {Δ}
+        ; [∘]ts = refl
+        ; [id]ts = refl
+        ; εs = εs
+        ; ◆sη = λ ts -> refl
+        ; _,s_ = λ {Γ}{n} -> _,s_ {Γ}{n}
+        ; π₁ = λ {Γ}{n} -> π₁ {Γ}{n}
+        ; π₂ = λ {Γ}{n} -> π₂ {Γ}{n}
+        ; ▸sβ₁ = refl
+        ; ▸sβ₂ = refl
+        ; ▸sη = refl
+        ; ,[] = refl
+        ; fun = fun'
+        ; fun[] = refl
+        ; rel = rel'
+        ; rel[] = λ {Γ}{n}{a}{ts}{Δ}{γ} -> rel[] {Γ}{n}{a}{ts}{Δ}{γ}
+        ; Conp = Conp
+        ; _[_]C = _[_]C
+        ; [id]C = refl
+        ; [∘]C = refl
+        ; Subp = Subp
+        ; _∘p_ = _∘p_
+        ; idp = idp
+        ; ◆p = ◆p
+        ; εp = εp
+        ; Pf = Pf
+        ; _[_]P = _[_]P
+        ; _[_]p = _[_]p
+        ; _▸p_ = _▸p_
+        ; _,p_ = _,p_
+        ; pp = λ {Γt}{Γ}{K = K} -> pp {K = K} 
+        ; qp = λ {Γt}{Γ}{K} -> qp {Γ = Γ}
+        ; ◆p[] = refl
+        ; ▸p[] = refl
+        ; ⊥ = ⊥
+        ; ⊥[] = refl
+        ; exfalso = exfalso
+        ; ⊤ = ⊤
+        ; ⊤[] = refl
+        ; tt = tt
+        ; _⊃_ = _⊃_
+        ; ⊃[] = λ {Γt}{K}{L}{Δt}{γt} -> ⊃[] {Γt}{K}{L}{Δt}{γt}
+        ; ⊃intro = λ{Γt}{K}{L}{Γ} -> ⊃intro {Γt}{K}{L}{Γ}
+        ; ⊃elim = λ{Γt}{K}{L}{Γ} -> ⊃elim {Γt}{K}{L}{Γ}
+        ; _∧_ = _∧_
+        ; ∧[] = refl
+        ; ∧intro = ∧intro
+        ; ∧elim₁ = λ {Γt}{K}{L} -> ∧elim₁ {L = L}
+        ; ∧elim₂ = λ {Γt}{K}{L} -> ∧elim₂ {K = K} 
+        ; _∨_ = _∨_
+        ; ∨[] = λ {Γt}{K}{L}{Δt}{γt} -> ∨[] {Γt}{K}{L}{Δt}{γt}
+        ; ∨elim = λ {Γt}{K}{L}{C} -> ∨elim {Γt}{K}{L}{C}
+        ; ∨intro₁ = λ {Γt}{K}{L} -> ∨intro₁ {Γt}{K}{L}
+        ; ∨intro₂ = λ {Γt}{K}{L} -> ∨intro₂ {Γt}{K}{L}
+        ; ∀' = ∀'
+        ; ∀[] = λ {Γt}{K}{Δt}{γt} -> ∀[] {Γt}{K}{Δt}{γt}
+        ; ∀intro = λ {Γt}{K}{Γ} -> ∀intro {Γt}{K}{Γ} 
+        ; ∀elim = λ {Γt}{K}{Γ} -> ∀elim {Γt}{K}{Γ}
+        ; ∃' = ∃'
+        ; ∃[] = λ {Γt}{K}{Δt}{γt} -> ∃[] {Γt}{K}{Δt}{γt}
+        ; ∃intro = λ {Γt}{K} -> ∃intro {Γt}{K}
+        ; ∃elim = λ {Γt}{K}{Γp}{L} -> ∃elim {Γt}{K}{Γp}{L} 
+        ; Eq = Eq
+        ; Eq[] = λ {Γt}{Δt}{γt}{t}{t'} -> Eq[] {Γt}{Δt}{γt}{t}{t'}
+        ; Eqrefl = λ {Γt}{t}{Γ} -> Eqrefl {Γt}{t}{Γ}
+        ; subst' = subst'
+        }
