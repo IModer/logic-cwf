@@ -12,7 +12,8 @@ record Category : Set₁ where
         Hom  : Ob -> Ob -> Set
         idC  : ∀{A} -> Hom A A
         _∘C_ : ∀{A B C} -> Hom B C -> Hom A B -> Hom A C
-        assC : ∀{A B C D}{f : Hom C D}{g : Hom B C}{h : Hom A B} -> (f ∘C g) ∘C h ≡ f ∘C (g ∘C h)
+        assC : ∀{A B C D}{f : Hom C D}{g : Hom B C}{h : Hom A B} -> 
+            (f ∘C g) ∘C h ≡ f ∘C (g ∘C h)
         idlC : ∀{A B}{f : Hom A B} -> idC ∘C f ≡ f
         idrC : ∀{A B}{f : Hom A B} -> f ∘C idC ≡ f
 
@@ -41,7 +42,8 @@ module Sh (C : Category) where
     ∣ R [ f ]ˢ ∣ K g = ∣ R ∣ K (f ∘C g)
     restr (R [ f ]ˢ) {J} {g} {K} Rk h = substp (∣ R ∣ K) assC (restr R Rk h)
 
-    [∘]ˢ : ∀{I J K : Ob}{f : Hom J I}{g : Hom K J}{s : Sieve I} -> s [ f ∘C g ]ˢ ≡ s [ f ]ˢ [ g ]ˢ  
+    [∘]ˢ : ∀{I J K : Ob}{f : Hom J I}{g : Hom K J}{s : Sieve I} -> 
+        s [ f ∘C g ]ˢ ≡ s [ f ]ˢ [ g ]ˢ  
     [∘]ˢ {I}{J}{K}{f}{g}{s} = 
         mkSieveEq
         (∣ s [ f ∘C g ]ˢ ∣) 
@@ -66,7 +68,8 @@ module Sh (C : Category) where
             _◁_     : (I : Ob) -> Sieve I -> Prop
             _[_]ᶜ   : ∀ {I J R} -> I ◁ R -> (f : Hom J I) -> J ◁ (R [ f ]ˢ)
             maximal : ∀{I R} -> ∣ R ∣ I idC -> I ◁ R
-            local   : ∀{I R S} -> I ◁ R -> (∀{J} -> (f : Hom J I) -> ∣ R ∣ J f  -> J ◁ (S [ f ]ˢ)) -> I ◁ S
+            local   : ∀{I R S} -> I ◁ R -> 
+                (∀{J} -> (f : Hom J I) -> ∣ R ∣ J f  -> J ◁ (S [ f ]ˢ)) -> I ◁ S
 
     record Sheaf (J : Top) : Set₁ where
         
@@ -76,8 +79,10 @@ module Sh (C : Category) where
             A     : Ob -> Set
             _⟨_⟩  : ∀{I J} -> A I -> Hom J I -> A J
             ⟨id⟩  : ∀{I : Ob}{a : A I} -> a ⟨ idC ⟩ ≡ a
-            ⟨∘⟩   : ∀{I J K : Ob}{a : A I}{f : Hom J I}{g : Hom K J} -> (a ⟨ f ⟩) ⟨ g ⟩ ≡ a ⟨ f ∘C g ⟩
-            glue  : ∀{I R} -> I ◁ R -> (∀{J} -> (f : Hom J I) -> ∣ R ∣ J f -> A J) -> A I
+            ⟨∘⟩   : ∀{I J K : Ob}{a : A I}{f : Hom J I}{g : Hom K J} -> 
+                (a ⟨ f ⟩) ⟨ g ⟩ ≡ a ⟨ f ∘C g ⟩
+            glue  : ∀{I R} -> I ◁ R -> 
+                (∀{J} -> (f : Hom J I) -> ∣ R ∣ J f -> A J) -> A I
     open Sheaf renaming (A to ∣_∣; _⟨_⟩ to _∶_⟨_⟩; ⟨id⟩ to _∶⟨id⟩; ⟨∘⟩ to _∶⟨∘⟩)
 
 module Semantics
@@ -88,12 +93,15 @@ module Semantics
     (open Top J)
     (D : Ob -> Set)
     (D∶_⟨_⟩ : ∀{I J} -> D I -> Hom J I -> D J)
-    (D∶⟨∘⟩  : ∀{I J K}{a : D I}{f : Hom J I}{g : Hom K J} -> D∶ a ⟨ f ∘C g ⟩ ≡ D∶ D∶ a ⟨ f ⟩ ⟨ g ⟩)
+    (D∶⟨∘⟩  : ∀{I J K}{a : D I}{f : Hom J I}{g : Hom K J} -> 
+        D∶ a ⟨ f ∘C g ⟩ ≡ D∶ D∶ a ⟨ f ⟩ ⟨ g ⟩)
     (D∶⟨id⟩ : ∀{I}{a : D I} -> D∶ a ⟨ idC ⟩ ≡ a)
     (rel  : (n : ℕ) -> relar n -> (I : Ob) -> (D I) ^ n -> Prop)
-    (⟨rel⟩ : ∀{n i I J ds} -> rel n i I ds -> (f : Hom J I) -> rel n i J (map^ ds (D∶_⟨ f ⟩)))
+    (⟨rel⟩ : ∀{n i I J ds} -> rel n i I ds -> (f : Hom J I) -> 
+        rel n i J (map^ ds (D∶_⟨ f ⟩)))
     (fun  : (n : ℕ) -> funar n -> (I : Ob) -> (D I) ^ n -> (D I))
-    (⟨fun⟩ : ∀(n : ℕ)(a : funar n)(I J : Ob)(ds : (D I) ^ n)(f : Hom J I) -> (D∶ (fun n a I ds) ⟨ f ⟩) ≡ (fun n a J (map^ ds (D∶_⟨ f ⟩))))
+    (⟨fun⟩ : ∀(n : ℕ)(a : funar n)(I J : Ob)(ds : (D I) ^ n)(f : Hom J I) -> 
+        (D∶ (fun n a I ds) ⟨ f ⟩) ≡ (fun n a J (map^ ds (D∶_⟨ f ⟩))))
     where
 
     record Cont : Set₁ where
@@ -102,14 +110,17 @@ module Semantics
             A    : Ob -> Set
             _⟨_⟩ : ∀{I J} -> A I -> Hom J I -> A J
             ⟨id⟩ : ∀{I}{a : A I} -> a ⟨ idC ⟩ ≡ a
-            ⟨∘⟩  : ∀{I J K}{a : A I}{g : Hom K J}{f : Hom J I} -> a ⟨ f ∘C g ⟩ ≡ (a ⟨ f ⟩) ⟨ g ⟩
-    open Cont public renaming (A to ∣_∣; _⟨_⟩ to _∶_⟨_⟩; ⟨id⟩ to _∶⟨id⟩; ⟨∘⟩ to _∶⟨∘⟩)
+            ⟨∘⟩  : ∀{I J K}{a : A I}{g : Hom K J}{f : Hom J I} -> 
+                a ⟨ f ∘C g ⟩ ≡ (a ⟨ f ⟩) ⟨ g ⟩
+    open Cont public 
+        renaming (A to ∣_∣; _⟨_⟩ to _∶_⟨_⟩; ⟨id⟩ to _∶⟨id⟩; ⟨∘⟩ to _∶⟨∘⟩)
 
     record Subt(Δ Γ : Cont) : Set where
         constructor mk
         field
             α   : ∀(I : Ob) -> ∣ Δ ∣ I -> ∣ Γ ∣ I
-            nat : ∀{I J : Ob}{a : ∣ Δ ∣ I}{f : Hom J I} -> (Γ ∶ (α I a) ⟨ f ⟩) ≡ α J (Δ ∶ a ⟨ f ⟩)
+            nat : ∀{I J : Ob}{a : ∣ Δ ∣ I}{f : Hom J I} -> 
+                (Γ ∶ (α I a) ⟨ f ⟩) ≡ α J (Δ ∶ a ⟨ f ⟩)
     open Subt public renaming (α to ∣_∣)
     
     _∘t_ : {Γ Δ Θ : Cont} -> Subt Δ Γ -> Subt Θ Δ -> Subt Θ Γ
@@ -125,7 +136,6 @@ module Semantics
     ◆t ∶ x ⟨ f ⟩ = *
     ◆t ∶⟨id⟩ = refl
     ◆t ∶⟨∘⟩ = refl
-    --glue ◆t = λ _ _ → *
 
     εt : {Γ : Cont} -> Subt Γ ◆t
     ∣ εt ∣ = λ I x -> *
@@ -135,15 +145,27 @@ module Semantics
         constructor mk
         field
             A    : ∀(I : Ob) -> ∣ Γ ∣ I -> Prop
-            _⟨_⟩ : ∀{I J : Ob}{i : ∣ Γ ∣ I} -> A I i -> (f : Hom J I) -> A J (Γ ∶ i ⟨ f ⟩)
-            glue : ∀{I : Ob}{i : ∣ Γ ∣ I}{R : Sieve I} -> I ◁ R -> (∀{J} -> (f : Hom J I) -> ⟨ J , f ⟩⊩ R -> A J (Γ ∶ i ⟨ f ⟩)) -> A I i
+            _⟨_⟩ : ∀{I J : Ob}{i : ∣ Γ ∣ I} -> A I i -> (f : Hom J I) -> 
+                A J (Γ ∶ i ⟨ f ⟩)
+            glue : ∀{I : Ob}{i : ∣ Γ ∣ I}{R : Sieve I} -> 
+                I ◁ R -> 
+                (∀{J} -> (f : Hom J I) -> ⟨ J , f ⟩⊩ R -> A J (Γ ∶ i ⟨ f ⟩)) -> 
+                A I i
     open For public renaming (A to ∣_∣; _⟨_⟩ to _∶_⟨_⟩)
 
     mkForEq : ∀{Γ : Cont}{A B : ∀(I : Ob) -> ∣ Γ ∣ I -> Prop } ->
-        {sub₁ : ∀{I J : Ob}{i : ∣ Γ ∣ I} -> A I i -> (f : Hom J I) -> A J (Γ ∶ i ⟨ f ⟩)} ->
-        {sub₂ : ∀{I J : Ob}{i : ∣ Γ ∣ I} -> B I i -> (f : Hom J I) -> B J (Γ ∶ i ⟨ f ⟩)} ->
-        {glue₁ : ∀{I : Ob}{i : ∣ Γ ∣ I}{R : Sieve I} -> I ◁ R -> (∀{J} -> (f : Hom J I) -> ⟨ J , f ⟩⊩ R -> A J (Γ ∶ i ⟨ f ⟩)) -> A I i} ->
-        {glue₂ : ∀{I : Ob}{i : ∣ Γ ∣ I}{R : Sieve I} -> I ◁ R -> (∀{J} -> (f : Hom J I) -> ⟨ J , f ⟩⊩ R -> B J (Γ ∶ i ⟨ f ⟩)) -> B I i} ->
+        {sub₁ : ∀{I J : Ob}{i : ∣ Γ ∣ I} -> 
+            A I i -> (f : Hom J I) -> A J (Γ ∶ i ⟨ f ⟩)} ->
+        {sub₂ : ∀{I J : Ob}{i : ∣ Γ ∣ I} -> 
+            B I i -> (f : Hom J I) -> B J (Γ ∶ i ⟨ f ⟩)} ->
+        {glue₁ : ∀{I : Ob}{i : ∣ Γ ∣ I}{R : Sieve I} -> 
+            I ◁ R -> 
+            (∀{J} -> (f : Hom J I) -> ⟨ J , f ⟩⊩ R -> A J (Γ ∶ i ⟨ f ⟩)) -> 
+            A I i} ->
+        {glue₂ : ∀{I : Ob}{i : ∣ Γ ∣ I}{R : Sieve I} -> 
+            I ◁ R -> 
+            (∀{J} -> (f : Hom J I) -> ⟨ J , f ⟩⊩ R -> B J (Γ ∶ i ⟨ f ⟩)) -> 
+            B I i} ->
         (A ≡ B) -> 
         _≡_ {A = For Γ} (mk A sub₁ glue₁)(mk B sub₂ glue₂)
     mkForEq refl = refl
@@ -226,21 +248,40 @@ module Semantics
     recTms {zero } I ts = *
     recTms {suc n} I (ts ,Σ d) = d ,Σ recTms I ts
     
-    ⟨recTms⟩ : ∀{n I J}{f : Hom J I}{ts : ∣ DPShV n ∣ I} -> map^ (recTms {n} I ts) (D∶_⟨ f ⟩) ≡ recTms J ((DPShV n) ∶ ts ⟨ f ⟩)
+    ⟨recTms⟩ : ∀{n I J}{f : Hom J I}{ts : ∣ DPShV n ∣ I} -> 
+        map^ (recTms {n} I ts) (D∶_⟨ f ⟩) ≡ recTms J ((DPShV n) ∶ ts ⟨ f ⟩)
     ⟨recTms⟩ {zero} {I} {J} {f} {ts} = refl
     ⟨recTms⟩ {suc n} {I} {J} {f} {ts} = mk,= refl ⟨recTms⟩
 
     fun' : {Γ : Cont} (n : ℕ) -> funar n -> Tms Γ n -> Tm Γ
     ∣ fun' n a ts ∣ I x = fun n a I (recTms I (∣ ts ∣ I x))
-    nat (fun' n a ts) {I}{J}{i}{f} = trans (⟨fun⟩ n a I J (recTms I (∣ ts ∣ I i)) f) (cong (fun n a J) (trans (⟨recTms⟩ {n} {I} {J} {f} {∣ ts ∣ I i}) (cong (recTms J) (nat ts))))
+    nat (fun' n a ts) {I}{J}{i}{f} = 
+        trans 
+            (⟨fun⟩ n a I J (recTms I (∣ ts ∣ I i)) f) 
+            (cong (fun n a J) (trans 
+                (⟨recTms⟩ {n} {I} {J} {f} {∣ ts ∣ I i}) 
+                (cong (recTms J) (nat ts))))
 
-    rel-sieve : (Γt : Cont) -> (n : ℕ) -> (relar n) -> (ts : Tms Γt n) -> (I : Ob) -> (∣ Γt ∣ I) -> Sieve I
-    rel-sieve Γt n a ts I i .Sh.Sieve.R J f = rel n a J (recTms J (∣ ts ∣ J (Γt ∶ i ⟨ f ⟩)))
+    rel-sieve : (Γt : Cont) -> (n : ℕ) -> (relar n) -> (ts : Tms Γt n) -> 
+        (I : Ob) -> (∣ Γt ∣ I) -> Sieve I
+    rel-sieve Γt n a ts I i .Sh.Sieve.R J f = 
+        rel n a J (recTms J (∣ ts ∣ J (Γt ∶ i ⟨ f ⟩)))
     rel-sieve Γt n a ts I i .Sh.Sieve.restr {J} {f} {K} r g = 
-        substp (rel n a K) (trans ⟨recTms⟩ (cong (recTms K) (trans (nat ts) (cong (∣ ts ∣ K) (sym (Γt ∶⟨∘⟩)))))) (⟨rel⟩ r g)
+        substp 
+            (rel n a K) 
+            (trans 
+                ⟨recTms⟩ 
+                (cong (recTms K) (trans 
+                    (nat ts) 
+                    (cong (∣ ts ∣ K) (sym (Γt ∶⟨∘⟩)))))) 
+            (⟨rel⟩ r g)
 
-    rel-[]ˢ-⟨⟩ : ∀{Γt : Cont}{I J : Ob}{Γi : ∣ Γt ∣ I}{f : Hom J I}{n : ℕ}{a : relar n}{ts : Tms Γt n} ->
-        (rel-sieve Γt n a ts I Γi) [ f ]ˢ ≡ rel-sieve Γt n a ts J (Γt ∶ Γi ⟨ f ⟩)
+    rel-[]ˢ-⟨⟩ : 
+        ∀{Γt : Cont}{I J : Ob}{Γi : ∣ Γt ∣ I}{f : Hom J I}{n : ℕ}{a : relar n}
+        {ts : Tms Γt n} ->
+        (rel-sieve Γt n a ts I Γi) [ f ]ˢ 
+        ≡ 
+        rel-sieve Γt n a ts J (Γt ∶ Γi ⟨ f ⟩)
     rel-[]ˢ-⟨⟩ {Γt} {I} {J} {Γi} {f} {n} {a} {ts} = 
         mkSieveEq {J}
         (Sh.Sieve.R ((rel-sieve Γt n a ts I Γi) [ f ]ˢ))
@@ -252,10 +293,20 @@ module Semantics
 
     rel' : {Γ : Cont} (n : ℕ) -> relar n -> Tms Γ n -> For Γ
     ∣ rel' {Γt} n a ts ∣ I i = I ◁ (rel-sieve Γt n a ts I i)
-    _∶_⟨_⟩ (rel' {Γt} n a ts) {I} {J} {i} x f = substp (J ◁_) (rel-[]ˢ-⟨⟩ {Γt} {I} {J} {i} {f} {n} {a} {ts}) (x [ f ]ᶜ)
-    rel' {Γt} n a ts .glue {I} {i} I◁R x = local I◁R (λ {J} f y → substp (J ◁_) (sym (rel-[]ˢ-⟨⟩ {Γt} {I} {J} {i} {f} {n} {a} {ts})) (x f y))
+    _∶_⟨_⟩ (rel' {Γt} n a ts) {I} {J} {i} x f = 
+        substp 
+            (J ◁_) 
+            (rel-[]ˢ-⟨⟩ {Γt} {I} {J} {i} {f} {n} {a} {ts}) 
+            (x [ f ]ᶜ)
+    rel' {Γt} n a ts .glue {I} {i} I◁R x = 
+        local I◁R 
+        (λ {J} f y → substp 
+            (J ◁_) 
+            (sym (rel-[]ˢ-⟨⟩ {Γt} {I} {J} {i} {f} {n} {a} {ts})) 
+            (x f y))
 
-    rel[] : {Γ : Cont} {n : ℕ} {a : relar n} {ts : Tms Γ n} {Δ : Cont} {γ : Subt Δ Γ} →
+    rel[] : {Γ : Cont}{n : ℕ}{a : relar n}{ts : Tms Γ n}{Δ : Cont}
+        {γ : Subt Δ Γ} →
         (rel' n a ts [ γ ]F) ≡ rel' n a (_[_]ts {Γ}{n} ts γ)
     rel[] {Γ}{n}{a}{ts}{Δ}{γ} = 
         mkForEq 
@@ -272,14 +323,19 @@ module Semantics
         (Sh.Sieve.R (rel-sieve Δ n a (_[_]ts {Γ}{n} ts γ) J x)) 
         {Sh.Sieve.restr (rel-sieve Γ n a ts J (∣ γ ∣ J x))}
         {Sh.Sieve.restr (rel-sieve Δ n a (_[_]ts {Γ}{n} ts γ) J x)}
-        (funext (λ K -> funext (λ y -> cong (λ z -> rel n a K (recTms K (∣ ts ∣ K z))) (nat γ))))))))
+        (funext (λ K -> funext (λ y -> 
+            cong (λ z -> rel n a K (recTms K (∣ ts ∣ K z))) (nat γ))))))))
 
     record Conp(Γt : Cont) : Set₁ where
         constructor mk
         field
             A    : ∀(I : Ob) -> ∣ Γt ∣ I -> Prop
-            _⟨_⟩ : ∀{I J : Ob}{i : ∣ Γt ∣ I} -> A I i -> (f : Hom J I) -> A J (Γt ∶ i ⟨ f ⟩)
-            glue : ∀{I : Ob}{i : ∣ Γt ∣ I}{R : Sieve I} -> I ◁ R -> (∀{J} -> (f : Hom J I) -> ⟨ J , f ⟩⊩ R -> A J (Γt ∶ i ⟨ f ⟩)) -> A I i
+            _⟨_⟩ : ∀{I J : Ob}{i : ∣ Γt ∣ I} -> A I i -> (f : Hom J I) -> 
+                A J (Γt ∶ i ⟨ f ⟩)
+            glue : ∀{I : Ob}{i : ∣ Γt ∣ I}{R : Sieve I} -> 
+                I ◁ R -> 
+                (∀{J} -> (f : Hom J I) -> ⟨ J , f ⟩⊩ R -> A J (Γt ∶ i ⟨ f ⟩)) -> 
+                A I i
     open Conp public renaming (A to ∣_∣; _⟨_⟩ to _∶_⟨_⟩)
     
     _[_]C : ∀{Γt Δt} -> Conp Γt -> Subt Δt Γt -> Conp Δt
@@ -361,8 +417,14 @@ module Semantics
     ∣ tt ∣ _ = *
 
     _⊃_ : {Γt : Cont} -> For Γt -> For Γt -> For Γt
-    ∣ _⊃_ {Γt} K L ∣ I x = (J : Ob) -> (f : Hom J I) -> ∣ K ∣ J (Γt ∶ x ⟨ f ⟩) -> ∣ L ∣ J (Γt ∶ x ⟨ f ⟩)
-    (_∶_⟨_⟩ (_⊃_ {Γt} K L) {I}{J}{i}) = λ x f J' g Ki -> substp (∣ L ∣ J') (Γt ∶⟨∘⟩) (x J' (f ∘C g) (substp (∣ K ∣ J') (sym (Γt ∶⟨∘⟩)) Ki))
+    ∣ _⊃_ {Γt} K L ∣ I x = 
+        (J : Ob) -> (f : Hom J I) -> 
+        ∣ K ∣ J (Γt ∶ x ⟨ f ⟩) -> ∣ L ∣ J (Γt ∶ x ⟨ f ⟩)
+    (_∶_⟨_⟩ (_⊃_ {Γt} K L) {I}{J}{i}) x f J' g Ki = 
+        substp 
+            (∣ L ∣ J') 
+            (Γt ∶⟨∘⟩) 
+            (x J' (f ∘C g) (substp (∣ K ∣ J') (sym (Γt ∶⟨∘⟩)) Ki))
     glue (_⊃_ {Γt} K L) {I} I◁R x J f Kj = 
         L .glue (I◁R [ f ]ᶜ) (λ {K'} g J⊩R -> 
         let EQ  = substp (∣ L ∣ K') (trans (Γt ∶⟨id⟩) (Γt ∶⟨∘⟩)) in
@@ -387,7 +449,8 @@ module Semantics
         {glue ((K [ γt ]F) ⊃ (L [ γt ]F))}
         (funext (λ J → funext (λ x → 
         cong (λ Z -> (K : Ob) (f : Hom K J) -> Z K f) 
-        (funext (λ K' → funext (λ y → prop-fun (cong (∣ K ∣ K') (nat γt)) (cong (∣ L ∣ K') (nat γt))))))))
+        (funext (λ K' → funext (λ y → 
+            prop-fun (cong (∣ K ∣ K') (nat γt)) (cong (∣ L ∣ K') (nat γt))))))))
     
     ⊃intro : {Γt : Cont} {K L : For Γt} {Γ : Conp Γt} ->
       Pf (Γ ▸p K) L -> Pf Γ (K ⊃ L)
@@ -395,7 +458,11 @@ module Semantics
 
     ⊃elim : {Γt : Cont} {K L : For Γt} {Γ : Conp Γt} ->
       Pf Γ (K ⊃ L) -> Pf (Γ ▸p K) L
-    ∣ ⊃elim {Γt}{K}{L}{Γ} PfKL ∣ {I}{i} (Γi ,Σ Ki) = substp (∣ L ∣ I) (Γt ∶⟨id⟩) (∣ PfKL ∣ Γi I idC (substp (∣ K ∣ I) (sym (Γt ∶⟨id⟩)) Ki))
+    ∣ ⊃elim {Γt}{K}{L}{Γ} PfKL ∣ {I}{i} (Γi ,Σ Ki) = 
+        substp 
+            (∣ L ∣ I) 
+            (Γt ∶⟨id⟩) 
+            (∣ PfKL ∣ Γi I idC (substp (∣ K ∣ I) (sym (Γt ∶⟨id⟩)) Ki))
 
     _∧_ : {Γt : Cont} -> For Γt -> For Γt -> For Γt
     ∣ K ∧ L ∣ I Γi    = ∣ K ∣ I Γi ×p ∣ L ∣ I Γi
@@ -414,12 +481,17 @@ module Semantics
     ∧elim₂ : {Γt : Cont} {K L : For Γt} {Γ : Conp Γt} -> Pf Γ (K ∧ L) -> Pf Γ L
     ∣ ∧elim₂ x ∣ Γi = proj₂ (∣ x ∣ Γi)
 
-    ∨-sieve : (Γt : Cont) -> (I : Ob) -> (Γi : ∣ Γt ∣ I) -> (K L : For Γt) -> Sieve I
-    (∨-sieve Γt I Γi K L) .Sh.Sieve.R = λ J f -> ∣ K ∣ J (Γt ∶ Γi ⟨ f ⟩) +p ∣ L ∣ J (Γt ∶ Γi ⟨ f ⟩)
-    (∨-sieve Γt I Γi K L) .Sh.Sieve.restr {J}{f}{K'} (inj₁ Kj) g = inj₁ (substp (∣ K ∣ K') (sym (Γt ∶⟨∘⟩)) (K ∶ Kj ⟨ g ⟩))
-    (∨-sieve Γt I Γi K L) .Sh.Sieve.restr {J}{f}{K'} (inj₂ Lj) g = inj₂ (substp (∣ L ∣ K') (sym (Γt ∶⟨∘⟩)) (L ∶ Lj ⟨ g ⟩))
+    ∨-sieve : (Γt : Cont) -> (I : Ob) -> (Γi : ∣ Γt ∣ I) -> (K L : For Γt) -> 
+        Sieve I
+    (∨-sieve Γt I Γi K L) .Sh.Sieve.R J f = 
+        ∣ K ∣ J (Γt ∶ Γi ⟨ f ⟩) +p ∣ L ∣ J (Γt ∶ Γi ⟨ f ⟩)
+    (∨-sieve Γt I Γi K L) .Sh.Sieve.restr {J}{f}{K'} (inj₁ Kj) g = 
+        inj₁ (substp (∣ K ∣ K') (sym (Γt ∶⟨∘⟩)) (K ∶ Kj ⟨ g ⟩))
+    (∨-sieve Γt I Γi K L) .Sh.Sieve.restr {J}{f}{K'} (inj₂ Lj) g = 
+        inj₂ (substp (∣ L ∣ K') (sym (Γt ∶⟨∘⟩)) (L ∶ Lj ⟨ g ⟩))
     
-    ∨-[]ˢ-⟨⟩ : ∀{Γt : Cont}{I J : Ob}{Γi : ∣ Γt ∣ I}{f : Hom J I}{K L : For Γt} ->
+    ∨-[]ˢ-⟨⟩ : {Γt : Cont}{I J : Ob}{Γi : ∣ Γt ∣ I}{f : Hom J I}
+        {K L : For Γt} ->
         (∨-sieve Γt I Γi K L) [ f ]ˢ ≡  ∨-sieve Γt J (Γt ∶ Γi ⟨ f ⟩) K L
     ∨-[]ˢ-⟨⟩ {Γt} {I} {J} {Γi} {f} {K} {L} = 
         mkSieveEq {J}
@@ -427,12 +499,21 @@ module Semantics
         (Sh.Sieve.R (∨-sieve Γt J (Γt ∶ Γi ⟨ f ⟩) K L)) 
         {Sh.Sieve.restr (∨-sieve Γt I Γi K L [ f ]ˢ)}
         {Sh.Sieve.restr (∨-sieve Γt J (Γt ∶ Γi ⟨ f ⟩) K L)}
-        (funext (λ I' → funext (λ f' → cong-bin _+p_ (cong (∣ K ∣ I') (Γt ∶⟨∘⟩)) (cong (∣ L ∣ I') (Γt ∶⟨∘⟩))))) 
+        (funext (λ I' → funext (λ f' → 
+            cong-bin _+p_ 
+                (cong (∣ K ∣ I') (Γt ∶⟨∘⟩)) 
+                (cong (∣ L ∣ I') (Γt ∶⟨∘⟩))))) 
 
     _∨_ : {Γt : Cont} -> For Γt -> For Γt -> For Γt
     ∣ _∨_ {Γt} K L ∣ I Γi    = I ◁ (∨-sieve Γt I Γi K L)
-    _∶_⟨_⟩ (_∨_ {Γt} K L) {I} {J} {i} x f = substp (J ◁_) (∨-[]ˢ-⟨⟩ {Γt}{I}{J}{i}{f}{K}{L}) (_[_]ᶜ {I}{J} x f)
-    glue (_∨_ {Γt} K L) {I} {i} {R} I◁R x = local {I}{R} I◁R λ {J'} f J'⊩R → substp (J' ◁_) (sym (∨-[]ˢ-⟨⟩ {Γt}{I}{J'}{i}{f}{K}{L})) (x f J'⊩R)
+    _∶_⟨_⟩ (_∨_ {Γt} K L) {I} {J} {i} x f = 
+        substp 
+            (J ◁_) 
+            (∨-[]ˢ-⟨⟩ {Γt}{I}{J}{i}{f}{K}{L}) 
+            (_[_]ᶜ {I}{J} x f)
+    glue (_∨_ {Γt} K L) {I} {i} {R} I◁R x = 
+        local {I}{R} I◁R λ {J'} f J'⊩R → 
+            substp (J' ◁_) (sym (∨-[]ˢ-⟨⟩ {Γt}{I}{J'}{i}{f}{K}{L})) (x f J'⊩R)
 
     ∨[] : {Γt : Cont} {K L : For Γt} {Δt : Cont} {γt : Subt Δt Γt} →
       ((K ∨ L) [ γt ]F) ≡ ((K [ γt ]F) ∨ (L [ γt ]F))
@@ -451,17 +532,26 @@ module Semantics
         (Sh.Sieve.R (∨-sieve Δt J x (K [ γt ]F) (L [ γt ]F))) 
         {Sh.Sieve.restr (∨-sieve Γt J (∣ γt ∣ J x) K L)}
         {Sh.Sieve.restr (∨-sieve Δt J x (K [ γt ]F) (L [ γt ]F))}
-        (funext (λ K' → funext (λ y → cong-bin _+p_ (cong (∣ K ∣ K') (nat γt)) (cong (∣ L ∣ K') (nat γt)))))))))
+        (funext (λ K' → funext (λ y → 
+            cong-bin _+p_ 
+                (cong (∣ K ∣ K') (nat γt)) 
+                (cong (∣ L ∣ K') (nat γt)))))))))
 
     ∨intro₁ : {Γt : Cont} {K L : For Γt} {Γ : Conp Γt} ->
       Pf Γ K -> Pf Γ (K ∨ L)
-    ∣ ∨intro₁ {Γt} {K} {L} {Γ} PfK ∣ Γi = maximal (inj₁ (K ∶ ∣ PfK ∣ Γi ⟨ idC ⟩))
+    ∣ ∨intro₁ {Γt} {K} {L} {Γ} PfK ∣ Γi = 
+        maximal (inj₁ (K ∶ ∣ PfK ∣ Γi ⟨ idC ⟩))
     
     ∨intro₂ : {Γt : Cont} {K L : For Γt} {Γ : Conp Γt} ->
       Pf Γ L -> Pf Γ (K ∨ L)
-    ∣ ∨intro₂ {Γt} {K} {L} {Γ} PfL ∣ Γi = maximal (inj₂ (L ∶ ∣ PfL ∣ Γi ⟨ idC ⟩))
+    ∣ ∨intro₂ {Γt} {K} {L} {Γ} PfL ∣ Γi = 
+        maximal (inj₂ (L ∶ ∣ PfL ∣ Γi ⟨ idC ⟩))
 
-    ∨elim : ∀{Γt}{K L C}{Γ : Conp Γt} -> Pf (Γ ▸p K) C -> Pf (Γ ▸p L) C -> Pf Γ (K ∨ L) -> Pf Γ C
+    ∨elim : ∀{Γt}{K L C}{Γ : Conp Γt} -> 
+        Pf (Γ ▸p K) C -> 
+        Pf (Γ ▸p L) C -> 
+        Pf Γ (K ∨ L) -> 
+        Pf Γ C
     ∣ ∨elim {Γt}{K}{L}{C}{Γ} PfKC PfLC PfK∨L ∣ {I} {i} Γi = 
         C .glue (∣ PfK∨L ∣ Γi) 
         λ {J} f J⊩R → 
@@ -472,12 +562,20 @@ module Semantics
             J⊩R
 
     ∀' : {Γt : Cont} -> For (Γt ▸t) -> For Γt
-    ∣ ∀' {Γt} K ∣ I Γi = (J : Ob) -> (f : Hom J I) -> (d : D J) -> ∣ K ∣ J ((Γt ∶ Γi ⟨ f ⟩) ,Σ d)
-    _∶_⟨_⟩ (∀' {Γt} K) {I} {J} {i} x f J' g d = substp (λ z -> ∣ K ∣ J' (z ,Σ d)) (Γt ∶⟨∘⟩) (x J' (f ∘C g) d) 
+    ∣ ∀' {Γt} K ∣ I Γi = (J : Ob) -> (f : Hom J I) -> (d : D J) -> 
+        ∣ K ∣ J ((Γt ∶ Γi ⟨ f ⟩) ,Σ d)
+    _∶_⟨_⟩ (∀' {Γt} K) {I} {J} {i} x f J' g d = 
+        substp 
+            (λ z -> ∣ K ∣ J' (z ,Σ d)) 
+            (Γt ∶⟨∘⟩) 
+            (x J' (f ∘C g) d) 
     glue (∀' {Γt} K){I} {i} {R} I◁R x J f d = 
         K .glue {J}{Γt ∶ i ⟨ f ⟩ ,Σ d} 
-        (I◁R [ f ]ᶜ) λ {K'} g y → substp (λ z -> ∣ K ∣ K' (z ,Σ D∶ d ⟨ g ⟩)) (trans (Γt ∶⟨id⟩) (Γt ∶⟨∘⟩)) 
-        (x {K'} (f ∘C g) y K' idC D∶ d ⟨ g ⟩)
+        (I◁R [ f ]ᶜ) λ {K'} g y → 
+            substp 
+                (λ z -> ∣ K ∣ K' (z ,Σ D∶ d ⟨ g ⟩)) 
+                (trans (Γt ∶⟨id⟩) (Γt ∶⟨∘⟩)) 
+                (x {K'} (f ∘C g) y K' idC D∶ d ⟨ g ⟩)
 
     ∀[] : {Γt : Cont} {K : For (Γt ▸t)} {Δt : Cont} {γt : Subt Δt Γt} ->
       (∀' K [ γt ]F) ≡ ∀' (K [ (γt ∘t pt) ,t qt {Δt} ]F)
@@ -491,7 +589,8 @@ module Semantics
         (funext (λ I -> 
         funext (λ Δi -> 
         cong (λ Z -> (J : Ob)(f : Hom J I)(d : D J) -> Z J f d) 
-        (funext λ J -> funext (λ f -> funext (λ d -> cong (λ z -> ∣ K ∣ J (z ,Σ d)) (nat γt)))))))
+        (funext λ J -> funext (λ f -> funext (λ d -> 
+            cong (λ z -> ∣ K ∣ J (z ,Σ d)) (nat γt)))))))
 
     ∀intro : {Γt : Cont} {K : For (Γt ▸t)} {Γ : Conp Γt} ->
       Pf (Γ [ pt ]C) K -> Pf Γ (∀' K)
@@ -499,16 +598,25 @@ module Semantics
 
     ∀elim : {Γt : Cont} {K : For (Γt ▸t)} {Γ : Conp Γt} ->
       Pf Γ (∀' K) -> Pf (Γ [ pt ]C) K
-    ∣ ∀elim {Γt}{K}{Γ} PfK ∣ {I} {Γti ,Σ d} Γi = substp (λ z -> ∣ K ∣ I (z ,Σ d)) (Γt ∶⟨id⟩) (∣ PfK ∣ Γi I idC d)
+    ∣ ∀elim {Γt}{K}{Γ} PfK ∣ {I} {Γti ,Σ d} Γi = 
+        substp 
+            (λ z -> ∣ K ∣ I (z ,Σ d)) 
+            (Γt ∶⟨id⟩) 
+            (∣ PfK ∣ Γi I idC d)
 
-    ∃-sieve : (Γt : Cont) -> (K : For (Γt ▸t)) -> (I : Ob) -> (Γi : ∣ Γt ∣ I) -> Sieve I
-    ∃-sieve Γt K I Γi .Sh.Sieve.R = λ J f → ∃ (D J) λ d -> ∣ K ∣ J ((Γt ∶ Γi ⟨ f ⟩) ,Σ d)
+    ∃-sieve : (Γt : Cont) -> (K : For (Γt ▸t)) -> (I : Ob) -> (Γi : ∣ Γt ∣ I) ->
+        Sieve I
+    ∃-sieve Γt K I Γi .Sh.Sieve.R J f = 
+        ∃ (D J) λ d -> ∣ K ∣ J ((Γt ∶ Γi ⟨ f ⟩) ,Σ d)
     ∃-sieve Γt K I Γi .Sh.Sieve.restr {J} {f} {K'} (Dj ,∃ Kj) g = 
         D∶ Dj ⟨ g ⟩ ,∃ 
-        substp (λ z -> ∣ K ∣ K' (z ,Σ D∶ Dj ⟨ g ⟩)) (sym (Γt ∶⟨∘⟩)) 
-        (K ∶ Kj ⟨ g ⟩)
+        substp 
+            (λ z -> ∣ K ∣ K' (z ,Σ D∶ Dj ⟨ g ⟩)) 
+            (sym (Γt ∶⟨∘⟩)) 
+            (K ∶ Kj ⟨ g ⟩)
 
-    ∃-[]ˢ-⟨⟩ : ∀{Γt : Cont}{I J : Ob}{Γi : ∣ Γt ∣ I}{f : Hom J I}{K : For (Γt ▸t)} ->
+    ∃-[]ˢ-⟨⟩ : {Γt : Cont}{I J : Ob}{Γi : ∣ Γt ∣ I}{f : Hom J I}
+        {K : For (Γt ▸t)} ->
         (∃-sieve Γt K I Γi) [ f ]ˢ ≡  ∃-sieve Γt K J (Γt ∶ Γi ⟨ f ⟩)
     ∃-[]ˢ-⟨⟩ {Γt} {I} {J} {Γi} {f} {K} = 
         mkSieveEq {J}
@@ -521,8 +629,17 @@ module Semantics
 
     ∃' : {Γt : Cont} -> For (Γt ▸t) -> For Γt
     ∣ ∃' {Γt} K ∣ I Γi = I ◁ (∃-sieve Γt K I Γi)
-    _∶_⟨_⟩ (∃' {Γt} K) {I} {J} {i} x f = substp (J ◁_) (∃-[]ˢ-⟨⟩ {Γt} {I} {J} {i} {f} {K}) (x [ f ]ᶜ)
-    glue (∃' {Γt} K) {I} {i} {R} I◁R x = local I◁R λ {J} f J⊩R → substp (J ◁_) (sym (∃-[]ˢ-⟨⟩ {Γt} {I} {J} {i} {f} {K})) (x {J} f J⊩R)
+    _∶_⟨_⟩ (∃' {Γt} K) {I} {J} {i} x f = 
+        substp 
+            (J ◁_) 
+            (∃-[]ˢ-⟨⟩ {Γt} {I} {J} {i} {f} {K}) 
+            (x [ f ]ᶜ)
+    glue (∃' {Γt} K) {I} {i} {R} I◁R x = 
+        local I◁R λ {J} f J⊩R → 
+            substp 
+                (J ◁_) 
+                (sym (∃-[]ˢ-⟨⟩ {Γt} {I} {J} {i} {f} {K})) 
+                (x {J} f J⊩R)
     
     ∃[] : {Γt : Cont} {K : For (Γt ▸t)} {Δt : Cont} {γt : Subt Δt Γt} →
       (∃' K [ γt ]F) ≡ ∃' (K [ (γt ∘t pt) ,t (qt {Δt}) ]F)
@@ -541,27 +658,43 @@ module Semantics
         (Sh.Sieve.R (∃-sieve Δt (K [ (γt ∘t pt) ,t (qt {Δt}) ]F) J x)) 
         {Sh.Sieve.restr (∃-sieve Γt K J (∣ γt ∣ J x))}
         {Sh.Sieve.restr (∃-sieve Δt (K [ (γt ∘t pt) ,t (qt {Δt}) ]F) J x)}
-        (funext (λ K' → funext (λ y → cong (∃ (D K')) (funext (λ d → cong (λ z -> ∣ K ∣ K' (z ,Σ d)) (nat γt))))))))))
+        (funext (λ K' → funext (λ y → cong (∃ (D K')) 
+            (funext (λ d → cong (λ z -> ∣ K ∣ K' (z ,Σ d)) (nat γt))))))))))
 
     ∃intro : {Γt : Cont} {K : For (Γt ▸t)} (t : Tm Γt) {Γ : Conp Γt} ->
       Pf Γ (K [ idt ,t t ]F) -> Pf Γ (∃' K)
-    ∣ ∃intro {Γt}{K} t {Γ} PfK ∣ {I}{i} Γi = maximal ((∣ t ∣ I i) ,∃ substp (λ z -> ∣ K ∣ I (z ,Σ ∣ t ∣ I i)) (sym (Γt ∶⟨id⟩)) (∣ PfK ∣ Γi))
+    ∣ ∃intro {Γt}{K} t {Γ} PfK ∣ {I}{i} Γi = 
+        maximal ((∣ t ∣ I i) ,∃ 
+        substp 
+            (λ z -> ∣ K ∣ I (z ,Σ ∣ t ∣ I i)) 
+            (sym (Γt ∶⟨id⟩)) 
+            (∣ PfK ∣ Γi))
     
     ∃elim : {Γt : Cont} {K : For (Γt ▸t)} {Γp : Conp Γt}{L : For Γt} ->
-      Pf Γp (∃' K) -> Pf ((Γp [ pt ]C) ▸p (K [ _,t_ {Γt} pt (qt {Γt}) ]F)) (L [ pt ]F) -> Pf Γp L
+      Pf Γp (∃' K) -> 
+      Pf ((Γp [ pt ]C) ▸p (K [ _,t_ {Γt} pt (qt {Γt}) ]F)) (L [ pt ]F) -> 
+      Pf Γp L
     ∣ ∃elim {Γt}{K}{Γp}{L} Pf∃K PfKL ∣ {I} {i} Γi = 
         L .glue (∣ Pf∃K ∣ Γi) λ {J} f x → 
         with∃ x (λ d Kj → ∣ PfKL ∣ ((Γp ∶ Γi ⟨ f ⟩) ,Σ Kj))
 
-    Eq-sieve : (Γt : Cont) -> (t t' : Tm Γt) -> (I : Ob) -> (Γi : ∣ Γt ∣ I) -> Sieve I
-    Eq-sieve Γt t t' I Γi .Sh.Sieve.R = λ J f -> ∣ t ∣ J (Γt ∶ Γi ⟨ f ⟩) ≡ ∣ t' ∣ J (Γt ∶ Γi ⟨ f ⟩)
+    Eq-sieve : (Γt : Cont) -> (t t' : Tm Γt) -> (I : Ob) -> (Γi : ∣ Γt ∣ I) -> 
+        Sieve I
+    Eq-sieve Γt t t' I Γi .Sh.Sieve.R J f = 
+        ∣ t ∣ J (Γt ∶ Γi ⟨ f ⟩) ≡ ∣ t' ∣ J (Γt ∶ Γi ⟨ f ⟩)
     Eq-sieve Γt t t' I Γi .Sh.Sieve.restr {J} {f} {K} x g = 
         trans 
             (trans (sym (nat t)) D∶⟨∘⟩) 
-            (trans (cong (D∶_⟨ g ⟩) (trans (nat t) (trans x (sym (nat t')))))
-            (trans (sym D∶⟨∘⟩) (nat t')))
+            (trans 
+                (cong (D∶_⟨ g ⟩) (trans 
+                    (nat t) 
+                    (trans x (sym (nat t')))))
+                (trans 
+                    (sym D∶⟨∘⟩) 
+                    (nat t')))
 
-    Eq-[]ˢ-⟨⟩ : ∀{Γt : Cont}{I J : Ob}{Γi : ∣ Γt ∣ I}{f : Hom J I}{t t' : Tm Γt} ->
+    Eq-[]ˢ-⟨⟩ : {Γt : Cont}{I J : Ob}{Γi : ∣ Γt ∣ I}{f : Hom J I}
+        {t t' : Tm Γt} ->
         (Eq-sieve Γt t t' I Γi) [ f ]ˢ ≡  Eq-sieve Γt t t' J (Γt ∶ Γi ⟨ f ⟩)
     Eq-[]ˢ-⟨⟩ {Γt}{I}{J}{Γi}{f}{t}{t'} = 
         mkSieveEq {J}
@@ -574,8 +707,17 @@ module Semantics
     
     Eq : {Γt : Cont} -> Tm Γt -> Tm Γt -> For Γt
     ∣ Eq {Γt} t t' ∣ I Γi = I ◁ (Eq-sieve Γt t t' I Γi) 
-    _∶_⟨_⟩ (Eq {Γt} t t') {I} {J} {i} x f = substp (J ◁_) (Eq-[]ˢ-⟨⟩ {Γt}{I}{J}{i}{f}{t}{t'}) (x [ f ]ᶜ)
-    glue (Eq {Γt} t t') {I} {i} {R} I◁R x = local I◁R λ {J} f y → substp (J ◁_) (sym (Eq-[]ˢ-⟨⟩ {Γt}{I}{J}{i}{f}{t}{t'})) (x f y)
+    _∶_⟨_⟩ (Eq {Γt} t t') {I} {J} {i} x f = 
+        substp 
+            (J ◁_) 
+            (Eq-[]ˢ-⟨⟩ {Γt}{I}{J}{i}{f}{t}{t'}) 
+            (x [ f ]ᶜ)
+    glue (Eq {Γt} t t') {I} {i} {R} I◁R x = 
+        local I◁R λ {J} f y → 
+            substp 
+                (J ◁_) 
+                (sym (Eq-[]ˢ-⟨⟩ {Γt}{I}{J}{i}{f}{t}{t'})) 
+                (x f y)
 
     Eq[] : {Γt Δt : Cont} {γt : Subt Δt Γt} {t t' : Tm Γt} ->
       (Eq t t' [ γt ]F) ≡ Eq (t [ γt ]t) (t' [ γt ]t)
@@ -594,7 +736,10 @@ module Semantics
         (Sh.Sieve.R (Eq-sieve Δt (t [ γt ]t) (t' [ γt ]t) J x)) 
         {Sh.Sieve.restr (Eq-sieve Γt t t' J (∣ γt ∣ J x))}
         {Sh.Sieve.restr (Eq-sieve Δt (t [ γt ]t) (t' [ γt ]t) J x)}
-        (funext (λ K → funext (λ y → cong-bin _≡_ (cong (∣ t ∣ K) (nat γt)) (cong (∣ t' ∣ K) (nat γt)))))))))
+        (funext (λ K → funext (λ y → 
+            cong-bin _≡_ 
+                (cong (∣ t ∣ K) (nat γt)) 
+                (cong (∣ t' ∣ K) (nat γt)))))))))
     
     Eqrefl : {Γt : Cont} {t : Tm Γt} {Γ : Conp Γt} -> Pf Γ (Eq t t)
     ∣ Eqrefl ∣ x = maximal refl
@@ -603,8 +748,10 @@ module Semantics
       Pf Γ (Eq t t') -> Pf Γ (K [ idt ,t t ]F) -> Pf Γ (K [ idt ,t t' ]F)
     ∣ subst' {Γt} K {t}{t'} t=t' PfK ∣ {I}{i} x = 
         K .glue (∣ t=t' ∣ x) (λ {J} f y → 
-        substp (λ z -> ∣ K ∣ J ((Γt ∶ i ⟨ f ⟩) ,Σ z)) (trans (nat t) (trans y (sym (nat t')))) 
-        (K ∶ (∣ PfK ∣ x) ⟨ f ⟩))
+        substp 
+            (λ z -> ∣ K ∣ J ((Γt ∶ i ⟨ f ⟩) ,Σ z)) 
+            (trans (nat t) (trans y (sym (nat t')))) 
+            (K ∶ (∣ PfK ∣ x) ⟨ f ⟩))
         
     Beth : Model funar relar _ _ _ _ _
     Beth = record
