@@ -1,6 +1,8 @@
-# First order logic formalization in Agda in the CwF style
+# First-order logic formalization in Agda in the CwF style
 
 We present FOL as an algebraic theory (first and second-order). We show some examples working in the second-order version where its convenient to use meta level variables. We use the translation of Kaposi and Xie to translate the second-order presentation into a first-order one [^1]. We also give the double-negation translation in the first-order presentation and show some common models of FOL [^2] [^3]. We prove completeness for Beth models and Kripke models.
+
+The formalisation is available on [https://imoder.github.io/logic-agda/Everything.html](https://imoder.github.io/logic-agda/Everything.html)
 
 ## Outline
 
